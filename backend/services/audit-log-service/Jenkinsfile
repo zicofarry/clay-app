@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+
+    environment {
+        GO_VERSION = '1.25'
+        APP_NAME = 'clay-audit-log-service'
+        DOCKER_REGISTRY = 'registry.clay.id'
+    }
+
+    stages {
+        stage('1. Checkout repo') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('2. Unit Tests') {
+            steps {
+                sh 'go test -tags=unit -v ./...'
+            }
+        }
+
+        stage('3. Lint/Vet') {
+            steps {
+                sh 'go vet ./...'
+            }
+        }
+
+        stage('4. Build Image') {
+            steps {
+                sh "docker build -t ${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID} -f Dockerfile ."
+            }
+        }
+
+        stage('5. Functional Tests') {
+            steps {
+                sh 'go test -tags=functional -v ./test/functional/...'
+            }
+        }
+
+        stage('6. Push image') {
+            steps {
+                sh "docker push ${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID}"
+                sh "docker tag ${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID} ${DOCKER_REGISTRY}/${APP_NAME}:latest"
+                sh "docker push ${DOCKER_REGISTRY}/${APP_NAME}:latest"
+            }
+        }
+
+        stage('7. Deploy to Kubernetes') {
+            steps {
+                sh "echo Deploying ${APP_NAME} to production Kubernetes cluster..."
+                // sh "kubectl apply -f k8s/"
+            }
+        }
+
+        stage('8. Verify') {
+            steps {
+                sh "echo Verifying deployment health..."
+                // sh "kubectl rollout status deployment/${APP_NAME}"
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

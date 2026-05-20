@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 clay_erd_gen.py)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "Bash(go mod:*)",
+      "Bash(go test:*)",
+      "Bash(go vet *)",
+      "Bash(GOWORK=off go vet -tags=unit ./...)",
+      "Bash(xargs ls *)"
+    ]
+  }
+}

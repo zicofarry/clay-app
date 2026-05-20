@@ -1,0 +1,69 @@
+clay-ride-order-service/                                                                                            ├── go.mod                                                                                                        
+  ├── go.sum                                                                                                        
+  ├── main.go
+  ├── Dockerfile
+  ├── Jenkinsfile
+  │                                                                                                                   ├── internal/
+  │   ├── handler/                                                                                                  
+  │   │   ├── order_handler.go
+  │   │   └── order_handler_test.go      # //go:build unit
+  │   │
+  │   ├── service/
+  │   │   ├── order_service.go                                                                                        │   │   └── order_service_test.go      # //go:build unit
+  │   │                                                                                                             
+  │   └── repository/
+  │       ├── order_repository.go
+  │       └── order_repository_test.go   # //go:build unit
+  │                                                                                                                   ├── mocks/
+  │   ├── mock_order_service.go                                                                                     
+  │   └── mock_order_repository.go
+  │
+  └── test/
+      └── functional/
+          └── order_integration_test.go  # //go:build functional
+                                                                                                                      ---
+  Pembagian tanggung jawab                                                                                          
+  
+  ┌───────────────────────┬────────────┬──────────────────────────────────────┐
+  │        Lokasi         │ Build tag  │                 Isi                  │                                       ├───────────────────────┼────────────┼──────────────────────────────────────┤
+  │ internal/*/**_test.go │ unit       │ Test per layer, pakai mock, no DB    │                                     
+  ├───────────────────────┼────────────┼──────────────────────────────────────┤
+  │ test/functional/      │ functional │ End-to-end test dengan real DB/Redis │                                       └───────────────────────┴────────────┴──────────────────────────────────────┘
+                                                                                                                      Run commands                                                                                                         
+  # Unit tests                                                                                                      
+  go test -tags=unit ./internal/...
+
+  # Functional tests
+  go test -tags=functional ./test/functional/...
+
+  # Semua                                                                                                             go test -tags="unit functional" ./...
+                                                                                                                    
+  Ini yang dimaksud kan?
+
+
+okee jadi aku mau membuat unit test dan functional test yang lengkap dan bagus sesuai standar profesional untuk  service, untuk  struktur folder dan filenya kamu bisa ikutin ini                                        '/mnt/d/zicofarry/GitHub/clay/clay-ride-order-service' yang ada di ride order service, selain itu kamu bisa liat     gambar erd yang udah aku design '/mnt/d/zicofarry/GitHub/clay/clay-matching-service/Screenshot 2026-04-28          114525.png'  dan kamu juga bisa liat api specs yang udah dibuat di                                                  '/mnt/d/zicofarry/GitHub/clay/clay-matching-service/openapi.yaml' coba kamu buatin yang detail lengkap dari unit    test sampai functional test, untuk unit testnya pakai gomock ya biar sesuai standar profesional, terus functional    test juga harus konek langsung ke databasenya, yang berarti ketika belum di docker compose up harusnya fail        dulu, setelah di docker compose up baru pass. jangan lupa buatkan jenkinsfile nya juga lalu untuk databasenya       pakai adminer biar bisa dilihat lewat web. dan jangan lupa port mapping nya sesuain dengan ini                      '/mnt/d/zicofarry/GitHub/clay/clay-docs/PORT_MAPPING.md'. dan jangan lupa logic dari matching service ini harus     detail yaa jangan ada yang kelewat, kayak nge match in berdasarkan jarak, rating, distribusi driver, terus          priority mode dari driver, itu semua logicnya harus lengkap semua, jika kamu merasa ada yang perlu ditambahkan      dan lebih bagus seperti itu, itu bisa ditambahkan asal logicnya masih sesuai dan cocok. 
+okee sekarang buatkan untuk clay-security-service, ikutin struktur folder dan file dari ride order service juga, dan untuk erd nya bisa di liat di '/mnt/d/zicofarry/GitHub/clay/clay-security-service/security-service-erd.excalidraw', untuk api specs nya bisa diliat di '/mnt/d/zicofarry/GitHub/clay/clay-security-service/openapi.yaml', dan untuk port mapping nya sesuain dengan '/mnt/d/zicofarry/GitHub/clay/clay-docs/PORT_MAPPING.md' coba kamu buatin yang detail lengkap dari unit    test sampai functional test, untuk unit testnya pakai gomock ya biar sesuai standar profesional, terus functional    test juga harus konek langsung ke databasenya, yang berarti ketika belum di docker compose up harusnya fail        dulu, setelah di docker compose up baru pass. jangan lupa buatkan jenkinsfile nya juga lalu untuk databasenya       pakai adminer biar bisa dilihat lewat web. dan jangan lupa port mapping nya sesuain dengan ini                      '/mnt/d/zicofarry/GitHub/clay/clay-docs/PORT_MAPPING.md'. dan jangan lupa logic dari matching service ini harus     detail yaa jangan ada yang kelewat, kayak nge match in berdasarkan jarak, rating, distribusi driver, terus          priority mode dari driver, itu semua logicnya harus lengkap semua, jika kamu merasa ada yang perlu ditambahkan      dan lebih bagus seperti itu, itu bisa ditambahkan asal logicnya masih sesuai dan cocok. 
+
+  ┌──────────────────┬───────────┬────────────────────────────────────────────────────────────────────────────┐
+  │      Folder      │  Sebelum  │                                  Sesudah                                   │
+  ├──────────────────┼───────────┼────────────────────────────────────────────────────────────────────────────┤
+  │ Auth Service     │ 10        │ 14 (+sessions/{id} delete, password forgot/reset/change)                   │
+  │ User Service     │ 18        │ 23 (+driver documents CRUD)                                                │
+  │ Ride Order       │ 10        │ 11 (+reject driver, update status, fare-breakdown)                         │
+  │ Food Order       │ 15        │ 18 (+merchant order detail, driver pickup/deliver)                         │
+  │ Delivery Order   │ 5         │ 11 (+active, history, fare-breakdown, rate, driver actions)                │
+  │ Wallet           │ 5         │ 10 (+topup callback, tx detail, driver wallet/settlements)                 │
+  │ Payment          │ 6         │ 10 (+COD verification flow: initiate/status/otp/respond)                   │
+  │ Chat             │ 4         │ 8 (+by-order, upload, read, unread-count — path fix dari /chat/rooms/)     │
+  │ Search           │ 2         │ 5 (+suggest, trending, popular)                                            │
+  │ Geo              │ 9         │ 14 (+polyline, routing, snapping, traffic, place details — path fix)       │
+  │ Pricing          │ 3         │ 4 (+estimate ride/food/delivery — path fix)                                │
+  │ Tracking         │ 3         │ 4 (+/routes/{orderId} — path fix)                                          │
+  │ Promotion        │ 3         │ 3 (path fix: /promos/validate, /vouchers, /vouchers/claim)                 │
+  │ Rating           │ 4         │ 5 (path fix sesuai routes.yaml)                                            │
+  │ Security         │ 8         │ 10 (+fraud-flag detail, user fraud summary)                                │
+  │ Audit Log        │ 5         │ 7 (+export status, log detail)                                             │
+  │ Webhooks         │ —         │ 2 (baru: email + SMS delivery callbacks)                                   │
+  │ History          │ 7         │ 9 (+tx detail, feed item detail)                                           │
+  └──────────────────┴───────────┴────────────────────────────────────────────────────────────────────────────┘      
+  Total: 238 requests (sebelumnya ~178) dengan 31 collection variables dan semua URL sesuai dengan routes.yaml.       

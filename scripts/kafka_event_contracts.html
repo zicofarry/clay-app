@@ -1,0 +1,417 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:1rem 0;font-family:var(--font-sans)}
+.event-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem}
+.etab{font-size:12px;padding:5px 11px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s;font-family:var(--font-mono)}
+.etab.active{font-weight:500;border-color:var(--color-border-info)}
+.ec{display:none}
+.ec.active{display:block}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem}
+.meta-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 14px;flex:1;min-width:140px}
+.meta-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.meta-value{font-size:13px;font-weight:500;color:var(--color-text-primary);font-family:var(--font-mono)}
+.prod-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;font-family:var(--font-sans)}
+.cons-badges{display:flex;flex-wrap:wrap;gap:4px}
+.badge{font-size:11px;padding:2px 8px;border-radius:10px}
+.b-booking{background:#EEEDFE;color:#3C3489}
+.b-dispatcher{background:#FAEEDA;color:#854F0B}
+.b-payment{background:#EAF3DE;color:#3B6D11}
+.b-notification{background:#E6F1FB;color:#185FA5}
+.b-chat{background:#FBEAF0;color:#723E5A}
+.b-rating{background:#FAECE7;color:#993C1D}
+.b-identity{background:#F1EFE8;color:#444441}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.two-col{grid-template-columns:1fr}}
+.schema-card,.example-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.card-head{padding:8px 14px;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px}
+.field-table{width:100%;border-collapse:collapse}
+.field-table tr{border-bottom:0.5px solid var(--color-border-tertiary)}
+.field-table tr:last-child{border-bottom:none}
+.field-table td{padding:6px 14px;font-size:12px;vertical-align:top}
+.fn{font-family:var(--font-mono);color:var(--color-text-primary);font-size:11.5px;white-space:nowrap}
+.ft{font-family:var(--font-mono);color:var(--color-text-info);font-size:11px}
+.fd{color:var(--color-text-secondary);font-size:11px}
+.rq{font-size:9px;padding:1px 5px;border-radius:8px;background:#EEEDFE;color:#3C3489;font-weight:500;white-space:nowrap}
+.opt{font-size:9px;padding:1px 5px;border-radius:8px;background:#F1EFE8;color:#5F5E5A;font-weight:500;white-space:nowrap}
+pre{font-family:var(--font-mono);font-size:11.5px;line-height:1.7;padding:14px;color:var(--color-text-primary);overflow-x:auto;white-space:pre}
+.behavior-box{margin-top:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.bh-title{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.bh-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px}
+.bh-badge{font-size:10px;padding:2px 7px;border-radius:8px;white-space:nowrap;font-weight:500;margin-top:1px}
+.bh-action{color:var(--color-text-primary)}
+.bh-action span{font-family:var(--font-mono);font-size:11px}
+</style>
+<div class="wrap">
+<div class="event-tabs" id="tabs"></div>
+<div id="contents"></div>
+</div>
+<script>
+const events=[
+{
+  id:"order_created",
+  topic:"Order_Created",
+  color:"b-booking",
+  producer:"Booking",
+  producerColor:"b-booking",
+  consumers:["Dispatcher","Chat","Notification"],
+  partition:"service_type",
+  retention:"7 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"ID unik event ini",req:true},
+    {n:"event_type",t:"string",d:"'Order_Created'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"Waktu event dipublish",req:true},
+    {n:"order_id",t:"UUID",d:"ID order yang dibuat",req:true},
+    {n:"user_id",t:"UUID",d:"ID user yang memesan",req:true},
+    {n:"service_type",t:"enum",d:"goride | gocar | gofood | gosend",req:true},
+    {n:"origin",t:"object",d:"Koordinat & alamat pickup",req:true},
+    {n:"origin.lat",t:"float",d:"Latitude titik jemput",req:true},
+    {n:"origin.lng",t:"float",d:"Longitude titik jemput",req:true},
+    {n:"origin.address",t:"string",d:"Alamat titik jemput",req:false},
+    {n:"destination",t:"object",d:"Koordinat & alamat tujuan",req:true},
+    {n:"destination.lat",t:"float",d:"",req:true},
+    {n:"destination.lng",t:"float",d:"",req:true},
+    {n:"destination.address",t:"string",d:"",req:false},
+    {n:"fare_estimate",t:"float",d:"Estimasi harga saat order dibuat",req:true},
+    {n:"vehicle_type",t:"enum",d:"motor | car | truck",req:true},
+    {n:"payment_method",t:"enum",d:"gopay | cash",req:true},
+    {n:"promo_id",t:"UUID|null",d:"Promo yang dipakai (opsional)",req:false},
+  ],
+  example:`{
+  "event_id": "evt_a1b2c3d4-...",
+  "event_type": "Order_Created",
+  "timestamp": "2025-04-01T10:30:00Z",
+  "order_id": "ord_x9y8z7-...",
+  "user_id": "usr_abc123-...",
+  "service_type": "goride",
+  "origin": {
+    "lat": -6.914744,
+    "lng": 107.609810,
+    "address": "Jl. Braga No.1, Bandung"
+  },
+  "destination": {
+    "lat": -6.921000,
+    "lng": 107.607000,
+    "address": "Jl. Dago No.5, Bandung"
+  },
+  "fare_estimate": 18000,
+  "vehicle_type": "motor",
+  "payment_method": "gopay",
+  "promo_id": null
+}`,
+  behaviors:[
+    {consumer:"Dispatcher",color:"b-dispatcher",action:"Mulai cari driver terdekat dalam radius GEORADIUS, broadcast ke driver_ids yang eligible"},
+    {consumer:"Chat",color:"b-chat",action:"Buat chat_room baru dengan status active, siap terima pesan user & driver"},
+    {consumer:"Notification",color:"b-notification",action:"Kirim push notif ke user: 'Sedang mencari driver...'"},
+  ]
+},
+{
+  id:"driver_found",
+  topic:"Driver_Found",
+  color:"b-dispatcher",
+  producer:"Dispatcher",
+  producerColor:"b-dispatcher",
+  consumers:["Booking","Notification"],
+  partition:"order_id",
+  retention:"3 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"ID unik event",req:true},
+    {n:"event_type",t:"string",d:"'Driver_Found'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"",req:true},
+    {n:"order_id",t:"UUID",d:"Order yang berhasil dapat driver",req:true},
+    {n:"driver_id",t:"UUID",d:"Driver yang accept order",req:true},
+    {n:"driver_name",t:"string",d:"Nama driver",req:true},
+    {n:"driver_phone",t:"string",d:"No. HP driver",req:true},
+    {n:"vehicle_plate",t:"string",d:"Plat kendaraan",req:true},
+    {n:"vehicle_type",t:"string",d:"motor | car | truck",req:true},
+    {n:"driver_location",t:"object",d:"Lokasi driver saat accept",req:true},
+    {n:"driver_location.lat",t:"float",d:"",req:true},
+    {n:"driver_location.lng",t:"float",d:"",req:true},
+    {n:"eta_seconds",t:"integer",d:"ETA driver sampai ke user (detik)",req:true},
+  ],
+  example:`{
+  "event_id": "evt_d4e5f6-...",
+  "event_type": "Driver_Found",
+  "timestamp": "2025-04-01T10:31:15Z",
+  "order_id": "ord_x9y8z7-...",
+  "driver_id": "drv_m1n2o3-...",
+  "driver_name": "Budi Santoso",
+  "driver_phone": "081234567890",
+  "vehicle_plate": "D 1234 ABC",
+  "vehicle_type": "motor",
+  "driver_location": {
+    "lat": -6.913000,
+    "lng": 107.611000
+  },
+  "eta_seconds": 180
+}`,
+  behaviors:[
+    {consumer:"Booking",color:"b-booking",action:"Update order status PENDING → FINDING_DRIVER → driver_id di-assign. Publish state log."},
+    {consumer:"Notification",color:"b-notification",action:"Kirim push notif ke user dengan info driver (nama, plat, ETA)"},
+  ]
+},
+{
+  id:"otp_requested",
+  topic:"OTP_Requested",
+  color:"b-dispatcher",
+  producer:"Dispatcher",
+  producerColor:"b-dispatcher",
+  consumers:["Notification"],
+  partition:"driver_id",
+  retention:"1 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"",req:true},
+    {n:"event_type",t:"string",d:"'OTP_Requested'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"",req:true},
+    {n:"order_id",t:"UUID",d:"Order yang butuh OTP",req:true},
+    {n:"user_id",t:"UUID",d:"User penerima OTP",req:true},
+    {n:"otp_code",t:"string",d:"6-digit OTP (sudah di-hash di DB)",req:true},
+    {n:"channel",t:"enum",d:"fcm | sms",req:true},
+    {n:"expires_in_seconds",t:"integer",d:"Default: 300 (5 menit)",req:true},
+  ],
+  example:`{
+  "event_id": "evt_o7p8q9-...",
+  "event_type": "OTP_Requested",
+  "timestamp": "2025-04-01T10:33:00Z",
+  "order_id": "ord_x9y8z7-...",
+  "user_id": "usr_abc123-...",
+  "otp_code": "847291",
+  "channel": "fcm",
+  "expires_in_seconds": 300
+}`,
+  behaviors:[
+    {consumer:"Notification",color:"b-notification",action:"Kirim OTP ke user via FCM (push) atau Twilio (SMS). OTP dikasih ke user untuk diverifikasi ke driver saat pickup."},
+  ]
+},
+{
+  id:"order_cancelled",
+  topic:"Order_Cancelled",
+  color:"b-booking",
+  producer:"Booking",
+  producerColor:"b-booking",
+  consumers:["Payment","Notification","Dispatcher"],
+  partition:"order_id",
+  retention:"7 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"",req:true},
+    {n:"event_type",t:"string",d:"'Order_Cancelled'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"",req:true},
+    {n:"order_id",t:"UUID",d:"",req:true},
+    {n:"user_id",t:"UUID",d:"",req:true},
+    {n:"driver_id",t:"UUID|null",d:"Null jika belum dapat driver",req:false},
+    {n:"cancelled_by",t:"enum",d:"user | driver | system | timeout",req:true},
+    {n:"cancel_reason",t:"string",d:"Alasan pembatalan",req:false},
+    {n:"hold_amount",t:"float",d:"Jumlah hold yang perlu di-release",req:true},
+    {n:"payment_method",t:"enum",d:"gopay | cash",req:true},
+    {n:"cancelled_at_stage",t:"enum",d:"before_driver | after_driver | on_trip",req:true},
+  ],
+  example:`{
+  "event_id": "evt_c1d2e3-...",
+  "event_type": "Order_Cancelled",
+  "timestamp": "2025-04-01T10:35:00Z",
+  "order_id": "ord_x9y8z7-...",
+  "user_id": "usr_abc123-...",
+  "driver_id": "drv_m1n2o3-...",
+  "cancelled_by": "user",
+  "cancel_reason": "Salah tujuan",
+  "hold_amount": 18000,
+  "payment_method": "gopay",
+  "cancelled_at_stage": "after_driver"
+}`,
+  behaviors:[
+    {consumer:"Payment",color:"b-payment",action:"Release hold saldo user. Jika cancelled_at_stage = after_driver, bisa ada cancellation fee."},
+    {consumer:"Dispatcher",color:"b-dispatcher",action:"Set driver_id status kembali ke available. Hapus entry dari driver:broadcast:{order_id}."},
+    {consumer:"Notification",color:"b-notification",action:"Kirim notif ke user & driver bahwa order dibatalkan beserta alasan."},
+  ]
+},
+{
+  id:"trip_completed",
+  topic:"Trip_Completed",
+  color:"b-booking",
+  producer:"Booking",
+  producerColor:"b-booking",
+  consumers:["Payment","Rating","Chat","Notification"],
+  partition:"order_id",
+  retention:"30 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"",req:true},
+    {n:"event_type",t:"string",d:"'Trip_Completed'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"",req:true},
+    {n:"order_id",t:"UUID",d:"",req:true},
+    {n:"user_id",t:"UUID",d:"",req:true},
+    {n:"driver_id",t:"UUID",d:"",req:true},
+    {n:"fare_final",t:"float",d:"Harga akhir setelah semua kalkulasi",req:true},
+    {n:"distance_km",t:"float",d:"Jarak aktual trip",req:true},
+    {n:"duration_minutes",t:"integer",d:"Durasi aktual trip",req:true},
+    {n:"payment_method",t:"enum",d:"gopay | cash",req:true},
+    {n:"pickup_time",t:"ISO8601",d:"Waktu driver pick up user",req:true},
+    {n:"dropoff_time",t:"ISO8601",d:"Waktu driver antar user sampai",req:true},
+    {n:"promo_id",t:"UUID|null",d:"",req:false},
+    {n:"discount_amount",t:"float",d:"Total diskon dari promo",req:false},
+  ],
+  example:`{
+  "event_id": "evt_t5u6v7-...",
+  "event_type": "Trip_Completed",
+  "timestamp": "2025-04-01T10:55:00Z",
+  "order_id": "ord_x9y8z7-...",
+  "user_id": "usr_abc123-...",
+  "driver_id": "drv_m1n2o3-...",
+  "fare_final": 16000,
+  "distance_km": 3.2,
+  "duration_minutes": 18,
+  "payment_method": "gopay",
+  "pickup_time": "2025-04-01T10:34:00Z",
+  "dropoff_time": "2025-04-01T10:52:00Z",
+  "promo_id": "prm_zz99-...",
+  "discount_amount": 2000
+}`,
+  behaviors:[
+    {consumer:"Payment",color:"b-payment",action:"Capture hold → debit user wallet sebesar fare_final → credit driver wallet (net setelah platform fee) → buat settlement record."},
+    {consumer:"Rating",color:"b-rating",action:"Buat rating request untuk user (rate driver) dan driver (rate user). Set window 24 jam untuk memberi rating."},
+    {consumer:"Chat",color:"b-chat",action:"Update chat_room status → closed. User tidak bisa kirim pesan lagi."},
+    {consumer:"Notification",color:"b-notification",action:"Kirim struk perjalanan ke user & driver. Push prompt rating ke keduanya."},
+  ]
+},
+{
+  id:"order_success",
+  topic:"Order_Success",
+  color:"b-booking",
+  producer:"Booking",
+  producerColor:"b-booking",
+  consumers:["Notification","Rating"],
+  partition:"order_id",
+  retention:"7 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"",req:true},
+    {n:"event_type",t:"string",d:"'Order_Success'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"",req:true},
+    {n:"order_id",t:"UUID",d:"",req:true},
+    {n:"user_id",t:"UUID",d:"",req:true},
+    {n:"driver_id",t:"UUID",d:"",req:true},
+    {n:"fare_final",t:"float",d:"",req:true},
+    {n:"payment_status",t:"enum",d:"settled | pending_cash",req:true},
+    {n:"driver_receipt",t:"object",d:"Ringkasan pendapatan driver",req:true},
+    {n:"driver_receipt.gross",t:"float",d:"",req:true},
+    {n:"driver_receipt.platform_fee",t:"float",d:"",req:true},
+    {n:"driver_receipt.net",t:"float",d:"",req:true},
+  ],
+  example:`{
+  "event_id": "evt_s8t9u0-...",
+  "event_type": "Order_Success",
+  "timestamp": "2025-04-01T10:55:30Z",
+  "order_id": "ord_x9y8z7-...",
+  "user_id": "usr_abc123-...",
+  "driver_id": "drv_m1n2o3-...",
+  "fare_final": 16000,
+  "payment_status": "settled",
+  "driver_receipt": {
+    "gross": 16000,
+    "platform_fee": 3200,
+    "net": 12800
+  }
+}`,
+  behaviors:[
+    {consumer:"Notification",color:"b-notification",action:"Kirim notif Order_Success ke user (receipt lengkap) dan ke driver (ringkasan pendapatan net)."},
+    {consumer:"Rating",color:"b-rating",action:"Trigger rating window — driver bisa rate user dalam 24 jam setelah Order_Success."},
+  ]
+},
+{
+  id:"refund_triggered",
+  topic:"Refund_Triggered",
+  color:"b-payment",
+  producer:"Payment",
+  producerColor:"b-payment",
+  consumers:["Booking","Notification"],
+  partition:"order_id",
+  retention:"30 hari",
+  fields:[
+    {n:"event_id",t:"UUID",d:"",req:true},
+    {n:"event_type",t:"string",d:"'Refund_Triggered'",req:true},
+    {n:"timestamp",t:"ISO8601",d:"",req:true},
+    {n:"order_id",t:"UUID",d:"",req:true},
+    {n:"user_id",t:"UUID",d:"User yang menerima refund",req:true},
+    {n:"wallet_id",t:"UUID",d:"Wallet tujuan refund",req:true},
+    {n:"refund_amount",t:"float",d:"Jumlah yang dikembalikan",req:true},
+    {n:"refund_reason",t:"enum",d:"order_cancelled | driver_no_show | system_error",req:true},
+    {n:"transaction_id",t:"UUID",d:"ID transaksi refund",req:true},
+    {n:"refund_status",t:"enum",d:"success | failed",req:true},
+    {n:"balance_after",t:"float",d:"Saldo user setelah refund",req:true},
+  ],
+  example:`{
+  "event_id": "evt_r2s3t4-...",
+  "event_type": "Refund_Triggered",
+  "timestamp": "2025-04-01T10:36:00Z",
+  "order_id": "ord_x9y8z7-...",
+  "user_id": "usr_abc123-...",
+  "wallet_id": "wlt_p9q0r1-...",
+  "refund_amount": 18000,
+  "refund_reason": "order_cancelled",
+  "transaction_id": "txn_f7g8h9-...",
+  "refund_status": "success",
+  "balance_after": 68000
+}`,
+  behaviors:[
+    {consumer:"Booking",color:"b-booking",action:"Update order status menjadi CANCELLED + REFUND_COMPLETED. Catat di order_state_logs."},
+    {consumer:"Notification",color:"b-notification",action:"Kirim notif ke user: 'Refund sebesar Rp18.000 berhasil dikembalikan ke GoPay kamu.'"},
+  ]
+}
+];
+
+const tabsEl=document.getElementById('tabs');
+const contentsEl=document.getElementById('contents');
+
+events.forEach((ev,i)=>{
+  const tab=document.createElement('button');
+  tab.className='etab'+(i===0?' active':'');
+  tab.style.cssText=`border-color:${i===0?'var(--color-border-info)':''}`;
+  tab.textContent=ev.topic;
+  tab.onclick=()=>{
+    document.querySelectorAll('.etab').forEach(t=>{t.classList.remove('active');t.style.borderColor='';});
+    document.querySelectorAll('.ec').forEach(c=>c.classList.remove('active'));
+    tab.classList.add('active');
+    tab.style.borderColor='var(--color-border-info)';
+    document.getElementById('ec-'+ev.id).classList.add('active');
+  };
+  tabsEl.appendChild(tab);
+
+  const div=document.createElement('div');
+  div.className='ec'+(i===0?' active':'');
+  div.id='ec-'+ev.id;
+
+  const meta=`<div class="meta-row">
+    <div class="meta-card"><div class="meta-label">Producer</div><div class="meta-value"><span class="badge ${ev.producerColor}">${ev.producer}</span></div></div>
+    <div class="meta-card"><div class="meta-label">Consumers</div><div class="cons-badges">${ev.consumers.map(c=>`<span class="badge b-${c.toLowerCase()}">${c}</span>`).join('')}</div></div>
+    <div class="meta-card"><div class="meta-label">Partition Key</div><div class="meta-value">${ev.partition}</div></div>
+    <div class="meta-card"><div class="meta-label">Retention</div><div class="meta-value">${ev.retention}</div></div>
+  </div>`;
+
+  const schemaRows=ev.fields.map(f=>`<tr>
+    <td><span class="fn">${f.n}</span></td>
+    <td><span class="ft">${f.t}</span></td>
+    <td class="fd">${f.d}</td>
+    <td><span class="${f.req?'rq':'opt'}">${f.req?'required':'optional'}</span></td>
+  </tr>`).join('');
+
+  const behaviorRows=ev.behaviors.map(b=>`<div class="bh-row">
+    <span class="bh-badge badge ${b.color}">${b.consumer}</span>
+    <span class="bh-action">${b.action}</span>
+  </div>`).join('');
+
+  div.innerHTML=meta+`
+  <div class="two-col">
+    <div class="schema-card">
+      <div class="card-head">Payload Schema</div>
+      <table class="field-table">${schemaRows}</table>
+    </div>
+    <div class="example-card">
+      <div class="card-head">Contoh Payload</div>
+      <pre>${ev.example}</pre>
+    </div>
+  </div>
+  <div class="behavior-box">
+    <div class="bh-title">Consumer Behavior</div>
+    ${behaviorRows}
+  </div>`;
+  contentsEl.appendChild(div);
+});
+</script>
