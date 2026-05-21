@@ -347,6 +347,11 @@ def buildAndDeploy(String serviceDir, String appName) {
 
             echo "[7/8] Deploying to Kubernetes..."
             bat "kubectl create namespace ${params.K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f - || echo Namespace check skipped"
+            if (appName == 'clay-gateway') {
+                bat "kubectl apply -f ../../infra/k8s/services/gateway.yaml -n ${params.K8S_NAMESPACE} || echo Apply manifest skipped"
+            } else {
+                bat "kubectl apply -f ../../infra/k8s/services/services.yaml -n ${params.K8S_NAMESPACE} || echo Apply manifest skipped"
+            }
             bat "kubectl set image deployment/${appName} ${appName}=${imageTag} -n ${params.K8S_NAMESPACE} --record || (echo Deploy skipped - K8s not available & exit /b 0)"
 
             echo "[8/8] Verifying rollout..."
