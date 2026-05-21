@@ -221,3 +221,181 @@ func TestChangePassword_WrongCurrent(t *testing.T) {
 		t.Errorf("expected 422, got %d", w.Code)
 	}
 }
+
+func TestVerifyOTP_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		VerifyOTP(gomock.Any(), gomock.Any()).
+		Return(&service.VerifyOTPResponse{Verified: true}, nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	body := `{"phone":"+6281234567890","otp_code":"123456","type":"registration"}`
+	req := httptest.NewRequest("POST", "/auth/verify-otp", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.VerifyOTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestLoginWithOTP_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		LoginWithOTP(gomock.Any(), gomock.Any()).
+		Return(&service.AuthTokenResponse{
+			AccessToken: "jwt-token",
+			TokenType:   "Bearer",
+			ExpiresIn:   900,
+		}, nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	body := `{"phone":"+6281234567890","otp_code":"123456"}`
+	req := httptest.NewRequest("POST", "/auth/login/otp", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.LoginWithOTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestRefreshToken_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		RefreshToken(gomock.Any(), gomock.Any()).
+		Return(&service.AuthTokenResponse{
+			AccessToken: "new-jwt-token",
+			TokenType:   "Bearer",
+			ExpiresIn:   900,
+		}, nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	body := `{"refresh_token":"some-refresh-token"}`
+	req := httptest.NewRequest("POST", "/auth/refresh-token", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.RefreshToken(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestLogoutAll_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		LogoutAll(gomock.Any(), "user-123").
+		Return(nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	req := httptest.NewRequest("POST", "/auth/logout-all", nil)
+	req.Header.Set("X-User-ID", "user-123")
+	w := httptest.NewRecorder()
+
+	h.LogoutAll(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestRevokeSession_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		RevokeSession(gomock.Any(), "user-123", "session-456").
+		Return(nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	req := httptest.NewRequest("DELETE", "/auth/sessions/session-456", nil)
+	req.Header.Set("X-User-ID", "user-123")
+	req.SetPathValue("sessionId", "session-456")
+	w := httptest.NewRecorder()
+
+	h.RevokeSession(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestForgotPassword_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		ForgotPassword(gomock.Any(), gomock.Any()).
+		Return(&service.OTPResponse{Phone: "+6281234567890", Cooldown: 60}, nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	body := `{"phone":"+6281234567890"}`
+	req := httptest.NewRequest("POST", "/auth/password/forgot", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.ForgotPassword(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestResetPassword_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		ResetPassword(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	body := `{"phone":"+6281234567890","reset_token":"token","new_password":"NewStr0ng"}`
+	req := httptest.NewRequest("POST", "/auth/password/reset", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.ResetPassword(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestChangePassword_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	mockSvc := mocks.NewMockAuthServiceInterface(ctrl)
+	mockSvc.EXPECT().
+		ChangePassword(gomock.Any(), "user-123", gomock.Any()).
+		Return(nil)
+
+	h := NewAuthHandler(mockSvc)
+
+	body := `{"current_password":"current","new_password":"NewStr0ng"}`
+	req := httptest.NewRequest("PUT", "/auth/password/change", strings.NewReader(body))
+	req.Header.Set("X-User-ID", "user-123")
+	w := httptest.NewRecorder()
+
+	h.ChangePassword(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}

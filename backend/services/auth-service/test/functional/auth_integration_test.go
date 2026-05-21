@@ -140,6 +140,53 @@ func TestAuthRepository_E2E(t *testing.T) {
 			t.Errorf("expected ID %s, got %s", created.ID, foundByIdent.ID)
 		}
 		t.Log("Successfully retrieved credential from PostgreSQL")
+
+		// 4. Exists by Email or Phone
+		exists, err := repo.ExistsByEmailOrPhone(ctx, "e2e@example.com", "")
+		if err != nil || !exists {
+			t.Errorf("expected email to exist, err: %v", err)
+		}
+		
+		exists, err = repo.ExistsByEmailOrPhone(ctx, "", "+628111111111")
+		if err != nil || !exists {
+			t.Errorf("expected phone to exist, err: %v", err)
+		}
+		
+		exists, err = repo.ExistsByEmailOrPhone(ctx, "nonexistent@example.com", "+628999999999")
+		if err != nil || exists {
+			t.Errorf("expected email/phone to not exist, err: %v", err)
+		}
+		t.Log("Successfully verified ExistsByEmailOrPhone")
+
+		// 5. Update Password
+		err = repo.UpdatePassword(ctx, created.ID, "new_hashed_secret")
+		if err != nil {
+			t.Fatalf("failed to update password: %v", err)
+		}
+
+		updated, err := repo.FindByID(ctx, created.ID)
+		if err != nil {
+			t.Fatalf("failed to find credential after password update: %v", err)
+		}
+		if updated.PasswordHash != "new_hashed_secret" {
+			t.Errorf("expected updated password hash, got '%s'", updated.PasswordHash)
+		}
+		t.Log("Successfully updated and verified password")
+
+		// 6. Set Phone Verified
+		err = repo.SetPhoneVerified(ctx, "+628111111111")
+		if err != nil {
+			t.Fatalf("failed to set phone verified: %v", err)
+		}
+
+		verified, err := repo.FindByID(ctx, created.ID)
+		if err != nil {
+			t.Fatalf("failed to find credential after phone verification: %v", err)
+		}
+		if !verified.PhoneVerified {
+			t.Error("expected phone to be verified")
+		}
+		t.Log("Successfully verified phone number")
 	})
 }
 
