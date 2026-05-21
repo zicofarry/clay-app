@@ -321,52 +321,74 @@ def buildAndDeploy(String serviceDir, String appName) {
         echo "========================================"
 
         echo "[1/8] Downloading dependencies..."
-        bat 'go mod download'
+        runCmd 'go mod download'
 
         echo "[2/8] Running unit tests..."
-        bat "go test -tags=unit -v ./..."
+        runCmd "go test -tags=unit -v ./..."
 
         echo "[3/8] Running linter (go vet)..."
-        bat 'go vet ./...'
+        runCmd 'go vet ./...'
 
         echo "[4/8] Building Docker image..."
         def imageTag = params.DOCKER_REGISTRY ? "${params.DOCKER_REGISTRY}/${appName}:latest" : "${appName}:latest"
-        bat "docker build -t ${imageTag} -f Dockerfile ../.."
+        runCmd "docker build -t ${imageTag} -f Dockerfile ../.."
 
         echo "[5/8] Running functional tests..."
-        bat "docker compose up -d"
+        runCmd "docker compose up -d"
         try {
-            bat "go test -tags=functional -v ./test/functional/..."
+            runCmd "go test -tags=functional -v ./test/functional/..."
         } finally {
-            bat "docker compose down -v"
+            runCmd "docker compose down -v"
         }
 
         if (params.DOCKER_REGISTRY) {
             echo "[6/8] Pushing image to ${params.DOCKER_REGISTRY}..."
-            bat "docker push ${imageTag}"
+            runCmd "docker push ${imageTag}"
 
             echo "[7/8] Deploying to Kubernetes..."
             // 1. Always ensure base configs (namespace, secrets) are applied
-            bat "kubectl apply -f ../../infra/k8s/base/ -n ${params.K8S_NAMESPACE} || echo Base configs apply skipped"
+            try {
+                runCmd "kubectl apply -f ../../infra/k8s/base/ -n ${params.K8S_NAMESPACE}"
+            } catch (Exception e) {
+                echo "Base configs apply skipped: ${e.getMessage()}"
+            }
 
             // 2. Conditionally apply deployment manifest only if it doesn't exist to avoid resetting the image
-            def deployExists = bat(script: "kubectl get deployment ${appName} -n ${params.K8S_NAMESPACE}", returnStatus: true) == 0
+            def deployExists = false
+            if (isUnix()) {
+                deployExists = sh(script: "kubectl get deployment ${appName} -n ${params.K8S_NAMESPACE}", returnStatus: true) == 0
+            } else {
+                deployExists = bat(script: "kubectl get deployment ${appName} -n ${params.K8S_NAMESPACE}", returnStatus: true) == 0
+            }
+
             if (!deployExists) {
                 echo "Deployment ${appName} not found. Creating it..."
-                if (appName == 'clay-gateway') {
-                    bat "kubectl apply -f ../../infra/k8s/services/gateway.yaml -n ${params.K8S_NAMESPACE} || echo Apply gateway manifest skipped"
-                } else {
-                    bat "kubectl apply -f ../../infra/k8s/services/services.yaml -n ${params.K8S_NAMESPACE} || echo Apply services manifest skipped"
+                try {
+                    if (appName == 'clay-gateway') {
+                        runCmd "kubectl apply -f ../../infra/k8s/services/gateway.yaml -n ${params.K8S_NAMESPACE}"
+                    } else {
+                        runCmd "kubectl apply -f ../../infra/k8s/services/services.yaml -n ${params.K8S_NAMESPACE}"
+                    }
+                } catch (Exception e) {
+                    echo "Apply manifest skipped: ${e.getMessage()}"
                 }
             } else {
                 echo "Deployment ${appName} already exists. Skipping manifest apply to preserve image configuration."
             }
 
-            // 3. Update the deployment image
-            bat "kubectl set image deployment/${appName} ${appName}=${imageTag} -n ${params.K8S_NAMESPACE} --record || (echo Deploy skipped - K8s not available & exit /b 0)"
+            // 3. Update the deployment image gracefully
+            try {
+                runCmd "kubectl set image deployment/${appName} ${appName}=${imageTag} -n ${params.K8S_NAMESPACE}"
+            } catch (Exception e) {
+                echo "Deploy skipped - K8s not available: ${e.getMessage()}"
+            }
 
             echo "[8/8] Verifying rollout..."
-            bat "kubectl rollout status deployment/${appName} -n ${params.K8S_NAMESPACE} || (echo Verify skipped - K8s not available & exit /b 0)"
+            try {
+                runCmd "kubectl rollout status deployment/${appName} -n ${params.K8S_NAMESPACE}"
+            } catch (Exception e) {
+                echo "Verify skipped - K8s not available: ${e.getMessage()}"
+            }
         } else {
             echo "[6/8] Push skipped — DOCKER_REGISTRY parameter is empty."
             echo "[7/8] Deploy skipped — no registry configured."
@@ -376,5 +398,13 @@ def buildAndDeploy(String serviceDir, String appName) {
         echo "========================================"
         echo "  Done: ${appName}"
         echo "========================================"
+    }
+}
+
+def runCmd(String command) {
+    if (isUnix()) {
+        sh command
+    } else {
+        bat command
     }
 }
