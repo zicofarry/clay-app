@@ -5,9 +5,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/zicofarry/clay-push-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/response"
-	"github.com/zicofarry/clay-shared/pkg/validator"
+	"github.com/zicofarry/clay-app/backend/services/push-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/validator"
 )
 
 // PushHandler holds references to the push service layer.

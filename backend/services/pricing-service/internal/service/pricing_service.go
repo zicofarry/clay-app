@@ -7,7 +7,7 @@ import (
 	"math"
 	"net/http"
 
-	"github.com/zicofarry/clay-pricing-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/pricing-service/internal/repository"
 )
 
 // ── Service Error ────────────────────────────────────────────────────────────

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/zicofarry/clay-email-service/internal/model"
-	"github.com/zicofarry/clay-email-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/email-service/internal/model"
+	"github.com/zicofarry/clay-app/backend/services/email-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 )
 
 type EmailHandler struct {

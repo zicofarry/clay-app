@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/zicofarry/clay-search-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/search-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 )
 
 type SearchHandler struct {

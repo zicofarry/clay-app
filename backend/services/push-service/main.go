@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/zicofarry/clay-push-service/internal/handler"
-	"github.com/zicofarry/clay-push-service/internal/repository"
-	"github.com/zicofarry/clay-push-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/middleware"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/push-service/internal/handler"
+	"github.com/zicofarry/clay-app/backend/services/push-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/push-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 )
 
 func main() {

@@ -12,9 +12,9 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zicofarry/clay-food-order-service/internal/model"
-	"github.com/zicofarry/clay-food-order-service/internal/repository"
-	"github.com/zicofarry/clay-shared/pkg/database"
+	"github.com/zicofarry/clay-app/backend/services/food-order-service/internal/model"
+	"github.com/zicofarry/clay-app/backend/services/food-order-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/database"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 

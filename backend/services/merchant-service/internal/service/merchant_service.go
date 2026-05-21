@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zicofarry/clay-merchant-service/internal/model"
-	"github.com/zicofarry/clay-merchant-service/internal/repository"
-	sharedKafka "github.com/zicofarry/clay-shared/pkg/kafka"
+	"github.com/zicofarry/clay-app/backend/services/merchant-service/internal/model"
+	"github.com/zicofarry/clay-app/backend/services/merchant-service/internal/repository"
+	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/pkg/kafka"
 )
 
 const (

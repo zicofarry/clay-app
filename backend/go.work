@@ -1,6 +1,7 @@
 go 1.25.0
 
 use (
+	./pkg
 	./services/audit-log-service
 	./services/auth-service
 	./services/chat-service
@@ -19,9 +20,8 @@ use (
 	./services/push-service
 	./services/rating-service
 	./services/ride-order-service
-	./services/security-service
 	./services/search-service
-	./pkg
+	./services/security-service
 	./services/sms-service
 	./services/tracking-service
 	./services/user-service

@@ -13,8 +13,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/zicofarry/clay-matching-service/internal/geo"
-	"github.com/zicofarry/clay-matching-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/geo"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/repository"
 )
 
 // ── Service Error ──────────────────────────────────────────────────────────

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zicofarry/clay-security-service/internal/repository"
-	"github.com/zicofarry/clay-security-service/internal/service"
-	"github.com/zicofarry/clay-security-service/mocks/repomock"
+	"github.com/zicofarry/clay-app/backend/services/security-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/security-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/services/security-service/mocks/repomock"
 	"go.uber.org/mock/gomock"
 	"log/slog"
 	"os"

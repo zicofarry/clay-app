@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	repository "github.com/zicofarry/clay-notification-service/internal/repository"
-	service "github.com/zicofarry/clay-notification-service/internal/service"
+	repository "github.com/zicofarry/clay-app/backend/services/notification-service/internal/repository"
+	service "github.com/zicofarry/clay-app/backend/services/notification-service/internal/service"
 	gomock "go.uber.org/mock/gomock"
 )
 
