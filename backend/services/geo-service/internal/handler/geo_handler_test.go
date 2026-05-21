@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zicofarry/clay-geo-service/internal/cache"
-	"github.com/zicofarry/clay-geo-service/internal/service"
-	"github.com/zicofarry/clay-geo-service/mocks"
+	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/cache"
+	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/services/geo-service/mocks"
 	"go.uber.org/mock/gomock"
 )
 

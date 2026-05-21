@@ -1,15 +1,17 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/pricing-service
 
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy all source code including the vendor directory
-COPY . .
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/pricing-service/ /app/services/pricing-service/
 
-# Build the binary using the vendor folder
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /pricing-service ./main.go
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /pricing-service ./main.go
 
 # Final stage
 FROM alpine:3.19
@@ -23,7 +25,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Copy built binary
 COPY --from=builder /pricing-service .
 
-ENV PORT=8005
-EXPOSE 8005
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./pricing-service"]

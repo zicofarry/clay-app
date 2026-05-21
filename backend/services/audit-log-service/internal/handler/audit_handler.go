@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/zicofarry/clay-audit-log-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/audit-log-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 )
 
 type AuditHandler struct {

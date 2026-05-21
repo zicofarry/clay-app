@@ -1,22 +1,31 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/tracking-service
 
+# Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-COPY . .
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/tracking-service/ /app/services/tracking-service/
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /tracking-service ./main.go
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /tracking-service ./main.go
 
+# Final stage
 FROM alpine:3.19
 
 WORKDIR /root/
 
+# Copy timezone data and certs
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Copy built binary
 COPY --from=builder /tracking-service .
 
-ENV PORT=8013
-EXPOSE 8013
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./tracking-service"]

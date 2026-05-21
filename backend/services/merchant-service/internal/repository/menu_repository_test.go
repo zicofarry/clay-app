@@ -1,4 +1,4 @@
-﻿//go:build unit
+//go:build unit
 
 package repository
 
@@ -6,12 +6,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/zicofarry/clay-merchant-service/internal/model"
+	"github.com/zicofarry/clay-app/backend/services/merchant-service/internal/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
 )
 
-// ── ListCategories ────────────────────────────────────────────────────────────
+// -- ListCategories ------------------------------------------------------------
 
 func TestMenuRepo_ListCategories_Success(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -62,7 +62,7 @@ func TestMenuRepo_ListCategories_Empty(t *testing.T) {
 	})
 }
 
-// ── GetItemByID ───────────────────────────────────────────────────────────────
+// -- GetItemByID ---------------------------------------------------------------
 
 func TestMenuRepo_GetItemByID_Found(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -112,7 +112,7 @@ func TestMenuRepo_GetItemByID_NotFound(t *testing.T) {
 	})
 }
 
-// ── ListItems ─────────────────────────────────────────────────────────────────
+// -- ListItems -----------------------------------------------------------------
 
 func TestMenuRepo_ListItems_AllItems(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -161,7 +161,7 @@ func TestMenuRepo_ListItems_FilterByCategory(t *testing.T) {
 	})
 }
 
-// ── DeleteItem ────────────────────────────────────────────────────────────────
+// -- DeleteItem ----------------------------------------------------------------
 
 func TestMenuRepo_DeleteItem_Success(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -182,7 +182,7 @@ func TestMenuRepo_DeleteItem_Success(t *testing.T) {
 	})
 }
 
-// ── DeleteCategory ────────────────────────────────────────────────────────────
+// -- DeleteCategory ------------------------------------------------------------
 
 func TestMenuRepo_DeleteCategory_Success(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -203,7 +203,7 @@ func TestMenuRepo_DeleteCategory_Success(t *testing.T) {
 	})
 }
 
-// ── BatchGetItems ─────────────────────────────────────────────────────────────
+// -- BatchGetItems -------------------------------------------------------------
 
 func TestMenuRepo_BatchGetItems_Success(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -240,7 +240,7 @@ func TestMenuRepo_BatchGetItems_Success(t *testing.T) {
 	})
 }
 
-// ── CreateCategory ────────────────────────────────────────────────────────────
+// -- CreateCategory ------------------------------------------------------------
 
 func TestMenuRepo_CreateCategory_Success(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
@@ -269,7 +269,7 @@ func TestMenuRepo_CreateCategory_Success(t *testing.T) {
 	})
 }
 
-// ── CreateItem ────────────────────────────────────────────────────────────────
+// -- CreateItem ----------------------------------------------------------------
 
 func TestMenuRepo_CreateItem_Success(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))

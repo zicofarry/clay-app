@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zicofarry/clay-history-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/history-service/internal/repository"
 	"gorm.io/gorm"
 )
 

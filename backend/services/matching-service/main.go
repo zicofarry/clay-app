@@ -7,12 +7,12 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/zicofarry/clay-matching-service/internal/geo"
-	"github.com/zicofarry/clay-matching-service/internal/handler"
-	"github.com/zicofarry/clay-matching-service/internal/repository"
-	"github.com/zicofarry/clay-matching-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/middleware"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/geo"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/handler"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 )
 
 func main() {

@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"github.com/zicofarry/clay-geo-service/internal/cache"
-	"github.com/zicofarry/clay-shared/pkg/kafka"
+	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/cache"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/kafka"
 )
 
 const (

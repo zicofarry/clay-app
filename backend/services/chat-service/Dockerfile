@@ -1,15 +1,17 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/chat-service
 
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy all source code including the vendor directory
-COPY . .
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/chat-service/ /app/services/chat-service/
 
-# Build the binary using the vendor folder
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /chat-service ./main.go
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /chat-service ./main.go
 
 # Final stage
 FROM alpine:3.19
@@ -23,7 +25,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Copy built binary
 COPY --from=builder /chat-service .
 
-ENV PORT=8008
-EXPOSE 8008
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./chat-service"]

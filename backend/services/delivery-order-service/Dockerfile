@@ -1,27 +1,31 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/delivery-order-service
 
+# Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-COPY . .
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/delivery-order-service/ /app/services/delivery-order-service/
 
-RUN if [ -d vendor ]; then \
-      CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /delivery-order-service ./main.go; \
-    else \
-      CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /delivery-order-service ./main.go; \
-    fi
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /delivery-order-service ./main.go
 
+# Final stage
 FROM alpine:3.19
 
 WORKDIR /root/
 
+# Copy timezone data and certs
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+# Copy built binary
 COPY --from=builder /delivery-order-service .
 
-ENV PORT=3004
-EXPOSE 3004
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./delivery-order-service"]

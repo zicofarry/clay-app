@@ -1,27 +1,31 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/security-service
 
+# Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-COPY . .
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/security-service/ /app/services/security-service/
 
-RUN if [ -d vendor ]; then \
-      CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /security-service ./main.go; \
-    else \
-      CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /security-service ./main.go; \
-    fi
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /security-service ./main.go
 
+# Final stage
 FROM alpine:3.19
 
 WORKDIR /root/
 
+# Copy timezone data and certs
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+# Copy built binary
 COPY --from=builder /security-service .
 
-ENV PORT=8020
-EXPOSE 8020
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./security-service"]

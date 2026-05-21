@@ -12,9 +12,9 @@ import (
 
 	"go.uber.org/mock/gomock"
 
-	"github.com/zicofarry/clay-matching-service/internal/repository"
-	"github.com/zicofarry/clay-matching-service/mocks/geomock"
-	"github.com/zicofarry/clay-matching-service/mocks/repomock"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/mocks/geomock"
+	"github.com/zicofarry/clay-app/backend/services/matching-service/mocks/repomock"
 )
 
 // ── Test helpers ───────────────────────────────────────────────────────────

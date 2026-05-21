@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/zicofarry/clay-auth-service/internal/repository"
-	"github.com/zicofarry/clay-auth-service/mocks/repomock"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/mocks/repomock"
 	"go.uber.org/mock/gomock"
 )
 
@@ -250,5 +250,131 @@ func TestRequestOTP_Success(t *testing.T) {
 	}
 	if result.Cooldown != 60 {
 		t.Errorf("expected cooldown 60, got %d", result.Cooldown)
+	}
+}
+
+func TestVerifyOTP_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	result, err := svc.VerifyOTP(context.Background(), &VerifyOTPRequest{
+		Phone:   "+6281234567890",
+		OTPCode: "123456",
+		Type:    "registration",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !result.Verified {
+		t.Error("expected verified to be true")
+	}
+}
+
+func TestLoginWithOTP_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	result, err := svc.LoginWithOTP(context.Background(), &OTPLoginRequest{
+		Phone:   "+6281234567890",
+		OTPCode: "123456",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.TokenType != "Bearer" {
+		t.Errorf("expected Bearer, got %s", result.TokenType)
+	}
+}
+
+func TestRefreshToken_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	result, err := svc.RefreshToken(context.Background(), &RefreshTokenRequest{
+		RefreshToken: "some-refresh-token",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.TokenType != "Bearer" {
+		t.Errorf("expected Bearer, got %s", result.TokenType)
+	}
+}
+
+func TestLogout_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	err := svc.Logout(context.Background(), "user-123", &LogoutRequest{
+		RefreshToken: "some-token",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLogoutAll_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	err := svc.LogoutAll(context.Background(), "user-123")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestListSessions_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	sessions, err := svc.ListSessions(context.Background(), "user-123")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sessions == nil {
+		t.Error("expected non-nil sessions slice")
+	}
+}
+
+func TestRevokeSession_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	err := svc.RevokeSession(context.Background(), "user-123", "session-456")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestForgotPassword_Success(t *testing.T) {
+	svc, mockRepo, _ := newTestService(t)
+
+	mockRepo.EXPECT().
+		ExistsByEmailOrPhone(gomock.Any(), "", "+6281234567890").
+		Return(true, nil)
+
+	result, err := svc.ForgotPassword(context.Background(), &ForgotPasswordRequest{
+		Phone: "+6281234567890",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Phone != "+6281234567890" {
+		t.Errorf("expected +6281234567890, got %s", result.Phone)
+	}
+}
+
+func TestResetPassword_Success(t *testing.T) {
+	svc, _, _ := newTestService(t)
+
+	err := svc.ResetPassword(context.Background(), &ResetPasswordRequest{
+		Phone:       "+6281234567890",
+		ResetToken:  "reset-token",
+		NewPassword: "NewStr0ng",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

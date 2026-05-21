@@ -1,10 +1,13 @@
 pipeline {
     agent any
 
+    parameters {
+        string(name: 'DOCKER_REGISTRY', defaultValue: '', description: 'Docker Hub username (e.g. zicofarry). Leave empty to skip push.')
+        string(name: 'K8S_NAMESPACE', defaultValue: 'clay', description: 'Kubernetes namespace for deployment.')
+    }
+
     environment {
         GO_VERSION = '1.25'
-        DOCKER_REGISTRY = 'clay'
-        K8S_NAMESPACE = 'clay'
     }
 
     stages {
@@ -327,21 +330,37 @@ def buildAndDeploy(String serviceDir, String appName) {
         bat 'go vet ./...'
 
         echo "[4/8] Building Docker image..."
-        bat "docker build -t ${DOCKER_REGISTRY}/${appName}:latest -f Dockerfile ."
+        def imageTag = params.DOCKER_REGISTRY ? "${params.DOCKER_REGISTRY}/${appName}:latest" : "${appName}:latest"
+        bat "docker build -t ${imageTag} -f Dockerfile ../.."
 
         echo "[5/8] Running functional tests..."
-        bat "go test -tags=functional -v ./test/functional/..."
+        bat "docker compose up -d"
+        try {
+            bat "go test -tags=functional -v ./test/functional/..."
+        } finally {
+            bat "docker compose down -v"
+        }
 
-        echo "[6/8] Pushing image (skip if no registry configured)..."
-        bat """
-            docker push ${DOCKER_REGISTRY}/${appName}:latest || echo Push skipped (no registry configured)
-        """
+        if (params.DOCKER_REGISTRY) {
+            echo "[6/8] Pushing image to ${params.DOCKER_REGISTRY}..."
+            bat "docker push ${imageTag}"
 
-        echo "[7/8] Deploying to Kubernetes..."
-        bat "kubectl set image deployment/${appName} ${appName}=${DOCKER_REGISTRY}/${appName}:latest -n ${K8S_NAMESPACE} --record || echo Deploy skipped (K8s not available)"
+            echo "[7/8] Deploying to Kubernetes..."
+            bat "kubectl create namespace ${params.K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f - || echo Namespace check skipped"
+            if (appName == 'clay-gateway') {
+                bat "kubectl apply -f ../../infra/k8s/services/gateway.yaml -n ${params.K8S_NAMESPACE} || echo Apply manifest skipped"
+            } else {
+                bat "kubectl apply -f ../../infra/k8s/services/services.yaml -n ${params.K8S_NAMESPACE} || echo Apply manifest skipped"
+            }
+            bat "kubectl set image deployment/${appName} ${appName}=${imageTag} -n ${params.K8S_NAMESPACE} --record || (echo Deploy skipped - K8s not available & exit /b 0)"
 
-        echo "[8/8] Verifying rollout..."
-        bat "kubectl rollout status deployment/${appName} -n ${K8S_NAMESPACE} || echo Verify skipped (K8s not available)"
+            echo "[8/8] Verifying rollout..."
+            bat "kubectl rollout status deployment/${appName} -n ${params.K8S_NAMESPACE} || (echo Verify skipped - K8s not available & exit /b 0)"
+        } else {
+            echo "[6/8] Push skipped — DOCKER_REGISTRY parameter is empty."
+            echo "[7/8] Deploy skipped — no registry configured."
+            echo "[8/8] Verify skipped — no registry configured."
+        }
 
         echo "========================================"
         echo "  Done: ${appName}"

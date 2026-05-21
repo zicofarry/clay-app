@@ -1,4 +1,4 @@
-﻿//go:build unit
+//go:build unit
 
 package service
 
@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zicofarry/clay-merchant-service/internal/model"
-	"github.com/zicofarry/clay-merchant-service/mocks/repomock"
-	sharedKafka "github.com/zicofarry/clay-shared/pkg/kafka"
+	"github.com/zicofarry/clay-app/backend/services/merchant-service/internal/model"
+	"github.com/zicofarry/clay-app/backend/services/merchant-service/mocks/repomock"
+	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/pkg/kafka"
 	"go.uber.org/mock/gomock"
 )
 
@@ -29,7 +29,7 @@ func fakeMerchant(id, userID string, status model.MerchantStatus) *model.Merchan
 	return &model.Merchant{ID: id, UserID: userID, Name: "Warung Test", Status: status}
 }
 
-// ── RegisterMerchant ──────────────────────────────────────────────────────────
+// -- RegisterMerchant ----------------------------------------------------------
 
 func TestServiceRegisterMerchant_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -73,7 +73,7 @@ func TestServiceRegisterMerchant_CheckError(t *testing.T) {
 	}
 }
 
-// ── GetMyMerchant ─────────────────────────────────────────────────────────────
+// -- GetMyMerchant -------------------------------------------------------------
 
 func TestServiceGetMyMerchant_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -99,7 +99,7 @@ func TestServiceGetMyMerchant_NotFound(t *testing.T) {
 	}
 }
 
-// ── GetMerchantByID ───────────────────────────────────────────────────────────
+// -- GetMerchantByID -----------------------------------------------------------
 
 func TestServiceGetMerchantByID_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -125,7 +125,7 @@ func TestServiceGetMerchantByID_NotFound(t *testing.T) {
 	}
 }
 
-// ── UpdateMyMerchant ──────────────────────────────────────────────────────────
+// -- UpdateMyMerchant ----------------------------------------------------------
 
 func TestServiceUpdateMyMerchant_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -157,7 +157,7 @@ func TestServiceUpdateMyMerchant_NotFound(t *testing.T) {
 	}
 }
 
-// ── UpdateMerchantStatus ──────────────────────────────────────────────────────
+// -- UpdateMerchantStatus ------------------------------------------------------
 
 func TestServiceUpdateMerchantStatus_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -199,7 +199,7 @@ func TestServiceUpdateMerchantStatus_NotFound(t *testing.T) {
 	}
 }
 
-// ── IsOpen ────────────────────────────────────────────────────────────────────
+// -- IsOpen --------------------------------------------------------------------
 
 func TestServiceIsOpen_MerchantNotActive(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -256,7 +256,7 @@ func TestServiceIsOpen_DayClosed(t *testing.T) {
 	}
 }
 
-// ── Operating Hours ───────────────────────────────────────────────────────────
+// -- Operating Hours -----------------------------------------------------------
 
 func TestServiceGetOperatingHours_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -299,7 +299,7 @@ func TestServiceUpsertOperatingHours_Success(t *testing.T) {
 	}
 }
 
-// ── Bank Accounts ─────────────────────────────────────────────────────────────
+// -- Bank Accounts -------------------------------------------------------------
 
 func TestServiceListBankAccounts_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -367,7 +367,7 @@ func TestServiceSetPrimaryBankAccount_Forbidden(t *testing.T) {
 	}
 }
 
-// ── Menu Categories ───────────────────────────────────────────────────────────
+// -- Menu Categories -----------------------------------------------------------
 
 func TestServiceListCategories_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -442,7 +442,7 @@ func TestServiceReorderCategories_Success(t *testing.T) {
 	}
 }
 
-// ── Menu Items ────────────────────────────────────────────────────────────────
+// -- Menu Items ----------------------------------------------------------------
 
 func TestServiceListItems_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)

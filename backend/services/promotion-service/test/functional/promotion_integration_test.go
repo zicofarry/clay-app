@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zicofarry/clay-promotion-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/promotion-service/internal/repository"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

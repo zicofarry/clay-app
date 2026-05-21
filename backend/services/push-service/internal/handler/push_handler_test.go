@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zicofarry/clay-push-service/internal/repository"
-	"github.com/zicofarry/clay-push-service/internal/service"
-	"github.com/zicofarry/clay-push-service/mocks"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/push-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/push-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/services/push-service/mocks"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 	"go.uber.org/mock/gomock"
 )
 

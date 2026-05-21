@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/zicofarry/clay-food-order-service/internal/handler"
-	"github.com/zicofarry/clay-food-order-service/internal/repository"
-	"github.com/zicofarry/clay-food-order-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/database"
-	"github.com/zicofarry/clay-shared/pkg/kafka"
-	"github.com/zicofarry/clay-shared/pkg/middleware"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/food-order-service/internal/handler"
+	"github.com/zicofarry/clay-app/backend/services/food-order-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/food-order-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/database"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/kafka"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 
 	_ "github.com/lib/pq"
 )

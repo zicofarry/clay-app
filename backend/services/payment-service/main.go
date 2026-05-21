@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/zicofarry/clay-payment-service/internal/broker"
-	"github.com/zicofarry/clay-payment-service/internal/cache"
-	"github.com/zicofarry/clay-payment-service/internal/handler"
-	"github.com/zicofarry/clay-payment-service/internal/repository"
-	"github.com/zicofarry/clay-payment-service/internal/service"
-	"github.com/zicofarry/clay-shared/pkg/middleware"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/payment-service/internal/broker"
+	"github.com/zicofarry/clay-app/backend/services/payment-service/internal/cache"
+	"github.com/zicofarry/clay-app/backend/services/payment-service/internal/handler"
+	"github.com/zicofarry/clay-app/backend/services/payment-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/payment-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 )
 
 func main() {

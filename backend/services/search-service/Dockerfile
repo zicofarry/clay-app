@@ -1,15 +1,17 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/search-service
 
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy all source code including the vendor directory
-COPY . .
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/search-service/ /app/services/search-service/
 
-# Build the binary using the vendor folder
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /search-service ./main.go
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /search-service ./main.go
 
 # Final stage
 FROM alpine:3.19

@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/zicofarry/clay-history-service/internal/service"
-	"github.com/zicofarry/clay-history-service/mocks"
-	"github.com/zicofarry/clay-shared/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/history-service/internal/service"
+	"github.com/zicofarry/clay-app/backend/services/history-service/mocks"
+	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
 	"go.uber.org/mock/gomock"
 )
 

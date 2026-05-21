@@ -1,27 +1,31 @@
-# ── Stage 1: Build ───────────────────────────────────────────────────────────
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
-WORKDIR /workspace
+WORKDIR /app/services/gateway
 
-# Copy clay-shared first (local replace directive)
-COPY clay-shared/ clay-shared/
+# Install dependencies for building
+RUN apk add --no-cache git tzdata
 
-# Copy gateway source
-COPY clay-gateway/ clay-gateway/
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/gateway/ /app/services/gateway/
 
-WORKDIR /workspace/clay-gateway
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /gateway ./main.go
 
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /gateway .
+# Final stage
+FROM alpine:3.19
 
-# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM gcr.io/distroless/static-debian12
+WORKDIR /root/
 
-WORKDIR /app
+# Copy timezone data and certs
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY --from=builder /gateway /app/gateway
-COPY --from=builder /workspace/clay-gateway/config/routes.yaml /app/config/routes.yaml
+# Copy built binary
+COPY --from=builder /gateway .
 
+ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["/app/gateway"]
+CMD ["./gateway"]
