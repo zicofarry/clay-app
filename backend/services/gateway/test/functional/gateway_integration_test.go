@@ -19,7 +19,8 @@ func TestMain(m *testing.M) {
 	gatewayURL = fmt.Sprintf("http://localhost:%s", port)
 
 	// Start gateway binary in background for testing
-	cmd := exec.Command("go", "run", "../../main.go")
+	cmd := exec.Command("go", "run", "./main.go")
+	cmd.Dir = "../../"
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("PORT=%s", port),
 		"REDIS_ADDR=localhost:6370",
