@@ -1,17 +1,17 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/wallet-service
 
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy the entire backend directory to have access to pkg and go.work
-COPY go.work go.work.sum ./
-COPY pkg/ ./pkg/
-COPY services/wallet-service/ ./services/wallet-service/
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/wallet-service/ /app/services/wallet-service/
 
-# Build the binary using go workspace resolution (no vendor folder needed)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /wallet-service ./services/wallet-service/main.go
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /wallet-service ./main.go
 
 # Final stage
 FROM alpine:3.19

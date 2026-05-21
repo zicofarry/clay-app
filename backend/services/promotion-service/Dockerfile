@@ -1,17 +1,17 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/services/promotion-service
 
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy the entire backend directory to have access to pkg and go.work
-COPY go.work go.work.sum ./
-COPY pkg/ ./pkg/
-COPY services/promotion-service/ ./services/promotion-service/
+# Copy the shared pkg and the service code (build context is backend/)
+COPY pkg/ /app/pkg/
+COPY services/promotion-service/ /app/services/promotion-service/
 
-# Build the binary using go workspace resolution (no vendor folder needed)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /promotion-service ./services/promotion-service/main.go
+# Build the binary using local module resolution (ignores go.work)
+ENV GOWORK=off
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /promotion-service ./main.go
 
 # Final stage
 FROM alpine:3.19
