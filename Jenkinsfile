@@ -333,12 +333,16 @@ def buildAndDeploy(String serviceDir, String appName) {
         def imageTag = params.DOCKER_REGISTRY ? "${params.DOCKER_REGISTRY}/${appName}:latest" : "${appName}:latest"
         runCmd "docker build -t ${imageTag} -f Dockerfile ../.."
 
-        echo "[5/8] Running functional tests..."
-        runCmd "docker compose up -d"
-        try {
-            runCmd "go test -tags=functional -v ./test/functional/..."
-        } finally {
-            runCmd "docker compose down -v"
+        if (fileExists('docker-compose.yml')) {
+            echo "[5/8] Running functional tests..."
+            runCmd "docker compose up -d"
+            try {
+                runCmd "go test -tags=functional -v ./test/functional/..."
+            } finally {
+                runCmd "docker compose down -v"
+            }
+        } else {
+            echo "[5/8] Functional tests skipped — no docker-compose.yml found."
         }
 
         if (params.DOCKER_REGISTRY) {
