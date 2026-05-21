@@ -2,30 +2,30 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# Build deps
+# Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy source (vendor dir included for offline / reproducible builds).
-COPY . .
+# Copy the entire backend directory to have access to pkg and go.work
+COPY go.work go.work.sum ./
+COPY pkg/ ./pkg/
+COPY services/ride-order-service/ ./services/ride-order-service/
 
-# Build the binary using vendor when present, otherwise pull modules.
-RUN if [ -d vendor ]; then \
-      CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /ride-order-service ./main.go; \
-    else \
-      CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /ride-order-service ./main.go; \
-    fi
+# Build the binary using go workspace resolution (no vendor folder needed)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /ride-order-service ./services/ride-order-service/main.go
 
 # Final stage
 FROM alpine:3.19
 
 WORKDIR /root/
 
+# Copy timezone data and certs
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+# Copy built binary
 COPY --from=builder /ride-order-service .
 
-ENV PORT=3003
-EXPOSE 3003
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./ride-order-service"]

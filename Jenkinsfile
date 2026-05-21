@@ -327,7 +327,7 @@ def buildAndDeploy(String serviceDir, String appName) {
         bat 'go vet ./...'
 
         echo "[4/8] Building Docker image..."
-        bat "docker build -t ${DOCKER_REGISTRY}/${appName}:latest -f Dockerfile ."
+        bat "docker build -t ${DOCKER_REGISTRY}/${appName}:latest -f Dockerfile ../.."
 
         echo "[5/8] Running functional tests..."
         bat "go test -tags=functional -v ./test/functional/..."

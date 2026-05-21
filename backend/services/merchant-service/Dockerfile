@@ -1,23 +1,31 @@
-﻿FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
+# Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-COPY . .
+# Copy the entire backend directory to have access to pkg and go.work
+COPY go.work go.work.sum ./
+COPY pkg/ ./pkg/
+COPY services/merchant-service/ ./services/merchant-service/
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /merchant-service ./main.go
+# Build the binary using go workspace resolution (no vendor folder needed)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /merchant-service ./services/merchant-service/main.go
 
+# Final stage
 FROM alpine:3.19
 
 WORKDIR /root/
 
+# Copy timezone data and certs
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+# Copy built binary
 COPY --from=builder /merchant-service .
 
-ENV PORT=8011
-EXPOSE 8011
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./merchant-service"]

@@ -5,11 +5,13 @@ WORKDIR /app
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy all source code including the vendor directory
-COPY . .
+# Copy the entire backend directory to have access to pkg and go.work
+COPY go.work go.work.sum ./
+COPY pkg/ ./pkg/
+COPY services/user-service/ ./services/user-service/
 
-# Build the binary using the vendor folder
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /user-service ./main.go
+# Build the binary using go workspace resolution (no vendor folder needed)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /user-service ./services/user-service/main.go
 
 # Final stage
 FROM alpine:3.19

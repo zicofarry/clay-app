@@ -1,27 +1,31 @@
-# ── Stage 1: Build ───────────────────────────────────────────────────────────
-FROM golang:1.23-alpine AS builder
-
-WORKDIR /workspace
-
-# Copy clay-shared first (local replace directive)
-COPY clay-shared/ clay-shared/
-
-# Copy gateway source
-COPY clay-gateway/ clay-gateway/
-
-WORKDIR /workspace/clay-gateway
-
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /gateway .
-
-# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM gcr.io/distroless/static-debian12
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-COPY --from=builder /gateway /app/gateway
-COPY --from=builder /workspace/clay-gateway/config/routes.yaml /app/config/routes.yaml
+# Install dependencies for building
+RUN apk add --no-cache git tzdata
 
+# Copy the entire backend directory to have access to pkg and go.work
+COPY go.work go.work.sum ./
+COPY pkg/ ./pkg/
+COPY services/gateway/ ./services/gateway/
+
+# Build the binary using go workspace resolution (no vendor folder needed)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /gateway ./services/gateway/main.go
+
+# Final stage
+FROM alpine:3.19
+
+WORKDIR /root/
+
+# Copy timezone data and certs
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Copy built binary
+COPY --from=builder /gateway .
+
+ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["/app/gateway"]
+CMD ["./gateway"]

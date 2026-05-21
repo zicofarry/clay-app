@@ -1,15 +1,17 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
 # Install dependencies for building
 RUN apk add --no-cache git tzdata
 
-# Copy all source code including the vendor directory
-COPY . .
+# Copy the entire backend directory to have access to pkg and go.work
+COPY go.work go.work.sum ./
+COPY pkg/ ./pkg/
+COPY services/food-order-service/ ./services/food-order-service/
 
-# Build the binary using the vendor folder
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /food-order-service ./main.go
+# Build the binary using go workspace resolution (no vendor folder needed)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /food-order-service ./services/food-order-service/main.go
 
 # Final stage
 FROM alpine:3.19
@@ -23,7 +25,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Copy built binary
 COPY --from=builder /food-order-service .
 
-ENV PORT=8017
-EXPOSE 8017
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["./food-order-service"]
