@@ -330,7 +330,12 @@ def buildAndDeploy(String serviceDir, String appName) {
         bat "docker build -t ${DOCKER_REGISTRY}/${appName}:latest -f Dockerfile ../.."
 
         echo "[5/8] Running functional tests..."
-        bat "go test -tags=functional -v ./test/functional/..."
+        bat "docker compose up -d"
+        try {
+            bat "go test -tags=functional -v ./test/functional/..."
+        } finally {
+            bat "docker compose down -v"
+        }
 
         echo "[6/8] Pushing image (skip if no registry configured)..."
         bat """
