@@ -346,12 +346,23 @@ def buildAndDeploy(String serviceDir, String appName) {
             bat "docker push ${imageTag}"
 
             echo "[7/8] Deploying to Kubernetes..."
-            bat "kubectl create namespace ${params.K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f - || echo Namespace check skipped"
-            if (appName == 'clay-gateway') {
-                bat "kubectl apply -f ../../infra/k8s/services/gateway.yaml -n ${params.K8S_NAMESPACE} || echo Apply manifest skipped"
+            // 1. Always ensure base configs (namespace, secrets) are applied
+            bat "kubectl apply -f ../../infra/k8s/base/ -n ${params.K8S_NAMESPACE} || echo Base configs apply skipped"
+
+            // 2. Conditionally apply deployment manifest only if it doesn't exist to avoid resetting the image
+            def deployExists = bat(script: "kubectl get deployment ${appName} -n ${params.K8S_NAMESPACE}", returnStatus: true) == 0
+            if (!deployExists) {
+                echo "Deployment ${appName} not found. Creating it..."
+                if (appName == 'clay-gateway') {
+                    bat "kubectl apply -f ../../infra/k8s/services/gateway.yaml -n ${params.K8S_NAMESPACE} || echo Apply gateway manifest skipped"
+                } else {
+                    bat "kubectl apply -f ../../infra/k8s/services/services.yaml -n ${params.K8S_NAMESPACE} || echo Apply services manifest skipped"
+                }
             } else {
-                bat "kubectl apply -f ../../infra/k8s/services/services.yaml -n ${params.K8S_NAMESPACE} || echo Apply manifest skipped"
+                echo "Deployment ${appName} already exists. Skipping manifest apply to preserve image configuration."
             }
+
+            // 3. Update the deployment image
             bat "kubectl set image deployment/${appName} ${appName}=${imageTag} -n ${params.K8S_NAMESPACE} --record || (echo Deploy skipped - K8s not available & exit /b 0)"
 
             echo "[8/8] Verifying rollout..."
