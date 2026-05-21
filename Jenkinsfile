@@ -346,6 +346,7 @@ def buildAndDeploy(String serviceDir, String appName) {
             bat "docker push ${imageTag}"
 
             echo "[7/8] Deploying to Kubernetes..."
+            bat "kubectl create namespace ${params.K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f - || echo Namespace check skipped"
             bat "kubectl set image deployment/${appName} ${appName}=${imageTag} -n ${params.K8S_NAMESPACE} --record || (echo Deploy skipped - K8s not available & exit /b 0)"
 
             echo "[8/8] Verifying rollout..."
