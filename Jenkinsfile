@@ -39,90 +39,90 @@ pipeline {
             }
         }
 
-        // ── Auth Service ──
-        // stage('Auth Service') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/auth-service/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('auth-service', 'clay-auth-service')
-        //     }
-        // }
+        ── Auth Service ──
+        stage('Auth Service') {
+            when {
+                anyOf {
+                    changeset "backend/services/auth-service/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('auth-service', 'clay-auth-service')
+            }
+        }
 
-        // stage('User Service') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/user-service/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('user-service', 'clay-user-service')
-        //     }
-        // }
+        stage('User Service') {
+            when {
+                anyOf {
+                    changeset "backend/services/user-service/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('user-service', 'clay-user-service')
+            }
+        }
 
-        // stage('Payment Service') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/payment-service/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('payment-service', 'clay-payment-service')
-        //     }
-        // }
+        stage('Payment Service') {
+            when {
+                anyOf {
+                    changeset "backend/services/payment-service/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('payment-service', 'clay-payment-service')
+            }
+        }
 
-        // stage('Food Order Service') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/food-order-service/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('food-order-service', 'clay-food-order-service')
-        //     }
-        // }
+        stage('Food Order Service') {
+            when {
+                anyOf {
+                    changeset "backend/services/food-order-service/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('food-order-service', 'clay-food-order-service')
+            }
+        }
 
-        // stage('Delivery Order Service') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/delivery-order-service/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('delivery-order-service', 'clay-delivery-order-service')
-        //     }
-        // }
+        stage('Delivery Order Service') {
+            when {
+                anyOf {
+                    changeset "backend/services/delivery-order-service/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('delivery-order-service', 'clay-delivery-order-service')
+            }
+        }
 
-        // stage('Ride Order Service') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/ride-order-service/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('ride-order-service', 'clay-ride-order-service')
-        //     }
-        // }
+        stage('Ride Order Service') {
+            when {
+                anyOf {
+                    changeset "backend/services/ride-order-service/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('ride-order-service', 'clay-ride-order-service')
+            }
+        }
 
-        // stage('Gateway') {
-        //     when {
-        //         anyOf {
-        //             changeset "backend/services/gateway/**"
-        //             expression { env.BRANCH_NAME != 'main' }
-        //         }
-        //     }
-        //     steps {
-        //         buildAndDeploy('gateway', 'clay-gateway')
-        //     }
-        // }
+        stage('Gateway') {
+            when {
+                anyOf {
+                    changeset "backend/services/gateway/**"
+                    expression { env.BRANCH_NAME != 'main' }
+                }
+            }
+            steps {
+                buildAndDeploy('gateway', 'clay-gateway')
+            }
+        }
 
         stage('Chat Service') {
             when {
