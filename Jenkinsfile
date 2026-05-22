@@ -192,17 +192,17 @@ pipeline {
         //     }
         // }
 
-        stage('Search Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/search-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
-                }
-            }
-            steps {
-                buildAndDeploy('search-service', 'clay-search-service')
-            }
-        }
+        // stage('Search Service') {
+        //     when {
+        //         anyOf {
+        //             changeset "backend/services/search-service/**"
+        //             expression { env.BRANCH_NAME != 'main' }
+        //         }
+        //     }
+        //     steps {
+        //         buildAndDeploy('search-service', 'clay-search-service')
+        //     }
+        // }
 
         stage('Geo Service') {
             when {
