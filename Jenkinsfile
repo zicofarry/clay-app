@@ -24,11 +24,13 @@ pipeline {
                 echo "========================================"
 
                 dir('backend/infra') {
-                    echo "Cleaning up any old global database containers..."
-                    try {
-                        runCmd 'docker compose down -v'
-                    } catch (Exception e) {
-                        echo "Failed to clean up old containers: ${e.getMessage()}"
+                    script {
+                        echo "Cleaning up any old global database containers..."
+                        try {
+                            runCmd 'docker compose down -v'
+                        } catch (Exception e) {
+                            echo "Failed to clean up old containers: ${e.getMessage()}"
+                        }
                     }
                     echo "Starting core infrastructure (Kafka/Zookeeper)..."
                     runCmd 'docker compose up -d zookeeper kafka'
