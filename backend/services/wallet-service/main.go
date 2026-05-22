@@ -7,8 +7,8 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 	"github.com/zicofarry/clay-app/backend/services/wallet-service/internal/handler"
 	"github.com/zicofarry/clay-app/backend/services/wallet-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/wallet-service/internal/service"

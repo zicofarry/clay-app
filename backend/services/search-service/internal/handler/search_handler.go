@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/zicofarry/clay-app/backend/services/search-service/internal/service"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 )
 
 type SearchHandler struct {

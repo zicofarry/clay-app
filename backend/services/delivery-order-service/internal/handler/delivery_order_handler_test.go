@@ -11,7 +11,7 @@ import (
 
 	"github.com/zicofarry/clay-app/backend/services/delivery-order-service/internal/service"
 	"github.com/zicofarry/clay-app/backend/services/delivery-order-service/mocks"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 	"go.uber.org/mock/gomock"
 )
 

@@ -15,9 +15,9 @@ import (
 	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/handler"
 	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/service"
-	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/pkg/kafka"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/kafka"
+	"github.com/zicofarry/clay-app/backend/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zicofarry/clay-app/backend/services/audit-log-service/internal/service"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 )
 
 type AuditHandler struct {

@@ -13,7 +13,7 @@ import (
 	"github.com/zicofarry/clay-app/backend/services/email-service/internal/model"
 	"github.com/zicofarry/clay-app/backend/services/email-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/email-service/internal/service"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/middleware"
 )
 
 func setupTestServer() *httptest.Server {

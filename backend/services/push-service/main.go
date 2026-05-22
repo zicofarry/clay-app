@@ -11,8 +11,8 @@ import (
 	"github.com/zicofarry/clay-app/backend/services/push-service/internal/handler"
 	"github.com/zicofarry/clay-app/backend/services/push-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/push-service/internal/service"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/middleware"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/middleware"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 )
 
 func main() {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 	"github.com/zicofarry/clay-app/backend/services/tracking-service/internal/cache"
 	"github.com/zicofarry/clay-app/backend/services/tracking-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/tracking-service/internal/service"
