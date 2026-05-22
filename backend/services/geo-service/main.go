@@ -16,6 +16,8 @@ import (
 	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/geo-service/internal/service"
 	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/kafka"
+	_ "github.com/lib/pq"
+	"github.com/zicofarry/clay-app/backend/pkg/database"
 	"github.com/zicofarry/clay-app/backend/pkg/middleware"
 	"github.com/zicofarry/clay-app/backend/pkg/response"
 )
@@ -25,7 +27,21 @@ func main() {
 	slog.SetDefault(logger)
 
 	// ── Dependencies ─────────────────────────────────────────────────────
-	geoRepo := repository.NewGeoRepository(nil) // TODO: real PostgreSQL
+	pgConfig := database.DefaultPostgresConfig()
+	if host := os.Getenv("DB_HOST"); host != "" {
+		pgConfig.Host = host
+	}
+	if dbName := os.Getenv("DB_NAME"); dbName != "" {
+		pgConfig.DBName = dbName
+	}
+	db, err := database.NewPostgresDB(pgConfig)
+	if err != nil {
+		logger.Error("failed to connect to postgres", slog.Any("error", err))
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	geoRepo := repository.NewGeoRepository(db) // TODO: real PostgreSQL
 	geoCache := geocache.NewInMemoryGeoCache()   // TODO: real Redis
 
 	geoSvc := service.NewGeoService(geoRepo, geoCache, logger)

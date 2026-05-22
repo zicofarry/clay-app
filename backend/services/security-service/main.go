@@ -8,6 +8,8 @@ import (
 	"github.com/zicofarry/clay-app/backend/services/security-service/internal/handler"
 	"github.com/zicofarry/clay-app/backend/services/security-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/security-service/internal/service"
+	_ "github.com/lib/pq"
+	"github.com/zicofarry/clay-app/backend/pkg/database"
 	"github.com/zicofarry/clay-app/backend/pkg/middleware"
 	"github.com/zicofarry/clay-app/backend/pkg/response"
 )
@@ -18,7 +20,21 @@ func main() {
 
 	// ── Dependencies ─────────────────────────────────────────────────────
 	// TODO: Replace with real PostgreSQL + Redis connections (see clay-shared/pkg/database).
-	repo := repository.NewSecurityRepository(nil, nil)
+	pgConfig := database.DefaultPostgresConfig()
+	if host := os.Getenv("DB_HOST"); host != "" {
+		pgConfig.Host = host
+	}
+	if dbName := os.Getenv("DB_NAME"); dbName != "" {
+		pgConfig.DBName = dbName
+	}
+	db, err := database.NewPostgresDB(pgConfig)
+	if err != nil {
+		logger.Error("failed to connect to postgres", slog.Any("error", err))
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	repo := repository.NewSecurityRepository(db, nil)
 	svc := service.NewSecurityService(repo, logger)
 	h := handler.NewSecurityHandler(svc)
 
