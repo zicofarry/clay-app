@@ -231,17 +231,17 @@ pipeline {
                 //     }
                 // }
 
-                stage('Merchant Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/merchant-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('merchant-service', 'clay-merchant-service') }
-                    }
-                }
+                // stage('Merchant Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/merchant-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('merchant-service', 'clay-merchant-service') }
+                //     }
+                // }
 
                 stage('Rating Service') {
                     when {
@@ -267,29 +267,29 @@ pipeline {
                     }
                 }
 
-                stage('Pricing Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/pricing-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('pricing-service', 'clay-pricing-service') }
-                    }
-                }
+                // stage('Pricing Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/pricing-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('pricing-service', 'clay-pricing-service') }
+                //     }
+                // }
 
-                stage('Wallet Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/wallet-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('wallet-service', 'clay-wallet-service') }
-                    }
-                }
+                // stage('Wallet Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/wallet-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('wallet-service', 'clay-wallet-service') }
+                //     }
+                // }
 
                 stage('History Service') {
                     when {
@@ -303,29 +303,29 @@ pipeline {
                     }
                 }
 
-                stage('Tracking Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/tracking-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('tracking-service', 'clay-tracking-service') }
-                    }
-                }
+                // stage('Tracking Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/tracking-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('tracking-service', 'clay-tracking-service') }
+                //     }
+                // }
 
-                stage('Audit Log Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/audit-log-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('audit-log-service', 'clay-audit-log-service') }
-                    }
-                }
+                // stage('Audit Log Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/audit-log-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('audit-log-service', 'clay-audit-log-service') }
+                //     }
+                // }
 
                 stage('Security Service') {
                     when {
