@@ -207,29 +207,29 @@ pipeline {
         stage('Build & Deploy Services') {
             parallel {
 
-                stage('Geo Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/geo-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('geo-service', 'clay-geo-service') }
-                    }
-                }
+                // stage('Geo Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/geo-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('geo-service', 'clay-geo-service') }
+                //     }
+                // }
 
-                stage('Matching Service') {
-                    when {
-                        anyOf {
-                            changeset "backend/services/matching-service/**"
-                            expression { env.BRANCH_NAME != 'main' }
-                        }
-                    }
-                    steps {
-                        script { buildAndDeploy('matching-service', 'clay-matching-service') }
-                    }
-                }
+                // stage('Matching Service') {
+                //     when {
+                //         anyOf {
+                //             changeset "backend/services/matching-service/**"
+                //             expression { env.BRANCH_NAME != 'main' }
+                //         }
+                //     }
+                //     steps {
+                //         script { buildAndDeploy('matching-service', 'clay-matching-service') }
+                //     }
+                // }
 
                 stage('Merchant Service') {
                     when {
