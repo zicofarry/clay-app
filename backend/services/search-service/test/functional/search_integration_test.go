@@ -23,7 +23,7 @@ func TestSearchIntegration_Dependencies(t *testing.T) {
 		client := &http.Client{Timeout: 2 * time.Second}
 		resp, err := client.Get("http://localhost:9200")
 		if err != nil {
-			t.Fatalf("Elasticsearch is NOT running. Please run 'docker-compose up -d'. Error: %v", err)
+			t.Fatalf("Elasticsearch is NOT running. Please run 'docker compose up -d'. Error: %v", err)
 		}
 		defer resp.Body.Close()
 
@@ -41,7 +41,7 @@ func TestSearchIntegration_Dependencies(t *testing.T) {
 
 		err := rdb.Ping(ctx).Err()
 		if err != nil {
-			t.Fatalf("Redis is NOT running on port 6389. Please run 'docker-compose up -d'. Error: %v", err)
+			t.Fatalf("Redis is NOT running on port 6389. Please run 'docker compose up -d'. Error: %v", err)
 		}
 		t.Log("Successfully connected to Redis!")
 	})

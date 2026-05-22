@@ -1,6 +1,19 @@
 # Clay Platform
 
-Monorepo for Clay — a microservices-based on-demand service platform (Gojek-style).
+## Cara jalankan pipeline
+1. Jalankan docker desktop
+2. Jalankan minikube
+    ```cmd
+    minikube start --driver=docker
+    ```
+3. Jalankan jenkins
+4. Buat kredential dockerhub di jenkins dengan nama `dockerhub-cred` (wajib sama biar automation jalan)
+5. Buat pipeline di jenkins
+   - Pilih pipeline script from SCM
+   - Masukkan repo link repo "https://github.com/zicofarry/clay-app"
+   - Pilih branch develop (agar tiap servicenya melakukan build, test, push, dan deploy ke kubernetes)
+6. Build Now pada pipeline
+7. Check console output/ pipeline overview untuk melihat hasil build
 
 ## Structure
 
