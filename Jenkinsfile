@@ -3,6 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'DOCKER_REGISTRY', defaultValue: '', description: 'Docker Hub username (e.g. zicofarry). Leave empty to skip push.')
+        string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'dockerhub-cred', description: 'Jenkins Credentials ID for Docker Hub login.')
         string(name: 'K8S_NAMESPACE', defaultValue: 'clay', description: 'Kubernetes namespace for deployment.')
     }
 
@@ -376,6 +377,13 @@ def buildAndDeploy(String serviceDir, String appName) {
 
         if (params.DOCKER_REGISTRY) {
             echo "[6/8] Pushing image to ${params.DOCKER_REGISTRY}..."
+            withCredentials([usernamePassword(credentialsId: params.DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
+                if (isUnix()) {
+                    sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USER --password-stdin"
+                } else {
+                    bat "echo %DOCKER_PASSWORD%| docker login -u %DOCKER_USER% --password-stdin"
+                }
+            }
             runCmd "docker push ${imageTag}"
 
             echo "[7/8] Deploying to Kubernetes..."
