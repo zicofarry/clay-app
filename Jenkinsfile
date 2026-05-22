@@ -17,6 +17,28 @@ pipeline {
             }
         }
 
+        stage('Infrastructure') {
+            steps {
+                echo "========================================"
+                echo "  Starting Global Databases & K8s Infra"
+                echo "========================================"
+
+                dir('backend/infra') {
+                    echo "Starting all database containers..."
+                    runCmd 'docker compose up -d redis-gateway postgres-auth redis-auth postgres-user redis-user redis-email postgres-payment redis-payment postgres-notification mongo-tracking redis-tracking mongo-audit mongo-chat postgres-geo redis-geo redis-matching postgres-merchant mongo-merchant postgres-pricing redis-pricing postgres-promotion redis-promotion postgres-rating redis-rating postgres-ride-order redis-ride-order postgres-food-order redis-food-order mongo-food-order postgres-delivery-order redis-delivery-order redis-search elasticsearch postgres-security redis-security redis-sms postgres-wallet redis-wallet postgres-history redis-history zookeeper kafka'
+                }
+
+                echo "Applying K8s base configs..."
+                dir('backend/infra/k8s') {
+                    runCmd "kubectl apply -f base/ -n ${params.K8S_NAMESPACE}"
+                    runCmd "kubectl apply -f infra/ -n ${params.K8S_NAMESPACE}"
+                }
+
+                echo "Waiting 10s for databases to initialize..."
+                sleep 10
+            }
+        }
+
         // ── Auth Service ──
         // stage('Auth Service') {
         //     when {
@@ -333,16 +355,11 @@ def buildAndDeploy(String serviceDir, String appName) {
         def imageTag = params.DOCKER_REGISTRY ? "${params.DOCKER_REGISTRY}/${appName}:latest" : "${appName}:latest"
         runCmd "docker build -t ${imageTag} -f Dockerfile ../.."
 
-        if (fileExists('docker-compose.yml')) {
-            echo "[5/8] Running functional tests..."
-            runCmd "docker compose up -d"
-            try {
-                runCmd "go test -tags=functional -v ./test/functional/..."
-            } finally {
-                runCmd "docker compose down -v"
-            }
+        if (fileExists('test/functional')) {
+            echo "[5/8] Running functional tests (using global databases)..."
+            runCmd "go test -tags=functional -v ./test/functional/..."
         } else {
-            echo "[5/8] Functional tests skipped — no docker-compose.yml found."
+            echo "[5/8] Functional tests skipped — no test/functional directory found."
         }
 
         if (params.DOCKER_REGISTRY) {
