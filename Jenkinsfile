@@ -204,135 +204,141 @@ pipeline {
         //     }
         // }
 
-        stage('Geo Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/geo-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
-                }
-            }
-            steps {
-                buildAndDeploy('geo-service', 'clay-geo-service')
-            }
-        }
+        stage('Build & Deploy Services') {
+            parallel {
 
-        stage('Matching Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/matching-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Geo Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/geo-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('geo-service', 'clay-geo-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('matching-service', 'clay-matching-service')
-            }
-        }
 
-        stage('Merchant Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/merchant-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Matching Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/matching-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('matching-service', 'clay-matching-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('merchant-service', 'clay-merchant-service')
-            }
-        }
 
-        stage('Rating Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/rating-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Merchant Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/merchant-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('merchant-service', 'clay-merchant-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('rating-service', 'clay-rating-service')
-            }
-        }
 
-        stage('Promotion Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/promotion-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Rating Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/rating-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('rating-service', 'clay-rating-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('promotion-service', 'clay-promotion-service')
-            }
-        }
 
-        stage('Pricing Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/pricing-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Promotion Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/promotion-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('promotion-service', 'clay-promotion-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('pricing-service', 'clay-pricing-service')
-            }
-        }
 
-        stage('Wallet Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/wallet-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Pricing Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/pricing-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('pricing-service', 'clay-pricing-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('wallet-service', 'clay-wallet-service')
-            }
-        }
 
-        stage('History Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/history-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Wallet Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/wallet-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('wallet-service', 'clay-wallet-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('history-service', 'clay-history-service')
-            }
-        }
 
-        stage('Tracking Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/tracking-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('History Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/history-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('history-service', 'clay-history-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('tracking-service', 'clay-tracking-service')
-            }
-        }
 
-        stage('Audit Log Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/audit-log-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Tracking Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/tracking-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('tracking-service', 'clay-tracking-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('audit-log-service', 'clay-audit-log-service')
-            }
-        }
 
-        stage('Security Service') {
-            when {
-                anyOf {
-                    changeset "backend/services/security-service/**"
-                    expression { env.BRANCH_NAME != 'main' }
+                stage('Audit Log Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/audit-log-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('audit-log-service', 'clay-audit-log-service') }
+                    }
                 }
-            }
-            steps {
-                buildAndDeploy('security-service', 'clay-security-service')
+
+                stage('Security Service') {
+                    when {
+                        anyOf {
+                            changeset "backend/services/security-service/**"
+                            expression { env.BRANCH_NAME != 'main' }
+                        }
+                    }
+                    steps {
+                        script { buildAndDeploy('security-service', 'clay-security-service') }
+                    }
+                }
+
             }
         }
     }
