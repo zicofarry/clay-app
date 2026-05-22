@@ -39,7 +39,6 @@ pipeline {
             }
         }
 
-        ── Auth Service ──
         stage('Auth Service') {
             when {
                 anyOf {
