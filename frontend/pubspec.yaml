@@ -1,0 +1,12 @@
+name: clay_frontend
+description: Clay Platform - Monorepo workspace
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+workspace:
+  - packages/clay_shared
+  - packages/clay_ui
+  - apps/user_app

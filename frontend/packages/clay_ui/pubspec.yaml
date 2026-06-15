@@ -1,0 +1,19 @@
+name: clay_ui
+description: Shared UI components for Clay platform
+version: 0.0.1
+publish_to: none
+
+resolution: workspace
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  clay_shared:
+    path: ../clay_shared
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

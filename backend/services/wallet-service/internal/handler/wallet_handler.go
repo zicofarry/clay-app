@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
 	"github.com/zicofarry/clay-app/backend/services/wallet-service/internal/service"
 )
 

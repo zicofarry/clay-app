@@ -103,11 +103,11 @@ func setupTestMongo(t *testing.T) *mongo.Database {
 
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
-		t.Fatalf("connect mongo: %v\nMake sure MongoDB is running: docker-compose up -d mongodb-merchant", err)
+		t.Fatalf("connect mongo: %v\nMake sure MongoDB is running: docker compose up -d mongodb-merchant", err)
 	}
 
 	if err = client.Ping(ctx, nil); err != nil {
-		t.Fatalf("ping mongo at %s failed: %v\nMake sure MongoDB is running: docker-compose up -d mongodb-merchant", testMongoURI, err)
+		t.Fatalf("ping mongo at %s failed: %v\nMake sure MongoDB is running: docker compose up -d mongodb-merchant", testMongoURI, err)
 	}
 
 	db := client.Database(testMongoDB)

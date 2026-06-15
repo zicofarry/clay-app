@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/zicofarry/clay-app/backend/services/notification-service/internal/service"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/response"
-	"github.com/zicofarry/clay-app/backend/pkg/pkg/validator"
+	"github.com/zicofarry/clay-app/backend/pkg/response"
+	"github.com/zicofarry/clay-app/backend/pkg/validator"
 )
 
 type NotificationHandler struct {

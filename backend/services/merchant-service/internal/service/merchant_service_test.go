@@ -12,7 +12,7 @@ import (
 
 	"github.com/zicofarry/clay-app/backend/services/merchant-service/internal/model"
 	"github.com/zicofarry/clay-app/backend/services/merchant-service/mocks/repomock"
-	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/pkg/kafka"
+	sharedKafka "github.com/zicofarry/clay-app/backend/pkg/kafka"
 	"go.uber.org/mock/gomock"
 )
 

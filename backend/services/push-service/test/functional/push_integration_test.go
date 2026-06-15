@@ -38,7 +38,7 @@ func setupTestRepo(t *testing.T) (*repository.PushRepository, *redis.Client) {
 	defer cancel()
 
 	if err := client.Ping(ctx).Err(); err != nil {
-		t.Fatalf("failed to connect to Redis at %s: %v (is docker-compose up?)", redisAddr(), err)
+		t.Fatalf("failed to connect to Redis at %s: %v (is docker compose up?)", redisAddr(), err)
 	}
 
 	// Flush DB for a clean test state
