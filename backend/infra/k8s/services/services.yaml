@@ -12,7 +12,7 @@ metadata:
   name: clay-auth-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-auth-service
@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: clay-auth-service
-          image: clay/clay-auth-service:latest
+          image: clayregistry.azurecr.io/clay-auth-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -82,7 +82,7 @@ metadata:
   name: clay-user-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-user-service
@@ -93,7 +93,7 @@ spec:
     spec:
       containers:
         - name: clay-user-service
-          image: clay/clay-user-service:latest
+          image: clayregistry.azurecr.io/clay-user-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -147,7 +147,7 @@ metadata:
   name: clay-merchant-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-merchant-service
@@ -158,7 +158,7 @@ spec:
     spec:
       containers:
         - name: clay-merchant-service
-          image: clay/clay-merchant-service:latest
+          image: clayregistry.azurecr.io/clay-merchant-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -216,7 +216,7 @@ metadata:
   name: clay-food-order-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-food-order-service
@@ -227,7 +227,7 @@ spec:
     spec:
       containers:
         - name: clay-food-order-service
-          image: clay/clay-food-order-service:latest
+          image: clayregistry.azurecr.io/clay-food-order-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -289,7 +289,7 @@ metadata:
   name: clay-matching-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-matching-service
@@ -300,7 +300,7 @@ spec:
     spec:
       containers:
         - name: clay-matching-service
-          image: clay/clay-matching-service:latest
+          image: clayregistry.azurecr.io/clay-matching-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -342,7 +342,7 @@ metadata:
   name: clay-geo-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-geo-service
@@ -353,7 +353,7 @@ spec:
     spec:
       containers:
         - name: clay-geo-service
-          image: clay/clay-geo-service:latest
+          image: clayregistry.azurecr.io/clay-geo-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -397,7 +397,7 @@ metadata:
   name: clay-payment-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-payment-service
@@ -408,7 +408,7 @@ spec:
     spec:
       containers:
         - name: clay-payment-service
-          image: clay/clay-payment-service:latest
+          image: clayregistry.azurecr.io/clay-payment-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -464,7 +464,7 @@ metadata:
   name: clay-delivery-order-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-delivery-order-service
@@ -475,7 +475,7 @@ spec:
     spec:
       containers:
         - name: clay-delivery-order-service
-          image: clay/clay-delivery-order-service:latest
+          image: clayregistry.azurecr.io/clay-delivery-order-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -531,7 +531,7 @@ metadata:
   name: clay-ride-order-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-ride-order-service
@@ -542,7 +542,7 @@ spec:
     spec:
       containers:
         - name: clay-ride-order-service
-          image: clay/clay-ride-order-service:latest
+          image: clayregistry.azurecr.io/clay-ride-order-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -598,7 +598,7 @@ metadata:
   name: clay-chat-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-chat-service
@@ -609,7 +609,7 @@ spec:
     spec:
       containers:
         - name: clay-chat-service
-          image: clay/clay-chat-service:latest
+          image: clayregistry.azurecr.io/clay-chat-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -653,7 +653,7 @@ metadata:
   name: clay-notification-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-notification-service
@@ -664,7 +664,7 @@ spec:
     spec:
       containers:
         - name: clay-notification-service
-          image: clay/clay-notification-service:latest
+          image: clayregistry.azurecr.io/clay-notification-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -718,7 +718,7 @@ metadata:
   name: clay-push-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-push-service
@@ -729,7 +729,7 @@ spec:
     spec:
       containers:
         - name: clay-push-service
-          image: clay/clay-push-service:latest
+          image: clayregistry.azurecr.io/clay-push-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -769,7 +769,7 @@ metadata:
   name: clay-sms-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-sms-service
@@ -780,7 +780,7 @@ spec:
     spec:
       containers:
         - name: clay-sms-service
-          image: clay/clay-sms-service:latest
+          image: clayregistry.azurecr.io/clay-sms-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -834,7 +834,7 @@ metadata:
   name: clay-email-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-email-service
@@ -845,7 +845,7 @@ spec:
     spec:
       containers:
         - name: clay-email-service
-          image: clay/clay-email-service:latest
+          image: clayregistry.azurecr.io/clay-email-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -899,7 +899,7 @@ metadata:
   name: clay-search-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-search-service
@@ -910,7 +910,7 @@ spec:
     spec:
       containers:
         - name: clay-search-service
-          image: clay/clay-search-service:latest
+          image: clayregistry.azurecr.io/clay-search-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -952,7 +952,7 @@ metadata:
   name: clay-rating-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-rating-service
@@ -963,7 +963,7 @@ spec:
     spec:
       containers:
         - name: clay-rating-service
-          image: clay/clay-rating-service:latest
+          image: clayregistry.azurecr.io/clay-rating-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1017,7 +1017,7 @@ metadata:
   name: clay-promotion-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-promotion-service
@@ -1028,7 +1028,7 @@ spec:
     spec:
       containers:
         - name: clay-promotion-service
-          image: clay/clay-promotion-service:latest
+          image: clayregistry.azurecr.io/clay-promotion-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1082,7 +1082,7 @@ metadata:
   name: clay-pricing-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-pricing-service
@@ -1093,7 +1093,7 @@ spec:
     spec:
       containers:
         - name: clay-pricing-service
-          image: clay/clay-pricing-service:latest
+          image: clayregistry.azurecr.io/clay-pricing-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1147,7 +1147,7 @@ metadata:
   name: clay-wallet-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-wallet-service
@@ -1158,7 +1158,7 @@ spec:
     spec:
       containers:
         - name: clay-wallet-service
-          image: clay/clay-wallet-service:latest
+          image: clayregistry.azurecr.io/clay-wallet-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1214,7 +1214,7 @@ metadata:
   name: clay-history-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-history-service
@@ -1225,7 +1225,7 @@ spec:
     spec:
       containers:
         - name: clay-history-service
-          image: clay/clay-history-service:latest
+          image: clayregistry.azurecr.io/clay-history-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1281,7 +1281,7 @@ metadata:
   name: clay-tracking-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-tracking-service
@@ -1292,7 +1292,7 @@ spec:
     spec:
       containers:
         - name: clay-tracking-service
-          image: clay/clay-tracking-service:latest
+          image: clayregistry.azurecr.io/clay-tracking-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1340,7 +1340,7 @@ metadata:
   name: clay-audit-log-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-audit-log-service
@@ -1351,7 +1351,7 @@ spec:
     spec:
       containers:
         - name: clay-audit-log-service
-          image: clay/clay-audit-log-service:latest
+          image: clayregistry.azurecr.io/clay-audit-log-service:latest
           ports:
             - containerPort: 8080
           env:
@@ -1397,7 +1397,7 @@ metadata:
   name: clay-security-service
   namespace: clay
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: clay-security-service
@@ -1408,7 +1408,7 @@ spec:
     spec:
       containers:
         - name: clay-security-service
-          image: clay/clay-security-service:latest
+          image: clayregistry.azurecr.io/clay-security-service:latest
           ports:
             - containerPort: 8080
           env:

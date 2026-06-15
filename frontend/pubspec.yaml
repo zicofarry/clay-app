@@ -10,3 +10,4 @@ workspace:
   - packages/clay_shared
   - packages/clay_ui
   - apps/user_app
+  - apps/driver_app

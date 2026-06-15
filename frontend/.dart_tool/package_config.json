@@ -558,6 +558,12 @@
       "rootUri": "../apps/user_app",
       "packageUri": "lib/",
       "languageVersion": "3.10"
+    },
+    {
+      "name": "driver_app",
+      "rootUri": "../apps/driver_app",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
     }
   ],
   "generator": "pub",
