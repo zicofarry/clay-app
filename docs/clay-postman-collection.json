@@ -200,7 +200,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\",\n  \"full_name\": \"Budi Santoso\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123!\"\n}"
+              "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"user\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -229,7 +229,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\"\n}"
+              "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"type\": \"registration\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -258,7 +258,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\",\n  \"otp_code\": \"123456\"\n}"
+              "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"otp_code\": \"123456\",\n  \"type\": \"registration\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -287,7 +287,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\",\n  \"password\": \"Password123!\"\n}"
+              "raw": "{\n  \"password\": \"Password123!\",\n  \"identifier\": \"+6281234567890\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -317,7 +317,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\",\n  \"otp_code\": \"123456\"\n}"
+              "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"otp_code\": \"123456\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -520,7 +520,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\"\n}"
+              "raw": "{\n  \"phone\": \"+6281234567890\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -550,7 +550,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"NewPassword123!\"\n}"
+              "raw": "{\n  \"new_password\": \"NewPassword123!\",\n  \"reset_token\": \"{{reset_token}}\",\n  \"phone\": \"+6281234567890\"\n}"
             },
             "auth": {
               "type": "noauth"
@@ -6595,7 +6595,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"+6281234567890\"\n}"
+              "raw": "{\n  \"phone\": \"+6281234567890\"\n}"
             }
           }
         },

@@ -11,11 +11,16 @@ class AuthRepository {
       final response = await _api.dio.post(
         ApiEndpoints.login,
         data: {
-          'phone_number': phoneNumber,
+          'identifier': phoneNumber,
           'password': password,
         },
       );
-      return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+      final authResponse = AuthResponse.fromJson(response.data as Map<String, dynamic>);
+      
+      // Save token for future API calls
+      _api.setToken(authResponse.accessToken);
+      
+      return authResponse;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -27,15 +32,50 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _api.dio.post(
+      // 1. Call Backend Register
+      await _api.dio.post(
         ApiEndpoints.register,
         data: {
-          'phone_number': phoneNumber,
-          'full_name': fullName,
+          'email': '${phoneNumber.replaceAll('+', '')}@clay.com',
+          'phone': phoneNumber,
+          'password': password,
+          'role': 'user',
+        },
+      );
+      
+      // 2. Auto-Verify OTP (mock OTP is 123456)
+      await _api.dio.post(
+        ApiEndpoints.verifyOtp,
+        data: {
+          'phone': phoneNumber,
+          'otp_code': '123456',
+          'type': 'registration',
+        },
+      );
+
+      // 3. Login to get token
+      final loginResponse = await _api.dio.post(
+        ApiEndpoints.login,
+        data: {
+          'identifier': phoneNumber,
           'password': password,
         },
       );
-      return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+
+      final authResponse = AuthResponse.fromJson(loginResponse.data as Map<String, dynamic>);
+      
+      // Save token for profile creation
+      _api.setToken(authResponse.accessToken);
+
+      // 4. Create Profile with full name
+      await _api.dio.post(
+        ApiEndpoints.getProfile,
+        data: {
+          'full_name': fullName,
+        },
+      );
+
+      return authResponse;
     } on DioException catch (e) {
       throw _handleError(e);
     }

@@ -5,10 +5,19 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/repository"
 )
+
+type clayClaims struct {
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
+	jwt.RegisteredClaims
+}
 
 // ── Service Error ────────────────────────────────────────────────────────────
 
@@ -223,7 +232,12 @@ func (s *AuthService) RequestOTP(ctx context.Context, req *OTPRequest) (*OTPResp
 
 func (s *AuthService) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) (*VerifyOTPResponse, error) {
 	// TODO: Retrieve OTP from Redis, compare hash, increment attempt counter
-	// TODO: For registration type, update phone_verified = true
+	// For registration type, update phone_verified = true
+	if req.Type == "registration" {
+		if err := s.repo.SetPhoneVerified(ctx, req.Phone); err != nil {
+			return nil, err
+		}
+	}
 
 	s.logger.Info("OTP verified", slog.String("phone", req.Phone), slog.String("type", req.Type))
 
@@ -376,16 +390,41 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID string, req *Ch
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 func (s *AuthService) generateTokens(ctx context.Context, cred *repository.Credential, deviceID string) (*AuthTokenResponse, error) {
-	// TODO: Generate JWT with claims (user_id, role, jti, exp)
-	// TODO: Generate opaque refresh token
-	// TODO: Store session in Redis
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "default-secret" // fallback
+	}
+	jwtIssuer := os.Getenv("JWT_ISSUER")
+	if jwtIssuer == "" {
+		jwtIssuer = "clay-auth-service"
+	}
+
+	jti := uuid.New().String()
+	exp := time.Now().Add(15 * time.Minute)
+
+	claims := &clayClaims{
+		UserID: cred.ID,
+		Role:   cred.Role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        jti,
+			Issuer:    jwtIssuer,
+			ExpiresAt: jwt.NewNumericDate(exp),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return nil, err
+	}
 
 	return &AuthTokenResponse{
-		AccessToken:  "jwt-placeholder",
-		RefreshToken: "refresh-placeholder",
+		AccessToken:  tokenString,
+		RefreshToken: uuid.New().String(),
 		TokenType:    "Bearer",
-		ExpiresIn:    900, // 15 min
-		ExpiresAt:    time.Now().Add(15 * time.Minute),
+		ExpiresIn:    900,
+		ExpiresAt:    exp,
 		UserID:       cred.ID,
 		Role:         cred.Role,
 	}, nil

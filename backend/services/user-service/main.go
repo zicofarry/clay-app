@@ -98,6 +98,7 @@ func main() {
 
 	// ── Middleware Stack ──────────────────────────────────────────────────
 	var h http.Handler = mux
+	h = middleware.AuthContext(false)(h)
 	h = middleware.Logger(logger)(h)
 	h = middleware.Recovery(logger)(h)
 	h = middleware.RequestID(h)

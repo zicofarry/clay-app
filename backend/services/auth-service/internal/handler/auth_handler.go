@@ -3,6 +3,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/service"
@@ -245,6 +246,7 @@ func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 func handleServiceError(w http.ResponseWriter, err error) {
 	svcErr, ok := err.(*service.ServiceError)
 	if !ok {
+		slog.Error("unexpected handler error", slog.Any("error", err))
 		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an unexpected error occurred")
 		return
 	}
