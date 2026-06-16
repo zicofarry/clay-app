@@ -25,7 +25,7 @@ class MerchantsListScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: CircleAvatar(backgroundColor: Colors.orange.withValues(alpha: 0.1), child: const Icon(Icons.store, color: Colors.orange)),
-              title: Text(m['name']),
+              title: Text('${m['name']}'),
               subtitle: Text('${m['category']} • ${m['owner']}'),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -38,7 +38,7 @@ class MerchantsListScreen extends StatelessWidget {
                       color: (m['status'] == 'active' ? Colors.green : Colors.red).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(m['status'], style: TextStyle(color: m['status'] == 'active' ? Colors.green : Colors.red, fontSize: 10)),
+                    child: Text('${m['status']}', style: TextStyle(color: m['status'] == 'active' ? Colors.green : Colors.red, fontSize: 10)),
                   ),
                 ],
               ),

@@ -10,7 +10,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Dashboard'), actions: [
-        IconButton(icon: const Icon(Icons.person), onPressed: () => context.go('/profile')),
+        IconButton(icon: const Icon(Icons.person), onPressed: () => context.push('/profile')),
       ]),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -26,13 +26,13 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Row(children: [
-            Expanded(child: _StatCard('Pengguna', '12.450', Icons.people, Colors.blue, () => context.go('/users'))),
+            Expanded(child: _StatCard('Pengguna', '12.450', Icons.people, Colors.blue, () => context.push('/users'))),
             const SizedBox(width: 12),
-            Expanded(child: _StatCard('Driver', '2.340', Icons.directions_car, Colors.green, () => context.go('/drivers'))),
+            Expanded(child: _StatCard('Driver', '2.340', Icons.directions_car, Colors.green, () => context.push('/drivers'))),
           ]),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _StatCard('Merchant', '890', Icons.store, Colors.orange, () => context.go('/merchants'))),
+            Expanded(child: _StatCard('Merchant', '890', Icons.store, Colors.orange, () => context.push('/merchants'))),
             const SizedBox(width: 12),
             Expanded(child: _StatCard('Transaksi', '45.2K', Icons.receipt_long, Colors.purple, () {})),
           ]),
@@ -40,11 +40,11 @@ class DashboardScreen extends StatelessWidget {
           const Text('Aksi Cepat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           Card(child: Column(children: [
-            ListTile(leading: const Icon(Icons.people, color: Colors.blue), title: const Text('Kelola Pengguna'), trailing: const Icon(Icons.chevron_right), onTap: () => context.go('/users')),
+            ListTile(leading: const Icon(Icons.people, color: Colors.blue), title: const Text('Kelola Pengguna'), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/users')),
             const Divider(height: 1),
-            ListTile(leading: const Icon(Icons.directions_car, color: Colors.green), title: const Text('Kelola Driver'), trailing: const Icon(Icons.chevron_right), onTap: () => context.go('/drivers')),
+            ListTile(leading: const Icon(Icons.directions_car, color: Colors.green), title: const Text('Kelola Driver'), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/drivers')),
             const Divider(height: 1),
-            ListTile(leading: const Icon(Icons.store, color: Colors.orange), title: const Text('Kelola Merchant'), trailing: const Icon(Icons.chevron_right), onTap: () => context.go('/merchants')),
+            ListTile(leading: const Icon(Icons.store, color: Colors.orange), title: const Text('Kelola Merchant'), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/merchants')),
           ])),
         ],
       ),

@@ -63,6 +63,7 @@ func main() {
 	// Logout
 	mux.HandleFunc("POST /auth/logout", authHandler.Logout)
 	mux.HandleFunc("POST /auth/logout-all", authHandler.LogoutAll)
+	mux.HandleFunc("POST /auth/sessions/revoke-all", authHandler.LogoutAll)
 
 	// Sessions
 	mux.HandleFunc("GET /auth/sessions", authHandler.ListSessions)

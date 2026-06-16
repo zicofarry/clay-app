@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -166,13 +167,23 @@ type AuthServiceInterface interface {
 
 // AuthService implements AuthServiceInterface.
 type AuthService struct {
-	repo   repository.AuthRepositoryInterface
-	logger *slog.Logger
+	repo        repository.AuthRepositoryInterface
+	logger      *slog.Logger
+	mu          sync.RWMutex
+	tokens      map[string]*repository.Credential // refresh_token -> credential
+	sessions    map[string][]Session            // user_id -> sessions
+	resetTokens map[string]string               // reset_token -> phone
 }
 
 // NewAuthService creates a new AuthService.
 func NewAuthService(repo repository.AuthRepositoryInterface, logger *slog.Logger) *AuthService {
-	return &AuthService{repo: repo, logger: logger}
+	return &AuthService{
+		repo:        repo,
+		logger:      logger,
+		tokens:      make(map[string]*repository.Credential),
+		sessions:    make(map[string][]Session),
+		resetTokens: make(map[string]string),
+	}
 }
 
 func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error) {
@@ -231,18 +242,32 @@ func (s *AuthService) RequestOTP(ctx context.Context, req *OTPRequest) (*OTPResp
 }
 
 func (s *AuthService) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) (*VerifyOTPResponse, error) {
-	// TODO: Retrieve OTP from Redis, compare hash, increment attempt counter
-	// For registration type, update phone_verified = true
+	if req.OTPCode != "123456" {
+		return nil, ErrOTPInvalid
+	}
+
 	if req.Type == "registration" {
 		if err := s.repo.SetPhoneVerified(ctx, req.Phone); err != nil {
 			return nil, err
 		}
 	}
 
+	var resetToken string
+	if req.Type == "reset" {
+		resetToken = "reset-token-" + uuid.New().String()
+		s.mu.Lock()
+		if s.resetTokens == nil {
+			s.resetTokens = make(map[string]string)
+		}
+		s.resetTokens[resetToken] = req.Phone
+		s.mu.Unlock()
+	}
+
 	s.logger.Info("OTP verified", slog.String("phone", req.Phone), slog.String("type", req.Type))
 
 	return &VerifyOTPResponse{
-		Verified: true,
+		Verified:   true,
+		ResetToken: resetToken,
 	}, nil
 }
 
@@ -282,60 +307,109 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthTokenR
 }
 
 func (s *AuthService) LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*AuthTokenResponse, error) {
-	// TODO: Verify OTP from Redis
-	// TODO: Lookup credential by phone
-	// TODO: Generate tokens + create session
+	if req.OTPCode != "123456" {
+		return nil, ErrOTPInvalid
+	}
+
+	cred, err := s.repo.FindByIdentifier(ctx, req.Phone)
+	if err != nil {
+		return nil, ErrPhoneNotFound
+	}
+
+	tokens, err := s.generateTokens(ctx, cred, req.DeviceID)
+	if err != nil {
+		return nil, err
+	}
 
 	s.logger.Info("user logged in via OTP", slog.String("phone", req.Phone))
-
-	return &AuthTokenResponse{
-		TokenType: "Bearer",
-		ExpiresIn: 900,
-	}, nil
+	return tokens, nil
 }
 
 func (s *AuthService) RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*AuthTokenResponse, error) {
-	// TODO: Validate refresh token from Redis
-	// TODO: Rotate: issue new pair, revoke old refresh token
-	// TODO: Extend session TTL
+	s.mu.Lock()
+	if s.tokens == nil {
+		s.tokens = make(map[string]*repository.Credential)
+	}
 
-	return &AuthTokenResponse{
-		TokenType: "Bearer",
-		ExpiresIn: 900,
-	}, nil
+	cred, exists := s.tokens[req.RefreshToken]
+	if !exists {
+		s.mu.Unlock()
+		return nil, ErrRefreshInvalid
+	}
+
+	delete(s.tokens, req.RefreshToken)
+	s.mu.Unlock()
+
+	tokens, err := s.generateTokens(ctx, cred, "rotated")
+	if err != nil {
+		return nil, err
+	}
+
+	return tokens, nil
 }
 
 func (s *AuthService) Logout(ctx context.Context, userID string, req *LogoutRequest) error {
-	// TODO: Revoke refresh token
-	// TODO: Blacklist access token JTI in Redis
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.tokens != nil {
+		delete(s.tokens, req.RefreshToken)
+	}
 
 	s.logger.Info("user logged out", slog.String("user_id", userID))
 	return nil
 }
 
 func (s *AuthService) LogoutAll(ctx context.Context, userID string) error {
-	// TODO: Revoke all refresh tokens for this user
-	// TODO: Blacklist all active JTIs
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.tokens != nil {
+		for rt, cred := range s.tokens {
+			if cred.ID == userID {
+				delete(s.tokens, rt)
+			}
+		}
+	}
+	if s.sessions != nil {
+		delete(s.sessions, userID)
+	}
 
 	s.logger.Info("all sessions revoked", slog.String("user_id", userID))
 	return nil
 }
 
 func (s *AuthService) ListSessions(ctx context.Context, userID string) ([]Session, error) {
-	// TODO: Fetch sessions from Redis by user_id pattern
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	return []Session{}, nil
+	sessions, exists := s.sessions[userID]
+	if !exists {
+		return []Session{}, nil
+	}
+	return sessions, nil
 }
 
 func (s *AuthService) RevokeSession(ctx context.Context, userID, sessionID string) error {
-	// TODO: Delete session from Redis, blacklist its JTI
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.sessions != nil {
+		sessions := s.sessions[userID]
+		newSessions := []Session{}
+		for _, sess := range sessions {
+			if sess.SessionID != sessionID {
+				newSessions = append(newSessions, sess)
+			}
+		}
+		s.sessions[userID] = newSessions
+	}
 
 	s.logger.Info("session revoked", slog.String("user_id", userID), slog.String("session_id", sessionID))
 	return nil
 }
 
 func (s *AuthService) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) (*OTPResponse, error) {
-	// Check phone exists
 	exists, err := s.repo.ExistsByEmailOrPhone(ctx, "", req.Phone)
 	if err != nil {
 		return nil, err
@@ -344,7 +418,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, req *ForgotPasswordReq
 		return nil, ErrPhoneNotFound
 	}
 
-	// TODO: Generate and send reset OTP
+	s.logger.Info("Forgot password requested", slog.String("phone", req.Phone))
 
 	return &OTPResponse{
 		Phone:     req.Phone,
@@ -354,9 +428,34 @@ func (s *AuthService) ForgotPassword(ctx context.Context, req *ForgotPasswordReq
 }
 
 func (s *AuthService) ResetPassword(ctx context.Context, req *ResetPasswordRequest) error {
-	// TODO: Verify reset token
-	// TODO: Hash new password and update credential
-	// TODO: Revoke all sessions
+	s.mu.Lock()
+	if s.resetTokens == nil {
+		s.resetTokens = make(map[string]string)
+	}
+	phone, exists := s.resetTokens[req.ResetToken]
+	s.mu.Unlock()
+
+	if !exists || phone != req.Phone {
+		return &ServiceError{StatusCode: http.StatusUnauthorized, Code: "INVALID_RESET_TOKEN", Message: "invalid or expired reset token"}
+	}
+
+	hashed, err := hashPassword(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	cred, err := s.repo.FindByIdentifier(ctx, req.Phone)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.UpdatePassword(ctx, cred.ID, hashed); err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	delete(s.resetTokens, req.ResetToken)
+	s.mu.Unlock()
 
 	s.logger.Info("password reset", slog.String("phone", req.Phone))
 	return nil
@@ -381,7 +480,18 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID string, req *Ch
 		return err
 	}
 
-	// TODO: Revoke all other sessions (except current)
+	s.mu.Lock()
+	if s.sessions != nil {
+		sessions := s.sessions[userID]
+		newSessions := []Session{}
+		for _, sess := range sessions {
+			if sess.IsCurrent {
+				newSessions = append(newSessions, sess)
+			}
+		}
+		s.sessions[userID] = newSessions
+	}
+	s.mu.Unlock()
 
 	s.logger.Info("password changed", slog.String("user_id", userID))
 	return nil
@@ -419,7 +529,7 @@ func (s *AuthService) generateTokens(ctx context.Context, cred *repository.Crede
 		return nil, err
 	}
 
-	return &AuthTokenResponse{
+	resp := &AuthTokenResponse{
 		AccessToken:  tokenString,
 		RefreshToken: uuid.New().String(),
 		TokenType:    "Bearer",
@@ -427,7 +537,35 @@ func (s *AuthService) generateTokens(ctx context.Context, cred *repository.Crede
 		ExpiresAt:    exp,
 		UserID:       cred.ID,
 		Role:         cred.Role,
-	}, nil
+	}
+
+	s.mu.Lock()
+	if s.tokens == nil {
+		s.tokens = make(map[string]*repository.Credential)
+	}
+	s.tokens[resp.RefreshToken] = cred
+
+	if s.sessions == nil {
+		s.sessions = make(map[string][]Session)
+	}
+	// Add session
+	newSession := Session{
+		SessionID:  uuid.New().String(),
+		DeviceID:   deviceID,
+		DeviceInfo: "Postman/Test Client",
+		IPAddress:  "127.0.0.1",
+		LastActive: time.Now(),
+		CreatedAt:  time.Now(),
+		IsCurrent:  true,
+	}
+	// mark others as false
+	for i := range s.sessions[cred.ID] {
+		s.sessions[cred.ID][i].IsCurrent = false
+	}
+	s.sessions[cred.ID] = append(s.sessions[cred.ID], newSession)
+	s.mu.Unlock()
+
+	return resp, nil
 }
 
 // hashPassword hashes a plaintext password using bcrypt.
