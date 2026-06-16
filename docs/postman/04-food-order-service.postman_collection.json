@@ -580,6 +580,105 @@
       }
     },
     {
+      "name": "[Driver] Accept Food Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/food/driver/orders/{{order_id}}/accept",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "food",
+            "driver",
+            "orders",
+            "{{order_id}}",
+            "accept"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "[Driver] Reject Food Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/food/driver/orders/{{order_id}}/reject",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "food",
+            "driver",
+            "orders",
+            "{{order_id}}",
+            "reject"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Too far\"\n}"
+        }
+      }
+    },
+    {
+      "name": "[Driver] Update Food Delivery Status",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/food/driver/orders/{{order_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "food",
+            "driver",
+            "orders",
+            "{{order_id}}",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"picked_up\"\n}"
+        }
+      }
+    },
+    {
       "name": "[Driver] Pickup Food",
       "request": {
         "method": "POST",
