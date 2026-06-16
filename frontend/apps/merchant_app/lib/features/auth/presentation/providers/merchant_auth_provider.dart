@@ -31,6 +31,13 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
     }
   }
 
+  void updateProfile(Map<String, dynamic> updatedData) {
+    if (state.merchant != null) {
+      final newMerchant = {...state.merchant!, ...updatedData};
+      state = state.copyWith(merchant: newMerchant);
+    }
+  }
+
   void logout() {
     state = const MerchantAuthState();
   }
