@@ -21,7 +21,7 @@ class DriversListScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: CircleAvatar(backgroundColor: Colors.green.withValues(alpha: 0.1), child: const Icon(Icons.directions_car, color: Colors.green)),
-              title: Text(d['name']),
+              title: Text('${d['name']}'),
               subtitle: Text('${d['vehicle']} • ${d['plate']}'),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -34,7 +34,7 @@ class DriversListScreen extends StatelessWidget {
                       color: (d['status'] == 'online' ? Colors.green : Colors.grey).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(d['status'], style: TextStyle(color: d['status'] == 'online' ? Colors.green : Colors.grey, fontSize: 10)),
+                    child: Text('${d['status']}', style: TextStyle(color: d['status'] == 'online' ? Colors.green : Colors.grey, fontSize: 10)),
                   ),
                 ],
               ),

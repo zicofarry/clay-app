@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
 import '../../data/auth_repository.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(ClayApi.instance);
@@ -8,7 +9,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(authRepositoryProvider);
-  return AuthNotifier(repository);
+  return AuthNotifier(repository, ref);
 });
 
 class AuthState {
@@ -37,14 +38,16 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
+  final Ref _ref;
 
-  AuthNotifier(this._repository) : super(const AuthState());
+  AuthNotifier(this._repository, this._ref) : super(const AuthState());
 
   Future<void> login(String phone, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await _repository.login(phone, password);
       state = state.copyWith(isLoading: false, authResponse: response);
+      _ref.invalidate(profileProvider);
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }
@@ -63,6 +66,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       state = state.copyWith(isLoading: false, authResponse: response);
+      _ref.invalidate(profileProvider);
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }
@@ -70,6 +74,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void logout() {
     ClayApi.instance.clearToken();
+    _ref.invalidate(profileProvider);
     state = const AuthState();
   }
 

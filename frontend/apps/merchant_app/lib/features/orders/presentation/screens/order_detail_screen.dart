@@ -84,7 +84,7 @@ class OrderDetailScreen extends ConsumerWidget {
           ],
           if (order['status'] != 'completed' && order['status'] != 'cancelled') ...[
             const SizedBox(height: 12),
-            TextButton(onPressed: () => context.go('/orders'), child: const Text('Kembali')),
+            TextButton(onPressed: () => context.pop(), child: const Text('Kembali')),
           ],
         ],
       ),
