@@ -7,7 +7,7 @@ REM ─────────────────────────�
 
 echo ============================================
 echo   Clay Platform — ACR Build Script
-echo   Building 25 images (24 services + gateway)
+echo   Building 24 images (23 services + gateway)
 echo   No Docker Desktop needed!
 echo ============================================
 echo.
@@ -39,7 +39,7 @@ call :build_service "security-service"       "clay-security-service"      24
 
 echo.
 echo ============================================
-echo   ALL 25 IMAGES BUILT SUCCESSFULLY!
+echo   ALL 24 IMAGES BUILT SUCCESSFULLY!
 echo ============================================
 exit /b 0
 
@@ -48,7 +48,7 @@ set SERVICE_DIR=%~1
 set IMAGE_NAME=%~2
 set NUM=%~3
 echo.
-echo [%NUM%/25] Building %IMAGE_NAME%...
+echo [%NUM%/24] Building %IMAGE_NAME%...
 call az acr build --registry clayregistry --image %IMAGE_NAME%:latest --file services/%SERVICE_DIR%/Dockerfile . --no-logs
 if %ERRORLEVEL% NEQ 0 (
     echo   WARNING: %IMAGE_NAME% build failed! Continuing...

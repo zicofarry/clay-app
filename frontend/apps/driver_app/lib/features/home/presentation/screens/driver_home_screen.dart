@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
-import '../../auth/presentation/providers/driver_auth_provider.dart';
-import '../../order/presentation/providers/order_provider.dart';
+import '../../../auth/presentation/providers/driver_auth_provider.dart';
+import '../../../order/presentation/providers/order_provider.dart';
 
 final _isOnlineProvider = StateProvider<bool>((ref) => false);
 

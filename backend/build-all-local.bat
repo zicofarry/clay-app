@@ -7,13 +7,13 @@ REM ─────────────────────────�
 
 echo ===================================================
 echo   Clay Platform — Local Docker Build and Push
-echo   Building 25 images (24 services + gateway)
+echo   Building 24 images (23 services + gateway)
 echo   Docker Desktop MUST be running!
 echo ===================================================
 echo.
 
 REM Login to ACR via Docker
-echo [0/25] Logging in to Azure Container Registry...
+echo [0/24] Logging in to Azure Container Registry...
 echo (Ini terkadang membutuhkan waktu 1-2 menit untuk berkomunikasi dengan Docker)
 call az acr login --name clayregistry
 if %ERRORLEVEL% NEQ 0 (
@@ -51,7 +51,7 @@ call :build_and_push "security-service"       "clay-security-service"      24
 
 echo.
 echo ===================================================
-echo   ALL 25 IMAGES BUILT AND PUSHED TO ACR!
+echo   ALL 24 IMAGES BUILT AND PUSHED TO ACR!
 echo ===================================================
 exit /b 0
 
@@ -60,14 +60,14 @@ set SERVICE_DIR=%~1
 set IMAGE_NAME=%~2
 set NUM=%~3
 echo.
-echo [%NUM%/25] Building %IMAGE_NAME% locally...
+echo [%NUM%/24] Building %IMAGE_NAME% locally...
 docker build -t clayregistry.azurecr.io/%IMAGE_NAME%:latest -f services/%SERVICE_DIR%/Dockerfile .
 if %ERRORLEVEL% NEQ 0 (
     echo   WARNING: %IMAGE_NAME% build failed! Skipping push.
     exit /b 0
 )
 
-echo [%NUM%/25] Pushing %IMAGE_NAME% to ACR...
+echo [%NUM%/24] Pushing %IMAGE_NAME% to ACR...
 docker push clayregistry.azurecr.io/%IMAGE_NAME%:latest
 if %ERRORLEVEL% NEQ 0 (
     echo   WARNING: %IMAGE_NAME% push failed!

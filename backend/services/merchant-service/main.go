@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -28,6 +29,11 @@ func main() {
 	pgCfg := database.DefaultPostgresConfig()
 	pgCfg.Host = envOrDefault("DB_HOST", "localhost")
 	pgCfg.Port = 5441
+	if portStr := os.Getenv("DB_PORT"); portStr != "" {
+		if p, err := strconv.Atoi(portStr); err == nil {
+			pgCfg.Port = p
+		}
+	}
 	pgCfg.DBName = envOrDefault("DB_NAME", "clay_merchant")
 	pgCfg.User = envOrDefault("DB_USER", "clay")
 	pgCfg.Password = envOrDefault("DB_PASSWORD", "clay")

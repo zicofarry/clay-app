@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/zicofarry/clay-app/backend/services/chat-service/internal/handler"
@@ -61,16 +62,57 @@ func main() {
 
 	// Rooms
 	mux.HandleFunc("GET /rooms", chatHandler.ListMyRooms)
-	mux.HandleFunc("GET /rooms/{roomId}", chatHandler.GetRoomByID)
-	mux.HandleFunc("GET /rooms/by-order/{orderId}", chatHandler.GetRoomByOrderID)
 
-	// Messages
-	mux.HandleFunc("GET /rooms/{roomId}/messages", chatHandler.ListMessages)
-	mux.HandleFunc("POST /rooms/{roomId}/messages", chatHandler.SendMessage)
-
-	// Read Receipts
-	mux.HandleFunc("POST /rooms/{roomId}/read", chatHandler.MarkMessagesAsRead)
-	mux.HandleFunc("GET /rooms/{roomId}/unread-count", chatHandler.GetUnreadCount)
+	// Custom dispatcher to resolve Go 1.22 ServeMux pattern conflict:
+	// "GET /rooms/{roomId}/messages" vs "GET /rooms/by-order/{orderId}"
+	mux.HandleFunc("/rooms/", func(w http.ResponseWriter, r *http.Request) {
+		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/rooms/"), "/")
+		if len(parts) == 1 {
+			roomId := parts[0]
+			if roomId == "" || roomId == "by-order" {
+				http.NotFound(w, r)
+				return
+			}
+			if r.Method == "GET" {
+				r.SetPathValue("roomId", roomId)
+				chatHandler.GetRoomByID(w, r)
+				return
+			}
+		} else if len(parts) == 2 {
+			if parts[0] == "by-order" {
+				orderId := parts[1]
+				if r.Method == "GET" {
+					r.SetPathValue("orderId", orderId)
+					chatHandler.GetRoomByOrderID(w, r)
+					return
+				}
+			} else {
+				roomId := parts[0]
+				action := parts[1]
+				r.SetPathValue("roomId", roomId)
+				if action == "messages" {
+					if r.Method == "GET" {
+						chatHandler.ListMessages(w, r)
+						return
+					} else if r.Method == "POST" {
+						chatHandler.SendMessage(w, r)
+						return
+					}
+				} else if action == "read" {
+					if r.Method == "POST" {
+						chatHandler.MarkMessagesAsRead(w, r)
+						return
+					}
+				} else if action == "unread-count" {
+					if r.Method == "GET" {
+						chatHandler.GetUnreadCount(w, r)
+						return
+					}
+				}
+			}
+		}
+		http.NotFound(w, r)
+	})
 
 	// Internal
 	mux.HandleFunc("POST /internal/rooms", chatHandler.InternalCreateRoom)

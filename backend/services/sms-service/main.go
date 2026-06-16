@@ -19,14 +19,25 @@ func main() {
 	slog.SetDefault(logger)
 
 	// ── Setup Redis ──────────────────────────────────────────────────────
+	var opts *redis.Options
+	var err error
 	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
-		redisURL = "redis://localhost:9021/0"
-	}
-	opts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		logger.Error("failed to parse redis url", slog.Any("error", err))
-		os.Exit(1)
+	if redisURL != "" {
+		opts, err = redis.ParseURL(redisURL)
+		if err != nil {
+			logger.Error("failed to parse redis url", slog.Any("error", err))
+			os.Exit(1)
+		}
+	} else if redisAddr := os.Getenv("REDIS_ADDR"); redisAddr != "" {
+		opts = &redis.Options{
+			Addr: redisAddr,
+		}
+	} else {
+		opts, err = redis.ParseURL("redis://localhost:9021/0")
+		if err != nil {
+			logger.Error("failed to parse redis url", slog.Any("error", err))
+			os.Exit(1)
+		}
 	}
 	rdb := redis.NewClient(opts)
 	defer rdb.Close()

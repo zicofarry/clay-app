@@ -22,9 +22,7 @@ data:
               clay_ride_order clay_food_order clay_delivery_order \
               clay_security clay_sms clay_email clay_wallet clay_history; do
       echo "Creating database: $db"
-      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-        SELECT 'CREATE DATABASE $db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db')\gexec
-      EOSQL
+      echo "SELECT 'CREATE DATABASE $db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db')\gexec" | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" -d postgres
     done
 ---
 apiVersion: apps/v1
@@ -59,11 +57,11 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
           resources:
             requests:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 30m
+              memory: 128Mi
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: 500m
+              memory: 384Mi
       volumes:
         - name: init-script
           configMap:
@@ -261,11 +259,11 @@ spec:
             - containerPort: 6379
           resources:
             requests:
-              cpu: 50m
-              memory: 64Mi
+              cpu: 10m
+              memory: 16Mi
             limits:
-              cpu: 300m
-              memory: 256Mi
+              cpu: 100m
+              memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -477,11 +475,11 @@ spec:
             - containerPort: 27017
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 200m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -572,11 +570,11 @@ spec:
               value: "2000"
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 10m
+              memory: 64Mi
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 200m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -604,6 +602,7 @@ spec:
       labels:
         app: kafka
     spec:
+      enableServiceLinks: false
       containers:
         - name: kafka
           image: confluentinc/cp-kafka:7.6.0
@@ -628,11 +627,11 @@ spec:
               value: "true"
           resources:
             requests:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 30m
+              memory: 128Mi
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: 500m
+              memory: 640Mi
 ---
 apiVersion: v1
 kind: Service
@@ -678,11 +677,11 @@ spec:
               value: "-Xms256m -Xmx256m"
           resources:
             requests:
-              cpu: 200m
-              memory: 512Mi
+              cpu: 30m
+              memory: 256Mi
             limits:
-              cpu: "1"
-              memory: 1Gi
+              cpu: 500m
+              memory: 768Mi
 ---
 apiVersion: v1
 kind: Service

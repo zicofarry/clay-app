@@ -23,8 +23,9 @@ WORKDIR /root/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# Copy built binary
+# Copy built binary and configs
 COPY --from=builder /gateway .
+COPY --from=builder /app/services/gateway/config/ ./config/
 
 ENV PORT=8080
 EXPOSE 8080

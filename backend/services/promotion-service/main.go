@@ -23,7 +23,19 @@ func main() {
 
 	dsn := os.Getenv("POSTGRES_DSN")
 	if dsn == "" {
-		dsn = "host=localhost user=clay_user password=clay_password dbname=promotion_db port=5443 sslmode=disable TimeZone=UTC"
+		dbHost := os.Getenv("DB_HOST")
+		dbPort := os.Getenv("DB_PORT")
+		dbUser := os.Getenv("DB_USER")
+		dbPassword := os.Getenv("DB_PASSWORD")
+		dbName := os.Getenv("DB_NAME")
+		if dbHost != "" && dbUser != "" && dbName != "" {
+			if dbPort == "" {
+				dbPort = "5432"
+			}
+			dsn = "host=" + dbHost + " user=" + dbUser + " password=" + dbPassword + " dbname=" + dbName + " port=" + dbPort + " sslmode=disable TimeZone=UTC"
+		} else {
+			dsn = "host=localhost user=clay_user password=clay_password dbname=promotion_db port=5443 sslmode=disable TimeZone=UTC"
+		}
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{

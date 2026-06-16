@@ -4,7 +4,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 
+	_ "github.com/lib/pq"
 	"github.com/zicofarry/clay-app/backend/services/notification-service/internal/handler"
 	"github.com/zicofarry/clay-app/backend/services/notification-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/notification-service/internal/service"
@@ -25,9 +27,20 @@ func main() {
 		dbConfig.Host = "localhost"
 	}
 	dbConfig.Port = 5435 // matching local docker-compose for notification service
-	dbConfig.User = "clay_user"
-	dbConfig.Password = "clay_password"
-	dbConfig.DBName = "notification_db"
+	if portStr := os.Getenv("DB_PORT"); portStr != "" {
+		if p, err := strconv.Atoi(portStr); err == nil {
+			dbConfig.Port = p
+		}
+	}
+	if dbConfig.User == "" {
+		dbConfig.User = "clay_user"
+	}
+	if dbConfig.Password == "" {
+		dbConfig.Password = "clay_password"
+	}
+	if dbConfig.DBName == "" {
+		dbConfig.DBName = "notification_db"
+	}
 
 	db, err := database.NewPostgresDB(dbConfig)
 	if err != nil {
