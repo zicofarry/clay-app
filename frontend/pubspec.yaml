@@ -11,3 +11,5 @@ workspace:
   - packages/clay_ui
   - apps/user_app
   - apps/driver_app
+  - apps/merchant_app
+  - apps/admin_app
