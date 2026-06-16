@@ -200,6 +200,21 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) GetDriverProfileByUserID(ctx,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDriverProfileByUserID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).GetDriverProfileByUserID), ctx, userID)
 }
 
+// GetProfileByReferralCode mocks base method.
+func (m *MockUserRepositoryInterface) GetProfileByReferralCode(ctx context.Context, code string) (*models.UserProfile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfileByReferralCode", ctx, code)
+	ret0, _ := ret[0].(*models.UserProfile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfileByReferralCode indicates an expected call of GetProfileByReferralCode.
+func (mr *MockUserRepositoryInterfaceMockRecorder) GetProfileByReferralCode(ctx, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByReferralCode", reflect.TypeOf((*MockUserRepositoryInterface)(nil).GetProfileByReferralCode), ctx, code)
+}
+
 // GetProfileByUserID mocks base method.
 func (m *MockUserRepositoryInterface) GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error) {
 	m.ctrl.T.Helper()

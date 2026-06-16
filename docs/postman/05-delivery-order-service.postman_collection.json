@@ -1,0 +1,522 @@
+{
+  "info": {
+    "_postman_id": "clay-platform-collection-v2",
+    "name": "Clay Platform API - 05 - Delivery Order Service",
+    "description": "Complete API collection for the Clay superapp platform (23 microservices). All requests go through the API Gateway at port 8080. Set the `base_url` variable to your gateway URL (e.g. http://localhost:8080).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://172.188.169.107",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "address_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "method_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tx_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "log_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feed_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dispatch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_type",
+      "value": "driver",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Clay Platform API - Pre-request script",
+          "// Set auth_token variable after login"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Estimate Delivery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/estimate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "estimate"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pickup\": {\n    \"lat\": -6.2088,\n    \"lng\": 106.8456,\n    \"address\": \"Jl. Sudirman\",\n    \"contact_name\": \"Budi\",\n    \"contact_phone\": \"+6281234567890\"\n  },\n  \"destination\": {\n    \"lat\": -6.3,\n    \"lng\": 106.9,\n    \"address\": \"Jl. Gatot Subroto\",\n    \"contact_name\": \"Siti\",\n    \"contact_phone\": \"+6289876543210\"\n  },\n  \"package\": {\n    \"weight_kg\": 2.5,\n    \"description\": \"Electronics\",\n    \"is_fragile\": true\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Delivery Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pickup\": {\n    \"lat\": -6.2088,\n    \"lng\": 106.8456,\n    \"address\": \"Jl. Sudirman\",\n    \"contact_name\": \"Budi\",\n    \"contact_phone\": \"+6281234567890\"\n  },\n  \"destination\": {\n    \"lat\": -6.3,\n    \"lng\": 106.9,\n    \"address\": \"Jl. Gatot Subroto\",\n    \"contact_name\": \"Siti\",\n    \"contact_phone\": \"+6289876543210\"\n  },\n  \"package\": {\n    \"weight_kg\": 2.5,\n    \"description\": \"Electronics\",\n    \"is_fragile\": true\n  },\n  \"payment_method\": \"gopay\",\n  \"insurance\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Active Delivery",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/active",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "active"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Delivery History",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/history?page=1&limit=10",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "history"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Delivery Order Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/{{order_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "{{order_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cancel Delivery Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/{{order_id}}/cancel",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "{{order_id}}",
+            "cancel"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Changed my mind\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Delivery Fare Breakdown",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/{{order_id}}/fare-breakdown",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "{{order_id}}",
+            "fare-breakdown"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Rate Delivery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/orders/{{order_id}}/rate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "orders",
+            "{{order_id}}",
+            "rate"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Fast and careful handling\"\n}"
+        }
+      }
+    },
+    {
+      "name": "[Driver] Accept Delivery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/driver/orders/{{order_id}}/accept",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "driver",
+            "orders",
+            "{{order_id}}",
+            "accept"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "[Driver] Reject Delivery",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/driver/orders/{{order_id}}/reject",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "driver",
+            "orders",
+            "{{order_id}}",
+            "reject"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"Too far\"\n}"
+        }
+      }
+    },
+    {
+      "name": "[Driver] Update Delivery Status",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/delivery/driver/orders/{{order_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "delivery",
+            "driver",
+            "orders",
+            "{{order_id}}",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"picked_up\"\n}"
+        }
+      }
+    }
+  ]
+}

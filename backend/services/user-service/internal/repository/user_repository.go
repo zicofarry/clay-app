@@ -19,6 +19,7 @@ type UserRepositoryInterface interface {
 	UpdateProfile(ctx context.Context, profile *models.UserProfile) error
 	GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
 	ApplyReferral(ctx context.Context, userID uuid.UUID, referredBy uuid.UUID) error
+	GetProfileByReferralCode(ctx context.Context, code string) (*models.UserProfile, error)
 
 	// Address
 	CreateAddress(ctx context.Context, address *models.UserAddress) error
@@ -150,6 +151,36 @@ func (r *UserRepository) ApplyReferral(ctx context.Context, userID uuid.UUID, re
 	query := `UPDATE user_profiles SET referred_by = $1, updated_at = $2 WHERE user_id = $3`
 	_, err := r.db.ExecContext(ctx, query, referredBy, time.Now(), userID)
 	return err
+}
+
+func (r *UserRepository) GetProfileByReferralCode(ctx context.Context, code string) (*models.UserProfile, error) {
+	query := `
+		SELECT id, user_id, full_name, avatar_url, birth_date, gender, referral_code, referred_by, created_at, updated_at
+		FROM user_profiles
+		WHERE referral_code = $1
+	`
+	var p models.UserProfile
+	var birthDate sql.NullString
+	var referredBy uuid.NullUUID
+	err := r.db.QueryRowContext(ctx, query, code).Scan(
+		&p.ID, &p.UserID, &p.FullName, &p.AvatarURL,
+		&birthDate, &p.Gender, &p.ReferralCode, &referredBy,
+		&p.CreatedAt, &p.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get profile by referral code: %w", err)
+	}
+	if birthDate.Valid {
+		p.BirthDate = &birthDate.String
+	}
+	if referredBy.Valid {
+		ref := referredBy.UUID
+		p.ReferredBy = &ref
+	}
+	return &p, nil
 }
 
 // --- Address Repository ---
