@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -28,7 +29,7 @@ type PostgresConfig struct {
 
 // DefaultPostgresConfig returns sensible defaults for local development.
 func DefaultPostgresConfig() PostgresConfig {
-	return PostgresConfig{
+	cfg := PostgresConfig{
 		Host:            "localhost",
 		Port:            5432,
 		User:            "clay",
@@ -39,6 +40,30 @@ func DefaultPostgresConfig() PostgresConfig {
 		MaxIdleConns:    5,
 		ConnMaxLifetime: 5 * time.Minute,
 	}
+
+	if host := os.Getenv("DB_HOST"); host != "" {
+		cfg.Host = host
+	}
+	if portStr := os.Getenv("DB_PORT"); portStr != "" {
+		var port int
+		if _, err := fmt.Sscanf(portStr, "%d", &port); err == nil {
+			cfg.Port = port
+		}
+	}
+	if user := os.Getenv("DB_USER"); user != "" {
+		cfg.User = user
+	}
+	if password := os.Getenv("DB_PASSWORD"); password != "" {
+		cfg.Password = password
+	}
+	if dbName := os.Getenv("DB_NAME"); dbName != "" {
+		cfg.DBName = dbName
+	}
+	if sslMode := os.Getenv("DB_SSL_MODE"); sslMode != "" {
+		cfg.SSLMode = sslMode
+	}
+
+	return cfg
 }
 
 // DSN returns the PostgreSQL connection string.
@@ -85,15 +110,28 @@ type RedisConfig struct {
 
 // DefaultRedisConfig returns sensible defaults for local development.
 func DefaultRedisConfig() RedisConfig {
-	return RedisConfig{
+	cfg := RedisConfig{
 		Host: "localhost",
 		Port: 6379,
 		DB:   0,
 	}
+	if host := os.Getenv("REDIS_HOST"); host != "" {
+		cfg.Host = host
+	}
+	if portStr := os.Getenv("REDIS_PORT"); portStr != "" {
+		var port int
+		if _, err := fmt.Sscanf(portStr, "%d", &port); err == nil {
+			cfg.Port = port
+		}
+	}
+	return cfg
 }
 
 // Addr returns the Redis address in host:port format.
 func (c RedisConfig) Addr() string {
+	if addr := os.Getenv("REDIS_ADDR"); addr != "" {
+		return addr
+	}
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
