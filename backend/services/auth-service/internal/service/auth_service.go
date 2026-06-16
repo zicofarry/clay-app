@@ -327,18 +327,18 @@ func (s *AuthService) LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*
 
 func (s *AuthService) RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*AuthTokenResponse, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if s.tokens == nil {
 		s.tokens = make(map[string]*repository.Credential)
 	}
 
 	cred, exists := s.tokens[req.RefreshToken]
 	if !exists {
+		s.mu.Unlock()
 		return nil, ErrRefreshInvalid
 	}
 
 	delete(s.tokens, req.RefreshToken)
+	s.mu.Unlock()
 
 	tokens, err := s.generateTokens(ctx, cred, "rotated")
 	if err != nil {
