@@ -18,8 +18,8 @@ class MerchantHomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('${merchant?['name'] ?? 'Merchant'}'),
         actions: [
-          IconButton(icon: const Icon(Icons.bar_chart), onPressed: () => context.go('/report')),
-          IconButton(icon: const Icon(Icons.person), onPressed: () => context.go('/profile')),
+          IconButton(icon: const Icon(Icons.bar_chart), onPressed: () => context.push('/report')),
+          IconButton(icon: const Icon(Icons.person), onPressed: () => context.push('/profile')),
         ],
       ),
       body: ListView(
@@ -58,15 +58,15 @@ class MerchantHomeScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           Row(children: [
-            Expanded(child: _ActionCard(Icons.restaurant_menu, 'Menu', Colors.orange, () => context.go('/menu'))),
+            Expanded(child: _ActionCard(Icons.restaurant_menu, 'Menu', Colors.orange, () => context.push('/menu'))),
             const SizedBox(width: 12),
-            Expanded(child: _ActionCard(Icons.receipt_long, 'Pesanan', Colors.blue, () => context.go('/orders'))),
+            Expanded(child: _ActionCard(Icons.receipt_long, 'Pesanan', Colors.blue, () => context.push('/orders'))),
           ]),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _ActionCard(Icons.bar_chart, 'Laporan', Colors.purple, () => context.go('/report'))),
+            Expanded(child: _ActionCard(Icons.bar_chart, 'Laporan', Colors.purple, () => context.push('/report'))),
             const SizedBox(width: 12),
-            Expanded(child: _ActionCard(Icons.person, 'Profil', Colors.green, () => context.go('/profile'))),
+            Expanded(child: _ActionCard(Icons.person, 'Profil', Colors.green, () => context.push('/profile'))),
           ]),
           const SizedBox(height: 24),
           const Text('Pesanan Terbaru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -78,7 +78,7 @@ class MerchantHomeScreen extends ConsumerWidget {
               title: Text('Pesanan #ORD-${100 + i}'),
               subtitle: Text('Rp ${[25000, 45000, 32000][i]} • ${['Menunggu', 'Diproses', 'Selesai'][i]}'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.go('/order/ORD-${100 + i}'),
+              onTap: () => context.push('/order/ORD-${100 + i}'),
             ),
           )),
         ],

@@ -21,15 +21,15 @@ class UsersScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: CircleAvatar(backgroundColor: ClayColors.primary.withValues(alpha: 0.1), child: const Icon(Icons.person, color: ClayColors.primary)),
-              title: Text(u['name']),
-              subtitle: Text(u['phone']),
+              title: Text('${u['name']}'),
+              subtitle: Text('${u['phone']}'),
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: (u['status'] == 'active' ? Colors.green : Colors.red).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(u['status'], style: TextStyle(color: u['status'] == 'active' ? Colors.green : Colors.red, fontSize: 12)),
+                child: Text('${u['status']}', style: TextStyle(color: u['status'] == 'active' ? Colors.green : Colors.red, fontSize: 12)),
               ),
             ),
           );

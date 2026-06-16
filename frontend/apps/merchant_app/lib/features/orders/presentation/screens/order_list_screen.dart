@@ -79,7 +79,7 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
                                 ),
                                 child: Text(o['status'], style: TextStyle(color: statusColors[o['status']] ?? Colors.grey, fontSize: 12)),
                               ),
-                              onTap: () => context.go('/order/${o['id']}'),
+                              onTap: () => context.push('/order/${o['id']}'),
                             ),
                           );
                         },

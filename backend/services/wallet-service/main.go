@@ -21,8 +21,31 @@ func main() {
 	// ── DB Connection ────────────────────────────────────────────────────
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		// Fallback to docker-compose default
-		dsn = "postgres://clay_user:clay_password@localhost:5452/wallet_db?sslmode=disable"
+		host := os.Getenv("DB_HOST")
+		port := os.Getenv("DB_PORT")
+		if host != "" {
+			if port == "" {
+				port = "5432"
+			}
+		} else {
+			host = "localhost"
+			if port == "" {
+				port = "5452"
+			}
+		}
+		user := os.Getenv("DB_USER")
+		if user == "" {
+			user = "clay_user"
+		}
+		password := os.Getenv("DB_PASSWORD")
+		if password == "" {
+			password = "clay_password"
+		}
+		dbname := os.Getenv("DB_NAME")
+		if dbname == "" {
+			dbname = "wallet_db"
+		}
+		dsn = "postgres://" + user + ":" + password + "@" + host + ":" + port + "/" + dbname + "?sslmode=disable"
 	}
 
 	db, err := sql.Open("postgres", dsn)
