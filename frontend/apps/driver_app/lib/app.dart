@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:clay_ui/clay_ui.dart';
+import 'shared/app_theme.dart';
 import 'routing/app_router.dart';
 
 class DriverApp extends ConsumerWidget {
@@ -12,7 +12,7 @@ class DriverApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Clay - Driver',
       debugShowCheckedModeBanner: false,
-      theme: ClayTheme.light,
+      theme: AppTheme.light,
       routerConfig: router,
     );
   }
