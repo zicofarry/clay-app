@@ -227,7 +227,19 @@ func (s *UserService) ApplyReferralCode(ctx context.Context, userID uuid.UUID, r
 	if p.ReferredBy != nil {
 		return errors.New("already referred")
 	}
-	return errors.New("not implemented: need GetProfileByReferralCode in repo")
+
+	referrer, err := s.repo.GetProfileByReferralCode(ctx, referralCode)
+	if err != nil {
+		return err
+	}
+	if referrer == nil {
+		return errors.New("invalid referral code")
+	}
+	if referrer.UserID == userID {
+		return errors.New("cannot refer yourself")
+	}
+
+	return s.repo.ApplyReferral(ctx, userID, referrer.UserID)
 }
 
 // --- Address Service ---

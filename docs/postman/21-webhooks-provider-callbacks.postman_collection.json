@@ -1,0 +1,239 @@
+{
+  "info": {
+    "_postman_id": "clay-platform-collection-v2",
+    "name": "Clay Platform API - 21 - Webhooks (Provider Callbacks)",
+    "description": "Complete API collection for the Clay superapp platform (23 microservices). All requests go through the API Gateway at port 8080. Set the `base_url` variable to your gateway URL (e.g. http://localhost:8080).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://172.188.169.107",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "address_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "method_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tx_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "log_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feed_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dispatch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_type",
+      "value": "driver",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Clay Platform API - Pre-request script",
+          "// Set auth_token variable after login"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Email Delivery Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/webhooks/email/delivery",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "email",
+            "delivery"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"delivered\",\n  \"message_id\": \"msg_abc123\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"signature\": \"sha256=abc...\"\n}"
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "SMS Delivery Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/webhooks/sms/delivery",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "sms",
+            "delivery"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"delivered\",\n  \"message_id\": \"sms_xyz789\",\n  \"to\": \"+6281234567890\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"signature\": \"sha256=xyz...\"\n}"
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    }
+  ]
+}
