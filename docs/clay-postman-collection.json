@@ -1279,7 +1279,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pickup\": {\n    \"lat\": -6.2088,\n    \"lng\": 106.8456,\n    \"address\": \"Jl. Sudirman\"\n  },\n  \"destination\": {\n    \"lat\": -6.3,\n    \"lng\": 106.9,\n    \"address\": \"Jl. Gatot Subroto\"\n  },\n  \"service_type\": \"gocar\"\n}"
+              "raw": "{\n  \"origin_lat\": -6.2088,\n  \"origin_lng\": 106.8456,\n  \"dest_lat\": -6.3,\n  \"dest_lng\": 106.9,\n  \"vehicle_type\": \"car\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1309,7 +1314,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pickup\": {\n    \"lat\": -6.2088,\n    \"lng\": 106.8456,\n    \"address\": \"Jl. Sudirman\"\n  },\n  \"destination\": {\n    \"lat\": -6.3,\n    \"lng\": 106.9,\n    \"address\": \"Jl. Gatot Subroto\"\n  },\n  \"service_type\": \"gocar\",\n  \"payment_method\": \"gopay\",\n  \"promo_code\": \"\"\n}"
+              "raw": "{\n  \"service_type\": \"gocar\",\n  \"vehicle_type\": \"car\",\n  \"origin_lat\": -6.2088,\n  \"origin_lng\": 106.8456,\n  \"origin_address\": \"Jl. Sudirman\",\n  \"dest_lat\": -6.3,\n  \"dest_lng\": 106.9,\n  \"dest_address\": \"Jl. Gatot Subroto\",\n  \"payment_method\": \"gopay\",\n  \"fare_estimate\": 25000.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1492,7 +1502,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great driver!\",\n  \"tags\": [\n    \"polite\",\n    \"clean_car\"\n  ]\n}"
+              "raw": "{\n  \"score\": 5,\n  \"comment\": \"Great driver!\",\n  \"tags\": [\n    \"polite\",\n    \"clean_car\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
@@ -1591,7 +1606,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"picked_up\"\n}"
+              "raw": "{\n  \"action\": \"arrived_at_pickup\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         }
