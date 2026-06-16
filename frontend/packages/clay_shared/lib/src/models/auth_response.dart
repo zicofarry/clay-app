@@ -12,10 +12,20 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    final data = json.containsKey('data') ? (json['data'] as Map<String, dynamic>? ?? json) : json;
+    
+    final userMap = data['user'] as Map<String, dynamic>? ?? {
+      'id': data['user_id']?.toString() ?? '',
+      'full_name': data['full_name']?.toString() ?? '',
+      'phone_number': data['phone']?.toString() ?? '',
+      'email': data['email']?.toString() ?? '',
+      'role': data['role']?.toString() ?? '',
+    };
+
     return AuthResponse(
-      accessToken: json['access_token']?.toString() ?? '',
-      refreshToken: json['refresh_token']?.toString() ?? '',
-      user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
+      accessToken: data['access_token']?.toString() ?? '',
+      refreshToken: data['refresh_token']?.toString() ?? '',
+      user: UserModel.fromJson(userMap),
     );
   }
 }

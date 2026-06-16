@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/zicofarry/clay-app/backend/pkg/middleware"
 	"github.com/zicofarry/clay-app/backend/pkg/response"
 	"github.com/zicofarry/clay-app/backend/services/user-service/internal/models"
 	"github.com/zicofarry/clay-app/backend/services/user-service/internal/service"
@@ -21,6 +22,12 @@ func NewUserHandler(svc service.UserServiceInterface) *UserHandler {
 
 // Mocking getting UserID from context. In a real app, middleware sets this.
 func getUserIDFromContext(ctx context.Context) uuid.UUID {
+	userIDStr := middleware.GetUserID(ctx)
+	if userIDStr != "" {
+		if id, err := uuid.Parse(userIDStr); err == nil {
+			return id
+		}
+	}
 	return uuid.MustParse("00000000-0000-0000-0000-000000000001")
 }
 

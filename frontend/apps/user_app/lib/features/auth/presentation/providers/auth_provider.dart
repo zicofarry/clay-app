@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
-import '../../data/mock_auth_repository.dart';
+import '../../data/auth_repository.dart';
 
-final mockAuthRepositoryProvider = Provider<MockAuthRepository>((ref) {
-  return MockAuthRepository();
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepository(ClayApi.instance);
 });
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final repository = ref.watch(mockAuthRepositoryProvider);
+  final repository = ref.watch(authRepositoryProvider);
   return AuthNotifier(repository);
 });
 
@@ -36,7 +36,7 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final MockAuthRepository _repository;
+  final AuthRepository _repository;
 
   AuthNotifier(this._repository) : super(const AuthState());
 
@@ -66,6 +66,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }
+  }
+
+  void logout() {
+    ClayApi.instance.clearToken();
+    state = const AuthState();
   }
 
   void clearError() {
