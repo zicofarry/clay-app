@@ -1,0 +1,594 @@
+{
+  "info": {
+    "_postman_id": "clay-platform-collection-v2",
+    "name": "Clay Platform API - 23 - Health Checks",
+    "description": "Complete API collection for the Clay superapp platform (23 microservices). All requests go through the API Gateway at port 8080. Set the `base_url` variable to your gateway URL (e.g. http://localhost:8080).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://172.188.169.107",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "address_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "method_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tx_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "log_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feed_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dispatch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_type",
+      "value": "driver",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Clay Platform API - Pre-request script",
+          "// Set auth_token variable after login"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Gateway Health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "Auth Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8001/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8001",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "User Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8002/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8002",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Email Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8003/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8003",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Payment Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8004/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8004",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Notification Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8005/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8005",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Tracking Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8006/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8006",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Audit Log Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8007/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8007",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Chat Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8008/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8008",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Geo Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8009/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8009",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Matching Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8010/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8010",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Merchant Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8011/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8011",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Pricing Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8012/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8012",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Promotion Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8013/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8013",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Push Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8014/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8014",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Rating Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8015/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8015",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ride Order Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8016/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8016",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Food Order Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8017/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8017",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delivery Order Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8018/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8018",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Search Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8019/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8019",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Security Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8020/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8020",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SMS Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8021/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8021",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Wallet Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8022/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8022",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "History Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8023/health",
+          "host": [
+            "localhost"
+          ],
+          "port": "8023",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    }
+  ]
+}

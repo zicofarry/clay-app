@@ -1,0 +1,450 @@
+{
+  "info": {
+    "_postman_id": "clay-platform-collection-v2",
+    "name": "Clay Platform API - 22 - Internal Endpoints (Service-to-Service)",
+    "description": "Complete API collection for the Clay superapp platform (23 microservices). All requests go through the API Gateway at port 8080. Set the `base_url` variable to your gateway URL (e.g. http://localhost:8080).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://172.188.169.107",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "address_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "method_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tx_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "log_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feed_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dispatch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_type",
+      "value": "driver",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Clay Platform API - Pre-request script",
+          "// Set auth_token variable after login"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Lookup User by Phone",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/users/internal/users/lookup-by-phone",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            "internal",
+            "users",
+            "lookup-by-phone"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+6281234567890\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Food Order (Internal)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/food/internal/orders/{{order_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "food",
+            "internal",
+            "orders",
+            "{{order_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Assign Driver to Food Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/food/internal/orders/{{order_id}}/assign-driver",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "food",
+            "internal",
+            "orders",
+            "{{order_id}}",
+            "assign-driver"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"driver_id\": \"{{driver_id}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get User Active Food Order",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/food/internal/users/{{user_id}}/active-order",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "food",
+            "internal",
+            "users",
+            "{{user_id}}",
+            "active-order"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Merchant (Internal)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/internal/merchants/{{merchant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "internal",
+            "merchants",
+            "{{merchant_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Check Merchant Is Open",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/internal/merchants/{{merchant_id}}/is-open",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "internal",
+            "merchants",
+            "{{merchant_id}}",
+            "is-open"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Batch Get Menu Items",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/internal/menu-items/batch",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "internal",
+            "menu-items",
+            "batch"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"item_ids\": [\n    \"{{item_id}}\",\n    \"{{item_id_2}}\"\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Internal Dispatch Driver",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/dispatcher/internal/dispatcher/dispatch",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "dispatcher",
+            "internal",
+            "dispatcher",
+            "dispatch"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"{{order_id}}\",\n  \"order_type\": \"ride\",\n  \"pickup\": {\n    \"lat\": -6.2088,\n    \"lng\": 106.8456\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Send Push Notification (Internal)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8014/internal/push/send",
+          "host": [
+            "localhost"
+          ],
+          "port": "8014",
+          "path": [
+            "internal",
+            "push",
+            "send"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"title\": \"Order Update\",\n  \"body\": \"Your driver is on the way!\",\n  \"data\": {\n    \"order_id\": \"{{order_id}}\"\n  }\n}"
+        }
+      }
+    }
+  ]
+}

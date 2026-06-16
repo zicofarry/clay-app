@@ -1,0 +1,676 @@
+{
+  "info": {
+    "_postman_id": "clay-platform-collection-v2",
+    "name": "Clay Platform API - 13 - Geo Service",
+    "description": "Complete API collection for the Clay superapp platform (23 microservices). All requests go through the API Gateway at port 8080. Set the `base_url` variable to your gateway URL (e.g. http://localhost:8080).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://172.188.169.107",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "address_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "method_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tx_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "log_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feed_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dispatch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_type",
+      "value": "driver",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Clay Platform API - Pre-request script",
+          "// Set auth_token variable after login"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Estimate Distance & Duration",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/estimate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "estimate"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"origin\": {\n    \"lat\": -6.2088,\n    \"lng\": 106.8456\n  },\n  \"destination\": {\n    \"lat\": -6.3,\n    \"lng\": 106.9\n  }\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Polyline",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/polyline?origin_lat=-6.2088&origin_lng=106.8456&dest_lat=-6.3000&dest_lng=106.9000",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "polyline"
+          ],
+          "query": [
+            {
+              "key": "origin_lat",
+              "value": "-6.2088"
+            },
+            {
+              "key": "origin_lng",
+              "value": "106.8456"
+            },
+            {
+              "key": "dest_lat",
+              "value": "-6.3000"
+            },
+            {
+              "key": "dest_lng",
+              "value": "106.9000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Routing",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/routing?origin_lat=-6.2088&origin_lng=106.8456&dest_lat=-6.3000&dest_lng=106.9000",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "routing"
+          ],
+          "query": [
+            {
+              "key": "origin_lat",
+              "value": "-6.2088"
+            },
+            {
+              "key": "origin_lng",
+              "value": "106.8456"
+            },
+            {
+              "key": "dest_lat",
+              "value": "-6.3000"
+            },
+            {
+              "key": "dest_lng",
+              "value": "106.9000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Snap to Road",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/snapping",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "snapping"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"points\": [\n    {\n      \"lat\": -6.2088,\n      \"lng\": 106.8456\n    },\n    {\n      \"lat\": -6.21,\n      \"lng\": 106.848\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Traffic",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/traffic?lat=-6.2088&lng=106.8456&radius=5",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "traffic"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "-6.2088"
+            },
+            {
+              "key": "lng",
+              "value": "106.8456"
+            },
+            {
+              "key": "radius",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Places Autocomplete",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/places/autocomplete?query=Sudirman&lat=-6.2088&lng=106.8456",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "places",
+            "autocomplete"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "Sudirman"
+            },
+            {
+              "key": "lat",
+              "value": "-6.2088"
+            },
+            {
+              "key": "lng",
+              "value": "106.8456"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Place Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/places/details?place_id=ChIJ...",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "places",
+            "details"
+          ],
+          "query": [
+            {
+              "key": "place_id",
+              "value": "ChIJ..."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Geocode Address",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/geocode",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "geocode"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"address\": \"Jl. Sudirman No. 1, Jakarta\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Reverse Geocode",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/maps/reverse-geocode",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "maps",
+            "reverse-geocode"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lat\": -6.2088,\n  \"lng\": 106.8456\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Distance",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/distance?origin_lat=-6.2088&origin_lng=106.8456&dest_lat=-6.3000&dest_lng=106.9000",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "distance"
+          ],
+          "query": [
+            {
+              "key": "origin_lat",
+              "value": "-6.2088"
+            },
+            {
+              "key": "origin_lng",
+              "value": "106.8456"
+            },
+            {
+              "key": "dest_lat",
+              "value": "-6.3000"
+            },
+            {
+              "key": "dest_lng",
+              "value": "106.9000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Check Geofence",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/geofence/check",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "geofence",
+            "check"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lat\": -6.2088,\n  \"lng\": 106.8456,\n  \"geofence_id\": \"jakarta_pusat\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Driver Location",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/drivers/{{driver_id}}/location",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "drivers",
+            "{{driver_id}}",
+            "location"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Driver Location",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/drivers/{{driver_id}}/location",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "drivers",
+            "{{driver_id}}",
+            "location"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"lat\": -6.2088,\n  \"lng\": 106.8456,\n  \"heading\": 45.0,\n  \"speed_kmh\": 30.0\n}"
+        }
+      }
+    },
+    {
+      "name": "Find Nearby Drivers",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/drivers/nearby?lat=-6.2088&lng=106.8456&radius=5&service_type=gocar",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "drivers",
+            "nearby"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "-6.2088"
+            },
+            {
+              "key": "lng",
+              "value": "106.8456"
+            },
+            {
+              "key": "radius",
+              "value": "5"
+            },
+            {
+              "key": "service_type",
+              "value": "gocar"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
