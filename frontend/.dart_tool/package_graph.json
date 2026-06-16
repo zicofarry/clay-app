@@ -1,9 +1,11 @@
 {
   "roots": [
+    "admin_app",
     "clay_frontend",
     "clay_shared",
     "clay_ui",
     "driver_app",
+    "merchant_app",
     "user_app"
   ],
   "packages": [
@@ -65,6 +67,38 @@
     },
     {
       "name": "driver_app",
+      "version": "1.0.0+1",
+      "dependencies": [
+        "clay_shared",
+        "clay_ui",
+        "cupertino_icons",
+        "flutter",
+        "flutter_riverpod",
+        "go_router"
+      ],
+      "devDependencies": [
+        "flutter_lints",
+        "flutter_test"
+      ]
+    },
+    {
+      "name": "merchant_app",
+      "version": "1.0.0+1",
+      "dependencies": [
+        "clay_shared",
+        "clay_ui",
+        "cupertino_icons",
+        "flutter",
+        "flutter_riverpod",
+        "go_router"
+      ],
+      "devDependencies": [
+        "flutter_lints",
+        "flutter_test"
+      ]
+    },
+    {
+      "name": "admin_app",
       "version": "1.0.0+1",
       "dependencies": [
         "clay_shared",
