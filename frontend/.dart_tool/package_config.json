@@ -564,6 +564,18 @@
       "rootUri": "../apps/driver_app",
       "packageUri": "lib/",
       "languageVersion": "3.10"
+    },
+    {
+      "name": "merchant_app",
+      "rootUri": "../apps/merchant_app",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "admin_app",
+      "rootUri": "../apps/admin_app",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
     }
   ],
   "generator": "pub",
