@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -129,9 +130,15 @@ func (c *Client) doRequest(method, path string, body interface{}) error {
 	contentHash := sha256Hex(jsonBody)
 	date := time.Now().UTC().Format(http.TimeFormat)
 
-	url := strings.TrimRight(c.config.Endpoint, "/") + path
+	parsedURL, err := url.Parse(c.config.Endpoint)
+	if err != nil {
+		return fmt.Errorf("parse endpoint: %w", err)
+	}
+	host := parsedURL.Host
 
-	req, err := http.NewRequest(method, url, bytes.NewReader(jsonBody))
+	targetURL := strings.TrimRight(c.config.Endpoint, "/") + path
+
+	req, err := http.NewRequest(method, targetURL, bytes.NewReader(jsonBody))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
@@ -139,13 +146,15 @@ func (c *Client) doRequest(method, path string, body interface{}) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-ms-date", date)
 	req.Header.Set("x-ms-content-sha256", contentHash)
+	req.Header.Set("Host", host)
 
-	stringToSign := fmt.Sprintf("%s\n%s\nx-ms-date:%s\nx-ms-content-sha256:%s",
-		method, path, date, contentHash)
+	// Construct Azure HMAC String to Sign:
+	// {HTTP_METHOD}\n{PATH_AND_QUERY}\n{TIMESTAMP};{HOST};{CONTENT_HASH}
+	stringToSign := fmt.Sprintf("%s\n%s\n%s;%s;%s", method, path, date, host, contentHash)
 
 	signature := computeHMAC(c.config.AccessKey, stringToSign)
 	req.Header.Set("Authorization",
-		fmt.Sprintf("HMAC-SHA256 SignedHeaders=x-ms-date;x-ms-content-sha256&Signature=%s", signature))
+		fmt.Sprintf("HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=%s", signature))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

@@ -90,16 +90,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
 
-      final contact = phone ?? email ?? '';
-      await _repository.requestOtp(contact, 'registration');
-
-      state = state.copyWith(
-        isLoading: false,
-        registered: true,
-        contact: contact,
-        password: password,
-        fullName: fullName,
-      );
+      if (email != null && email.isNotEmpty) {
+        await _repository.requestOtp(email, 'registration');
+        state = state.copyWith(
+          isLoading: false,
+          registered: true,
+          contact: email,
+          password: password,
+          fullName: fullName,
+        );
+      } else {
+        final contact = phone ?? '';
+        final response = await _repository.login(contact, password);
+        await _repository.createProfile(fullName);
+        state = state.copyWith(
+          isLoading: false,
+          authResponse: response,
+        );
+        _ref.invalidate(profileProvider);
+      }
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }

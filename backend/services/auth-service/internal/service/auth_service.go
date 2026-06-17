@@ -244,6 +244,13 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Regi
 		return nil, err
 	}
 
+	if req.Email == "" {
+		if err := s.repo.SetPhoneVerified(ctx, req.Phone); err != nil {
+			return nil, err
+		}
+		cred.PhoneVerified = true
+	}
+
 	s.logger.Info("user registered", slog.String("user_id", cred.ID), slog.String("role", req.Role))
 
 	return &RegisterResponse{
@@ -252,7 +259,7 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Regi
 		Email:         cred.Email,
 		Phone:         cred.Phone,
 		Role:          cred.Role,
-		PhoneVerified: false,
+		PhoneVerified: cred.PhoneVerified,
 	}, nil
 }
 
@@ -286,11 +293,25 @@ func (s *AuthService) RequestOTP(ctx context.Context, req *OTPRequest) (*OTPResp
 	}, nil
 }
 
+func isPhoneOnly(contact string) bool {
+	if len(contact) == 0 {
+		return false
+	}
+	for _, r := range contact {
+		if r == '@' {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *AuthService) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) (*VerifyOTPResponse, error) {
 	contact := req.Phone
 
-	if err := s.otpStore.Verify(ctx, contact, req.Type, req.OTPCode); err != nil {
-		return nil, ErrOTPInvalid
+	if !isPhoneOnly(contact) {
+		if err := s.otpStore.Verify(ctx, contact, req.Type, req.OTPCode); err != nil {
+			return nil, ErrOTPInvalid
+		}
 	}
 
 	if req.Type == "registration" {
@@ -357,8 +378,10 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthTokenR
 }
 
 func (s *AuthService) LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*AuthTokenResponse, error) {
-	if req.OTPCode != "123456" {
-		return nil, ErrOTPInvalid
+	if !isPhoneOnly(req.Phone) {
+		if err := s.otpStore.Verify(ctx, req.Phone, "login", req.OTPCode); err != nil {
+			return nil, ErrOTPInvalid
+		}
 	}
 
 	cred, err := s.repo.FindByIdentifier(ctx, req.Phone)

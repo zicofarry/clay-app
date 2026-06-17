@@ -65,6 +65,13 @@ func NewAuthRepository(db *sql.DB, redis interface{}) *AuthRepository {
 	return &AuthRepository{db: db, redis: redis}
 }
 
+func nullIfEmpty(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
 func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential) (*Credential, error) {
 	query := `
 		INSERT INTO credentials (username, email, phone, password_hash, role, status, email_verified, phone_verified)
@@ -73,7 +80,7 @@ func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential)
 	`
 
 	err := r.db.QueryRowContext(ctx, query,
-		cred.Username, cred.Email, cred.Phone, cred.PasswordHash, cred.Role,
+		cred.Username, nullIfEmpty(cred.Email), nullIfEmpty(cred.Phone), cred.PasswordHash, cred.Role,
 	).Scan(&cred.ID, &cred.CreatedAt, &cred.UpdatedAt)
 
 	if err != nil {

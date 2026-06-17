@@ -48,11 +48,67 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
     ref.listen<AuthState>(authStateProvider, (prev, state) {
       if (state.authResponse != null && widget.purpose == 'registration') {
-        context.go('/home');
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.all(24),
+            icon: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 56),
+            title: const Text(
+              'Verifikasi Berhasil',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: ClayColors.textPrimary),
+            ),
+            content: const Text(
+              'Selamat! Akun Anda telah berhasil diverifikasi dan aktif. Silakan masuk untuk mulai menggunakan Clay.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: ClayColors.textSecondary, height: 1.4),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ClayButton(
+                  label: 'Masuk Ke Aplikasi',
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    context.go('/home');
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
       }
       if (state.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.error!)),
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.all(24),
+            icon: const Icon(Icons.error_outline_rounded, color: ClayColors.error, size: 56),
+            title: const Text(
+              'Verifikasi Gagal',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: ClayColors.textPrimary),
+            ),
+            content: Text(
+              state.error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: ClayColors.textSecondary, height: 1.4),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ClayButton(
+                  label: 'Coba Lagi',
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ),
+            ],
+          ),
         );
         ref.read(authStateProvider.notifier).clearError();
       }

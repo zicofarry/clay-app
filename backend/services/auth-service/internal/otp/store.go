@@ -85,6 +85,10 @@ func (s *Store) Verify(ctx context.Context, contact, purpose, code string) error
 	return nil
 }
 
+func (s *Store) Peek(ctx context.Context, contact, purpose string) (string, error) {
+	return s.rdb.Get(ctx, otpKey(contact, purpose)).Result()
+}
+
 func (s *Store) Delete(ctx context.Context, contact, purpose string) error {
 	return s.rdb.Del(ctx, otpKey(contact, purpose)).Err()
 }
