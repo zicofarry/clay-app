@@ -63,7 +63,14 @@ class ClayButton extends StatelessWidget {
                   color: Colors.white,
                 ),
               )
-            : Text(label),
+            : Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
       ),
     );
   }

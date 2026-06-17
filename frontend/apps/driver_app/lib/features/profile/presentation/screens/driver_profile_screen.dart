@@ -12,6 +12,9 @@ class DriverProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(driverAuthProvider.notifier).refreshProfile();
+    });
     final d = ref.watch(driverAuthProvider).driver;
 
     final vehicleBrand = d?['vehicle_brand']?.toString() ?? d?['vehicle']?.toString() ?? '-';
@@ -37,6 +40,7 @@ class DriverProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             Padding(
@@ -73,7 +77,9 @@ class DriverProfileScreen extends ConsumerWidget {
                             const SizedBox(width: 16),
                             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(d?['name'] ?? '-', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ClayColors.textPrimary)),
-                              Text(d?['phone'] ?? '-', style: const TextStyle(fontSize: 13, color: ClayColors.textSecondary)),
+                              if ((d?['email']?.toString() ?? '').isNotEmpty)
+                                Text(d?['email'], style: const TextStyle(fontSize: 12, color: ClayColors.textSecondary)),
+                              Text(d?['phone'] ?? '-', style: const TextStyle(fontSize: 12, color: ClayColors.textSecondary)),
                               const SizedBox(height: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -98,30 +104,57 @@ class DriverProfileScreen extends ConsumerWidget {
 
                   const Text('Kendaraan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: ClayColors.textPrimary)),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: softShadow(),
-                    child: Row(
-                      children: [
-                        Container(width: 56, height: 56, decoration: BoxDecoration(color: ClayColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.directions_car, size: 28, color: ClayColors.primary)),
-                        const SizedBox(width: 16),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(vehicleDisplay, style: const TextStyle(fontWeight: FontWeight.w600, color: ClayColors.textPrimary)),
-                          Text(plate, style: const TextStyle(fontSize: 13, color: ClayColors.textSecondary)),
-                          if (vehicleMeta.isNotEmpty)
-                            Text(vehicleMeta, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
-                        ])),
-                      ],
+                  if ((vehicleBrand.isEmpty || vehicleBrand == '-') && (plate.isEmpty || plate == '-'))
+                    GestureDetector(
+                      onTap: () => context.go('/edit-profile'),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: softShadow(),
+                        child: Row(
+                          children: [
+                            Container(width: 56, height: 56, decoration: BoxDecoration(color: ClayColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.add_circle_outline, size: 28, color: ClayColors.warning)),
+                            const SizedBox(width: 16),
+                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              const Text('Lengkapi Data Kendaraan', style: TextStyle(fontWeight: FontWeight.w600, color: ClayColors.textPrimary)),
+                              const SizedBox(height: 2),
+                              Text('Tap di sini untuk menambahkan data kendaraan', style: TextStyle(fontSize: 12, color: ClayColors.textSecondary)),
+                            ])),
+                            const Icon(Icons.chevron_right, size: 20, color: ClayColors.textSecondary),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: softShadow(),
+                      child: Row(
+                        children: [
+                          Container(width: 56, height: 56, decoration: BoxDecoration(color: ClayColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.directions_car, size: 28, color: ClayColors.primary)),
+                          const SizedBox(width: 16),
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(vehicleDisplay, style: const TextStyle(fontWeight: FontWeight.w600, color: ClayColors.textPrimary)),
+                            Text(plate, style: const TextStyle(fontSize: 13, color: ClayColors.textSecondary)),
+                            if (vehicleMeta.isNotEmpty)
+                              Text(vehicleMeta, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
+                          ])),
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 16),
 
-                  const Text('Pengaturan Akun', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: ClayColors.textPrimary)),
+                  const Text('Akun', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: ClayColors.textPrimary)),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(color: ClayColors.card, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)]),
                     child: Column(
                       children: [
+                        _MenuItem(icon: Icons.person_outline, label: 'Edit Profil', onTap: () => context.go('/edit-profile')),
+                        _MenuItem(icon: Icons.description_outlined, label: 'Dokumen', onTap: () => context.go('/documents')),
+                        _MenuItem(icon: Icons.account_balance_wallet_outlined, label: 'Wallet', onTap: () => context.go('/wallet')),
+                        _MenuItem(icon: Icons.star_outline, label: 'Rating', onTap: () => context.go('/ratings')),
+                        _MenuItem(icon: Icons.local_offer_outlined, label: 'Voucher', onTap: () => context.go('/vouchers')),
+                        _MenuItem(icon: Icons.notifications_outlined, label: 'Notifikasi', onTap: () => context.go('/notification-preferences')),
                         _MenuItem(icon: Icons.settings_outlined, label: 'Pengaturan', onTap: () => context.go('/settings')),
                         _MenuItem(icon: Icons.help_outline, label: 'Bantuan', onTap: () => context.go('/help'), isLast: true),
                       ],
@@ -130,8 +163,8 @@ class DriverProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
 
                   GestureDetector(
-                    onTap: () {
-                      ref.read(driverAuthProvider.notifier).logout();
+                    onTap: () async {
+                      await ref.read(driverAuthProvider.notifier).logout();
                       ref.read(isOnlineProvider.notifier).state = false;
                       context.go('/login');
                     },

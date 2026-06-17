@@ -197,7 +197,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"user\"\n}"
+          "raw": "{\n  \"username\": \"budi\",\n  \"phone\": \"+6281234567890\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"user\"\n}"
         },
         "auth": {
           "type": "noauth"
@@ -285,36 +285,6 @@
         "body": {
           "mode": "raw",
           "raw": "{\n  \"password\": \"Password123!\",\n  \"identifier\": \"+6281234567890\"\n}"
-        },
-        "auth": {
-          "type": "noauth"
-        }
-      }
-    },
-    {
-      "name": "Login (OTP)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/auth/login/otp",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "auth",
-            "login",
-            "otp"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"otp_code\": \"123456\"\n}"
         },
         "auth": {
           "type": "noauth"

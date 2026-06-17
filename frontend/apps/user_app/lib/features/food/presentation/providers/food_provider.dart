@@ -16,6 +16,10 @@ class FoodState {
   final Map<String, int> cart;
   final Map<String, dynamic>? activeOrder;
   final List<Map<String, dynamic>> history;
+  final String? selectedMerchantId;
+  final String? selectedMerchantName;
+  final String? selectedAddress;
+  final String? selectedAddressLabel;
 
   const FoodState({
     this.isLoading = false,
@@ -25,6 +29,10 @@ class FoodState {
     this.cart = const {},
     this.activeOrder,
     this.history = const [],
+    this.selectedMerchantId,
+    this.selectedMerchantName,
+    this.selectedAddress,
+    this.selectedAddressLabel,
   });
 
   FoodState copyWith({
@@ -35,6 +43,10 @@ class FoodState {
     Map<String, int>? cart,
     Map<String, dynamic>? activeOrder,
     List<Map<String, dynamic>>? history,
+    String? selectedMerchantId,
+    String? selectedMerchantName,
+    String? selectedAddress,
+    String? selectedAddressLabel,
   }) {
     return FoodState(
       isLoading: isLoading ?? this.isLoading,
@@ -44,6 +56,10 @@ class FoodState {
       cart: cart ?? this.cart,
       activeOrder: activeOrder ?? this.activeOrder,
       history: history ?? this.history,
+      selectedMerchantId: selectedMerchantId ?? this.selectedMerchantId,
+      selectedMerchantName: selectedMerchantName ?? this.selectedMerchantName,
+      selectedAddress: selectedAddress ?? this.selectedAddress,
+      selectedAddressLabel: selectedAddressLabel ?? this.selectedAddressLabel,
     );
   }
 }
@@ -52,6 +68,28 @@ class FoodNotifier extends StateNotifier<FoodState> {
   final MockFoodRepository _repo;
 
   FoodNotifier(this._repo) : super(const FoodState());
+
+  void setSelectedAddress(String address, String label) {
+    state = state.copyWith(
+      selectedAddress: address,
+      selectedAddressLabel: label,
+    );
+  }
+
+  void selectMerchant(String merchantId, String merchantName) {
+    if (state.selectedMerchantId != merchantId) {
+      state = state.copyWith(
+        selectedMerchantId: merchantId,
+        selectedMerchantName: merchantName,
+        cart: {},
+      );
+    } else {
+      state = state.copyWith(
+        selectedMerchantId: merchantId,
+        selectedMerchantName: merchantName,
+      );
+    }
+  }
 
   Future<void> loadMerchants() async {
     state = state.copyWith(isLoading: true);
@@ -67,7 +105,23 @@ class FoodNotifier extends StateNotifier<FoodState> {
 
   void addToCart(String itemId, int quantity) {
     final cart = Map<String, int>.from(state.cart);
-    cart[itemId] = (cart[itemId] ?? 0) + quantity;
+    final current = cart[itemId] ?? 0;
+    final updated = current + quantity;
+    if (updated <= 0) {
+      cart.remove(itemId);
+    } else {
+      cart[itemId] = updated;
+    }
+    state = state.copyWith(cart: cart);
+  }
+
+  void updateCartQuantity(String itemId, int quantity) {
+    final cart = Map<String, int>.from(state.cart);
+    if (quantity <= 0) {
+      cart.remove(itemId);
+    } else {
+      cart[itemId] = quantity;
+    }
     state = state.copyWith(cart: cart);
   }
 
@@ -96,7 +150,7 @@ class FoodNotifier extends StateNotifier<FoodState> {
   }
 
   Future<void> createOrder({
-    required String merchantId, required String address,
+    required String merchantId, required String address, String paymentMethod = 'cash',
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -105,11 +159,13 @@ class FoodNotifier extends StateNotifier<FoodState> {
         return {'item_id': e.key, 'name': item['name'], 'price': item['price'], 'qty': e.value};
       }).toList();
 
+      final targetMerchantId = merchantId.isNotEmpty ? merchantId : (state.selectedMerchantId ?? '');
       final order = await _repo.createOrder(
-        merchantId: merchantId,
+        merchantId: targetMerchantId,
         items: items,
         total: totalPrice,
         address: address,
+        paymentMethod: paymentMethod,
       );
       state = state.copyWith(isLoading: false, activeOrder: order, cart: {});
     } on AppException catch (e) {
@@ -117,8 +173,25 @@ class FoodNotifier extends StateNotifier<FoodState> {
     }
   }
 
+  Future<void> loadActiveOrder() async {
+    try {
+      final order = await _repo.getActiveOrder();
+      state = state.copyWith(activeOrder: order);
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
   Future<void> loadHistory() async {
-    final list = await _repo.getHistory();
-    state = state.copyWith(history: list);
+    try {
+      final list = await _repo.getHistory();
+      state = state.copyWith(history: list);
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 }

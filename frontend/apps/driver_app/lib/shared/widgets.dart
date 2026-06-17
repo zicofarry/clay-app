@@ -38,43 +38,42 @@ class DriverBottomNav extends StatelessWidget {
       ('/profile', Icons.person_outline, 'Profil'),
     ];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 8)),
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: items.map((item) {
-            final active = item.$1 == current;
-            return Expanded(
-              child: GestureDetector(
-              onTap: () {
-                if (!active) context.go(item.$1);
-              },
-              child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(item.$2, size: 22, color: active ? ClayColors.primary : ClayColors.textSecondary),
-                    const SizedBox(height: 4),
-                    FittedBox(fit: BoxFit.scaleDown, child: Text(item.$3, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: active ? ClayColors.primary : ClayColors.textSecondary))),
-                    if (active) ...[
-                      const SizedBox(height: 4),
-                      Container(width: 6, height: 6, decoration: const BoxDecoration(color: ClayColors.primary, shape: BoxShape.circle)),
-                    ],
-                  ],
+    return Material(
+      color: Colors.white,
+      elevation: 8,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: items.map((item) {
+              final active = item.$1 == current;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (!active) context.go(item.$1);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(item.$2, size: 24, color: active ? ClayColors.primary : ClayColors.textSecondary),
+                        const SizedBox(height: 4),
+                        Text(item.$3, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: active ? ClayColors.primary : ClayColors.textSecondary)),
+                        if (active) ...[
+                          const SizedBox(height: 4),
+                          Container(width: 6, height: 6, decoration: const BoxDecoration(color: ClayColors.primary, shape: BoxShape.circle)),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

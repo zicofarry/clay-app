@@ -232,6 +232,14 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+                _SectionTitle('Keamanan'),
+                _MenuGroup(
+                  items: [
+                    _MenuItemData(Icons.devices_outlined, Colors.purple, 'Perangkat Aktif', 'Kelola sesi login',
+                        onTap: () => context.push('/sessions')),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _SectionTitle('Lainnya'),
                 _MenuGroup(
                   items: [
@@ -511,26 +519,31 @@ class _MenuGroup extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) Divider(height: 1, indent: 56, color: ClayColors.divider),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: items[i].iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+      child: Material(
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0) Divider(height: 1, indent: 56, color: ClayColors.divider),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: items[i].iconColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(items[i].icon, color: items[i].iconColor, size: 20),
                 ),
-                child: Icon(items[i].icon, color: items[i].iconColor, size: 20),
+                title: Text(items[i].title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                subtitle: Text(items[i].subtitle, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
+                trailing: items[i].trailing ?? const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                onTap: items[i].trailing != null ? null : items[i].onTap,
               ),
-              title: Text(items[i].title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              subtitle: Text(items[i].subtitle, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
-              trailing: items[i].trailing ?? const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-              onTap: items[i].trailing != null ? null : items[i].onTap,
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

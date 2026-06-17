@@ -89,7 +89,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 const SizedBox(height: 40),
                 ClayTextField(
                   label: 'Kata Sandi Baru',
-                  hint: 'Minimal 8 karakter',
+                  hint: 'Masukkan kata sandi baru',
                   controller: _newPasswordController,
                   obscureText: !_showNewPassword,
                   prefixIcon: const Icon(Icons.lock_outlined),
@@ -99,7 +99,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Masukkan kata sandi baru';
-                    if (v.length < 8) return 'Kata sandi minimal 8 karakter';
                     return null;
                   },
                 ),

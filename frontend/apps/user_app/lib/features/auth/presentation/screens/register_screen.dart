@@ -13,6 +13,8 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -20,6 +22,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -29,9 +33,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
-    ref.listen<AuthState>(authStateProvider, (_, state) {
+    ref.listen<AuthState>(authStateProvider, (prev, state) {
       if (state.authResponse != null) {
-        context.go('/home');
+        if (GoRouterState.of(context).uri.toString() == '/register') {
+          context.go('/home');
+        }
+      } else if (state.registered && !state.isLoading) {
+        if (GoRouterState.of(context).uri.toString() == '/register') {
+          final contact = state.contact ?? '';
+          context.push('/otp-verification', extra: {
+            'contact': contact,
+            'purpose': 'registration',
+          });
+          ref.read(authStateProvider.notifier).acknowledgeRegistrationNavigation();
+        }
       }
     });
 
@@ -53,7 +68,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 32),
                 ClayTextField(
                   label: 'Nama Lengkap',
-                  hint: 'Masukkan nama lengkap',
+                  hint: 'Contoh: John Doe',
                   controller: _nameController,
                   prefixIcon: const Icon(Icons.person_outlined),
                   validator: (v) =>
@@ -61,26 +76,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
                 ClayTextField(
+                  label: 'Username',
+                  hint: 'Contoh: johndoe123',
+                  controller: _usernameController,
+                  prefixIcon: const Icon(Icons.alternate_email_outlined),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Masukkan username' : null,
+                ),
+                const SizedBox(height: 20),
+                ClayTextField(
+                  label: 'Email',
+                  hint: 'johndoe@email.com',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  prefixIcon: const Icon(Icons.email_outlined),
+                ),
+                const SizedBox(height: 20),
+                ClayTextField(
                   label: 'Nomor Telepon',
-                  hint: '+6281234567890',
+                  hint: '0812 3456 7890',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone_outlined),
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Masukkan nomor telepon' : null,
                 ),
                 const SizedBox(height: 20),
                 ClayTextField(
                   label: 'Kata Sandi',
-                  hint: 'Minimal 8 karakter',
+                  hint: 'Masukkan kata sandi',
                   controller: _passwordController,
                   obscureText: true,
                   prefixIcon: const Icon(Icons.lock_outlined),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Masukkan kata sandi';
-                    if (v.length < 8) return 'Minimal 8 karakter';
-                    return null;
-                  },
+                  validator: (v) =>
+                      v == null || v.isEmpty ? 'Masukkan kata sandi' : null,
                 ),
                 const SizedBox(height: 32),
                 if (authState.error != null)
@@ -117,9 +144,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _onRegister() {
     if (_formKey.currentState?.validate() ?? false) {
+      final email = _emailController.text.trim();
+      final phone = _phoneController.text.trim();
+
+      if (email.isEmpty && phone.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email atau nomor telepon harus diisi')),
+        );
+        return;
+      }
+
       ref.read(authStateProvider.notifier).register(
-        phone: _phoneController.text.trim(),
-        name: _nameController.text.trim(),
+        fullName: _nameController.text.trim(),
+        username: _usernameController.text.trim(),
+        email: email.isNotEmpty ? email : null,
+        phone: phone.isNotEmpty ? phone : null,
         password: _passwordController.text,
       );
     }

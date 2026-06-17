@@ -79,7 +79,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 const SizedBox(height: 40),
                 ClayTextField(
                   label: 'Nomor Telepon',
-                  hint: 'Sama seperti saat daftar',
+                  hint: 'Contoh: 0812 3456 7890',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone_outlined),
@@ -108,7 +108,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
       if (success && mounted) {
         context.push('/otp-verification', extra: {
-          'phone': _phoneController.text.trim(),
+          'contact': _phoneController.text.trim(),
+          'purpose': 'reset',
         });
       }
     }

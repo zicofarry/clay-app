@@ -79,6 +79,80 @@ class DriverOrderRepository {
     }
   }
 
+  Future<void> heartbeat() async {
+    try {
+      await _api.dio.post('/dispatcher/heartbeat');
+    } catch (_) {}
+  }
+
+  Future<void> updateLocation(double lat, double lng) async {
+    try {
+      await _api.dio.put('/dispatcher/location', data: {'lat': lat, 'lng': lng});
+    } catch (_) {}
+  }
+
+  Future<Map<String, dynamic>> setDispatchMode(String mode) async {
+    try {
+      final response = await _api.dio.put('/dispatcher/mode', data: {'mode': mode});
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> foodPickup(String orderId) async {
+    try {
+      final response = await _api.dio.post('/food/driver/orders/$orderId/pickup');
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> foodDeliver(String orderId) async {
+    try {
+      final response = await _api.dio.post('/food/driver/orders/$orderId/deliver');
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> deliveryAccept(String orderId) async {
+    try {
+      final response = await _api.dio.post('/delivery/driver/orders/$orderId/accept');
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> deliveryReject(String orderId, {String? reason}) async {
+    try {
+      final response = await _api.dio.post('/delivery/driver/orders/$orderId/reject', data: {
+        if (reason != null) 'reason': reason,
+      });
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> deliveryUpdateStatus(String orderId, String action) async {
+    try {
+      final response = await _api.dio.put('/delivery/driver/orders/$orderId/status', data: {'action': action});
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   AppException _handleError(DioException e) {
     final data = e.response?.data;
     final msg = data is Map ? (data['message']?.toString() ?? e.message ?? 'Gagal memproses order') : (e.message ?? 'Gagal memproses order');

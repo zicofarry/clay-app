@@ -1,32 +1,29 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
 
-	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/handler"
-	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/repository"
-	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/service"
+	"github.com/redis/go-redis/v9"
 	_ "github.com/lib/pq"
 	"github.com/zicofarry/clay-app/backend/pkg/database"
 	"github.com/zicofarry/clay-app/backend/pkg/middleware"
 	"github.com/zicofarry/clay-app/backend/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/handler"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/otp"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/sender"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/service"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
-	// ── Dependencies ─────────────────────────────────────────────────────
-	// TODO: Replace with real PostgreSQL + Redis connections
+	// ── PostgreSQL ───────────────────────────────────────────────────────
 	pgConfig := database.DefaultPostgresConfig()
-	if host := os.Getenv("DB_HOST"); host != "" {
-		pgConfig.Host = host
-	}
-	if dbName := os.Getenv("DB_NAME"); dbName != "" {
-		pgConfig.DBName = dbName
-	}
 	db, err := database.NewPostgresDB(pgConfig)
 	if err != nil {
 		logger.Error("failed to connect to postgres", slog.Any("error", err))
@@ -34,8 +31,36 @@ func main() {
 	}
 	defer db.Close()
 
-	authRepo := repository.NewAuthRepository(db, nil)
-	authSvc := service.NewAuthService(authRepo, logger)
+	// ── Redis ────────────────────────────────────────────────────────────
+	var redisOpts *redis.Options
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL != "" {
+		opts, err := redis.ParseURL(redisURL)
+		if err != nil {
+			logger.Error("failed to parse redis url", slog.Any("error", err))
+			os.Exit(1)
+		}
+		redisOpts = opts
+	} else {
+		redisAddr := os.Getenv("REDIS_ADDR")
+		if redisAddr == "" {
+			redisAddr = "localhost:6379"
+		}
+		redisOpts = &redis.Options{Addr: redisAddr}
+	}
+
+	rdb := redis.NewClient(redisOpts)
+	defer rdb.Close()
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		logger.Error("failed to connect to redis", slog.Any("error", err))
+		os.Exit(1)
+	}
+
+	// ── Dependencies ─────────────────────────────────────────────────────
+	authRepo := repository.NewAuthRepository(db, rdb)
+	otpStore := otp.NewStore(rdb)
+	msgSender := sender.NewSender(logger)
+	authSvc := service.NewAuthService(authRepo, otpStore, msgSender, logger)
 	authHandler := handler.NewAuthHandler(authSvc)
 
 	// ── Router ───────────────────────────────────────────────────────────
@@ -55,7 +80,6 @@ func main() {
 
 	// Login
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
-	mux.HandleFunc("POST /auth/login/otp", authHandler.LoginWithOTP)
 
 	// Token
 	mux.HandleFunc("POST /auth/refresh-token", authHandler.RefreshToken)

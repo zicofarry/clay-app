@@ -8,24 +8,43 @@ import (
 	"os"
 	"testing"
 
+	"github.com/alicebob/miniredis/v2"
+	"github.com/redis/go-redis/v9"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/otp"
 	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/sender"
 	"github.com/zicofarry/clay-app/backend/services/auth-service/mocks/repomock"
 	"go.uber.org/mock/gomock"
 )
 
 // helper to build a test service with gomock repo
-func newTestService(t *testing.T) (*AuthService, *repomock.MockAuthRepositoryInterface, *gomock.Controller) {
+func newTestService(t *testing.T) (*AuthService, *repomock.MockAuthRepositoryInterface, *otp.Store, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 	mockRepo := repomock.NewMockAuthRepositoryInterface(ctrl)
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
-	svc := NewAuthService(mockRepo, logger)
-	return svc, mockRepo, ctrl
+
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("failed to start miniredis: %v", err)
+	}
+	t.Cleanup(mr.Close)
+
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	otpStore := otp.NewStore(rdb)
+	msgSender := sender.NewSender(logger)
+
+	svc := NewAuthService(mockRepo, otpStore, msgSender, logger)
+	return svc, mockRepo, otpStore, ctrl
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 func TestRegister_Success(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
+
+	mockRepo.EXPECT().
+		ExistsByUsername(gomock.Any(), "testuser").
+		Return(false, nil)
 
 	mockRepo.EXPECT().
 		ExistsByEmailOrPhone(gomock.Any(), "test@example.com", "+6281234567890").
@@ -39,6 +58,7 @@ func TestRegister_Success(t *testing.T) {
 		})
 
 	result, err := svc.Register(context.Background(), &RegisterRequest{
+		Username: "testuser",
 		Email:    "test@example.com",
 		Phone:    "+6281234567890",
 		Password: "Str0ngP4ss",
@@ -60,13 +80,18 @@ func TestRegister_Success(t *testing.T) {
 }
 
 func TestRegister_DuplicateAccount(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
+
+	mockRepo.EXPECT().
+		ExistsByUsername(gomock.Any(), "dupuser").
+		Return(false, nil)
 
 	mockRepo.EXPECT().
 		ExistsByEmailOrPhone(gomock.Any(), "dup@example.com", "+6281234567890").
 		Return(true, nil)
 
 	_, err := svc.Register(context.Background(), &RegisterRequest{
+		Username: "dupuser",
 		Email:    "dup@example.com",
 		Phone:    "+6281234567890",
 		Password: "Str0ngP4ss",
@@ -79,7 +104,7 @@ func TestRegister_DuplicateAccount(t *testing.T) {
 }
 
 func TestLogin_Success(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		FindByIdentifier(gomock.Any(), "test@example.com").
@@ -109,7 +134,7 @@ func TestLogin_Success(t *testing.T) {
 }
 
 func TestLogin_WrongPassword(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		FindByIdentifier(gomock.Any(), "test@example.com").
@@ -131,7 +156,7 @@ func TestLogin_WrongPassword(t *testing.T) {
 }
 
 func TestLogin_AccountNotVerified(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		FindByIdentifier(gomock.Any(), "test@example.com").
@@ -153,7 +178,7 @@ func TestLogin_AccountNotVerified(t *testing.T) {
 }
 
 func TestLogin_AccountSuspended(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		FindByIdentifier(gomock.Any(), "test@example.com").
@@ -175,7 +200,7 @@ func TestLogin_AccountSuspended(t *testing.T) {
 }
 
 func TestChangePassword_WrongCurrent(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		FindByID(gomock.Any(), "user-123").
@@ -195,7 +220,7 @@ func TestChangePassword_WrongCurrent(t *testing.T) {
 }
 
 func TestChangePassword_Success(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		FindByID(gomock.Any(), "user-123").
@@ -219,7 +244,7 @@ func TestChangePassword_Success(t *testing.T) {
 }
 
 func TestForgotPassword_PhoneNotFound(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		ExistsByEmailOrPhone(gomock.Any(), "", "+6281234567890").
@@ -235,7 +260,11 @@ func TestForgotPassword_PhoneNotFound(t *testing.T) {
 }
 
 func TestRequestOTP_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
+
+	mockRepo.EXPECT().
+		ExistsByEmailOrPhone(gomock.Any(), "+6281234567890", "+6281234567890").
+		Return(true, nil)
 
 	result, err := svc.RequestOTP(context.Background(), &OTPRequest{
 		Phone: "+6281234567890",
@@ -254,11 +283,32 @@ func TestRequestOTP_Success(t *testing.T) {
 }
 
 func TestVerifyOTP_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, mockRepo, otpStore, _ := newTestService(t)
+
+	mockRepo.EXPECT().
+		ExistsByEmailOrPhone(gomock.Any(), "+6281234567890", "+6281234567890").
+		Return(true, nil)
+
+	_, err := svc.RequestOTP(context.Background(), &OTPRequest{
+		Phone: "+6281234567890",
+		Type:  "registration",
+	})
+	if err != nil {
+		t.Fatalf("failed to request OTP: %v", err)
+	}
+
+	code, err := otpStore.Peek(context.Background(), "+6281234567890", "registration")
+	if err != nil {
+		t.Fatalf("failed to peek OTP: %v", err)
+	}
+
+	mockRepo.EXPECT().
+		SetPhoneVerified(gomock.Any(), "+6281234567890").
+		Return(nil)
 
 	result, err := svc.VerifyOTP(context.Background(), &VerifyOTPRequest{
 		Phone:   "+6281234567890",
-		OTPCode: "123456",
+		OTPCode: code,
 		Type:    "registration",
 	})
 
@@ -270,27 +320,30 @@ func TestVerifyOTP_Success(t *testing.T) {
 	}
 }
 
-func TestLoginWithOTP_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
-
-	result, err := svc.LoginWithOTP(context.Background(), &OTPLoginRequest{
-		Phone:   "+6281234567890",
-		OTPCode: "123456",
-	})
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result.TokenType != "Bearer" {
-		t.Errorf("expected Bearer, got %s", result.TokenType)
-	}
-}
-
 func TestRefreshToken_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
+
+	mockRepo.EXPECT().
+		FindByIdentifier(gomock.Any(), "test@example.com").
+		Return(&repository.Credential{
+			ID:            "user-123",
+			Email:         "test@example.com",
+			PasswordHash:  "hashed:correctpassword",
+			Role:          "user",
+			Status:        "active",
+			PhoneVerified: true,
+		}, nil)
+
+	loginResp, err := svc.Login(context.Background(), &LoginRequest{
+		Identifier: "test@example.com",
+		Password:   "correctpassword",
+	})
+	if err != nil {
+		t.Fatalf("failed to login: %v", err)
+	}
 
 	result, err := svc.RefreshToken(context.Background(), &RefreshTokenRequest{
-		RefreshToken: "some-refresh-token",
+		RefreshToken: loginResp.RefreshToken,
 	})
 
 	if err != nil {
@@ -302,7 +355,7 @@ func TestRefreshToken_Success(t *testing.T) {
 }
 
 func TestLogout_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, _, _, _ := newTestService(t)
 
 	err := svc.Logout(context.Background(), "user-123", &LogoutRequest{
 		RefreshToken: "some-token",
@@ -314,7 +367,7 @@ func TestLogout_Success(t *testing.T) {
 }
 
 func TestLogoutAll_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, _, _, _ := newTestService(t)
 
 	err := svc.LogoutAll(context.Background(), "user-123")
 
@@ -324,7 +377,7 @@ func TestLogoutAll_Success(t *testing.T) {
 }
 
 func TestListSessions_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, _, _, _ := newTestService(t)
 
 	sessions, err := svc.ListSessions(context.Background(), "user-123")
 
@@ -337,7 +390,7 @@ func TestListSessions_Success(t *testing.T) {
 }
 
 func TestRevokeSession_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, _, _, _ := newTestService(t)
 
 	err := svc.RevokeSession(context.Background(), "user-123", "session-456")
 
@@ -347,7 +400,7 @@ func TestRevokeSession_Success(t *testing.T) {
 }
 
 func TestForgotPassword_Success(t *testing.T) {
-	svc, mockRepo, _ := newTestService(t)
+	svc, mockRepo, _, _ := newTestService(t)
 
 	mockRepo.EXPECT().
 		ExistsByEmailOrPhone(gomock.Any(), "", "+6281234567890").
@@ -366,11 +419,56 @@ func TestForgotPassword_Success(t *testing.T) {
 }
 
 func TestResetPassword_Success(t *testing.T) {
-	svc, _, _ := newTestService(t)
+	svc, mockRepo, otpStore, _ := newTestService(t)
 
-	err := svc.ResetPassword(context.Background(), &ResetPasswordRequest{
+	mockRepo.EXPECT().
+		ExistsByEmailOrPhone(gomock.Any(), "", "+6281234567890").
+		Return(true, nil)
+
+	_, err := svc.ForgotPassword(context.Background(), &ForgotPasswordRequest{
+		Phone: "+6281234567890",
+	})
+	if err != nil {
+		t.Fatalf("failed to call ForgotPassword: %v", err)
+	}
+
+	mockRepo.EXPECT().
+		ExistsByEmailOrPhone(gomock.Any(), "+6281234567890", "+6281234567890").
+		Return(true, nil)
+
+	_, err = svc.RequestOTP(context.Background(), &OTPRequest{
+		Phone: "+6281234567890",
+		Type:  "reset",
+	})
+	if err != nil {
+		t.Fatalf("failed to call RequestOTP: %v", err)
+	}
+
+	code, err := otpStore.Peek(context.Background(), "+6281234567890", "reset")
+	if err != nil {
+		t.Fatalf("failed to peek OTP: %v", err)
+	}
+
+	verifyResp, err := svc.VerifyOTP(context.Background(), &VerifyOTPRequest{
+		Phone:   "+6281234567890",
+		OTPCode: code,
+		Type:    "reset",
+	})
+	if err != nil {
+		t.Fatalf("failed to verify OTP: %v", err)
+	}
+
+	mockRepo.EXPECT().
+		FindByIdentifier(gomock.Any(), "+6281234567890").
+		Return(&repository.Credential{ID: "user-123"}, nil)
+
+	mockRepo.EXPECT().
+		UpdatePassword(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	err = svc.ResetPassword(context.Background(), &ResetPasswordRequest{
 		Phone:       "+6281234567890",
-		ResetToken:  "reset-token",
+		ResetToken:  verifyResp.ResetToken,
 		NewPassword: "NewStr0ng",
 	})
 

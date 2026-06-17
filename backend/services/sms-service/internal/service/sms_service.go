@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/zicofarry/clay-app/backend/pkg/acs"
 	"github.com/zicofarry/clay-app/backend/services/sms-service/internal/repository"
 )
 
@@ -76,15 +77,29 @@ type SMSServiceInterface interface {
 // --- Service Implementation ---
 
 type SMSService struct {
-	repo   repository.SMSRepositoryInterface
-	logger *slog.Logger
+	repo     repository.SMSRepositoryInterface
+	acs      *acs.Client
+	logger   *slog.Logger
+	acsReady bool
 }
 
 func NewSMSService(repo repository.SMSRepositoryInterface, logger *slog.Logger) *SMSService {
-	return &SMSService{
+	svc := &SMSService{
 		repo:   repo,
 		logger: logger,
 	}
+
+	if cfg, ok := acs.ConfigFromEnv(); ok && cfg.SMSFromNumber != "" {
+		svc.acs = acs.NewClient(*cfg)
+		svc.acsReady = true
+		logger.Info("ACS SMS client initialized",
+			slog.String("from", cfg.SMSFromNumber),
+		)
+	} else {
+		logger.Info("ACS not configured, SMS will be logged to console")
+	}
+
+	return svc
 }
 
 func generateOTP() (string, error) {
@@ -128,9 +143,23 @@ func (s *SMSService) SendOTP(ctx context.Context, req SendOTPRequest) (*SendOTPR
 		s.logger.Error("failed to increment rate limit", slog.Any("error", err))
 	}
 
-	// 5. Send actual SMS (Mocked for now)
-	message := fmt.Sprintf("[%s] Your verification code is: %s. Valid for 5 minutes.", req.Purpose, code)
-	s.logger.Info("Mock sending SMS", slog.String("phone", req.Phone), slog.String("message", message))
+	// 5. Send SMS via ACS or log
+	message := fmt.Sprintf("[Clay] Kode OTP Anda: %s. Berlaku 5 menit. Jangan bagikan kode ini kepada siapa pun.", code)
+	if s.acsReady {
+		go func() {
+			if err := s.acs.SendSMS(req.Phone, message); err != nil {
+				s.logger.Error("ACS SMS failed", slog.Any("error", err))
+			} else {
+				s.logger.Info("OTP sent via ACS", slog.String("phone", req.Phone))
+			}
+		}()
+	} else {
+		s.logger.Info("OTP (logged, ACS not configured)",
+			slog.String("phone", req.Phone),
+			slog.String("otp_code", code),
+			slog.String("message", message),
+		)
+	}
 
 	expiresAt := time.Now().Add(ttl)
 	return &SendOTPResponse{
@@ -169,13 +198,6 @@ func (s *SMSService) VerifyOTP(ctx context.Context, req VerifyOTPRequest) (*Veri
 func (s *SMSService) SendSMS(ctx context.Context, req SendSMSRequest, idempotencyKey string) (*SendSMSResponse, error) {
 	smsID := uuid.New().String()
 
-	// Store in retry queue (Redis HASH) with TTL 24h
-	err := s.repo.StoreRetryMessage(ctx, smsID, req.To, req.Message, 0, 24*time.Hour)
-	if err != nil {
-		s.logger.Error("failed to store retry message", slog.Any("error", err))
-		return nil, err
-	}
-
 	// Check rate limit
 	count, err := s.repo.GetRateLimit(ctx, req.To)
 	if err != nil {
@@ -192,8 +214,26 @@ func (s *SMSService) SendSMS(ctx context.Context, req SendSMSRequest, idempotenc
 		s.logger.Error("failed to increment rate limit", slog.Any("error", err))
 	}
 
-	// Trigger async send (mocked)
-	s.logger.Info("Queued SMS", slog.String("sms_id", smsID))
+	// Send via ACS or log
+	if s.acsReady {
+		go func() {
+			if err := s.acs.SendSMS(req.To, req.Message); err != nil {
+				s.logger.Error("ACS SMS failed, storing for retry",
+					slog.String("sms_id", smsID),
+					slog.Any("error", err),
+				)
+				s.repo.StoreRetryMessage(context.Background(), smsID, req.To, req.Message, 1, 24*time.Hour)
+			} else {
+				s.logger.Info("SMS sent via ACS", slog.String("sms_id", smsID), slog.String("to", req.To))
+			}
+		}()
+	} else {
+		s.logger.Info("SMS (logged, ACS not configured)",
+			slog.String("sms_id", smsID),
+			slog.String("to", req.To),
+			slog.String("message", req.Message),
+		)
+	}
 
 	return &SendSMSResponse{
 		SMSID:  smsID,

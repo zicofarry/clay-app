@@ -17,10 +17,24 @@ class AuthState {
   final String? error;
   final AuthResponse? authResponse;
 
+  // Registration flow
+  final bool registered;
+  final String? contact;
+  final String? username;
+  final String? password;
+  final String? fullName;
+  final bool isOtpVerified;
+
   const AuthState({
     this.isLoading = false,
     this.error,
     this.authResponse,
+    this.registered = false,
+    this.contact,
+    this.username,
+    this.password,
+    this.fullName,
+    this.isOtpVerified = false,
   });
 
   AuthState copyWith({
@@ -28,11 +42,24 @@ class AuthState {
     String? error,
     bool clearError = false,
     AuthResponse? authResponse,
+    bool? registered,
+    String? contact,
+    String? username,
+    String? password,
+    String? fullName,
+    bool? isOtpVerified,
+    bool clearRegistration = false,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       authResponse: authResponse ?? this.authResponse,
+      registered: clearRegistration ? false : (registered ?? this.registered),
+      contact: clearRegistration ? null : (contact ?? this.contact),
+      username: clearRegistration ? null : (username ?? this.username),
+      password: clearRegistration ? null : (password ?? this.password),
+      fullName: clearRegistration ? null : (fullName ?? this.fullName),
+      isOtpVerified: clearRegistration ? false : (isOtpVerified ?? this.isOtpVerified),
     );
   }
 }
@@ -43,10 +70,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._repository, this._ref) : super(const AuthState());
 
-  Future<void> login(String phone, String password) async {
+  Future<void> login(String identifier, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await _repository.login(phone, password);
+      final response = await _repository.login(identifier, password);
       state = state.copyWith(isLoading: false, authResponse: response);
       _ref.invalidate(profileProvider);
     } on AppException catch (e) {
@@ -54,22 +81,150 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+
+
   Future<void> register({
-    required String phone,
-    required String name,
+    required String fullName,
+    required String username,
+    String? email,
+    String? phone,
     required String password,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await _repository.register(
-        phoneNumber: phone,
-        fullName: name,
+      await _repository.register(
+        fullName: fullName,
+        username: username,
+        email: email,
+        phone: phone,
         password: password,
       );
-      state = state.copyWith(isLoading: false, authResponse: response);
+
+      if (email != null && email.isNotEmpty) {
+        await _repository.requestOtp(email, 'registration');
+        state = state.copyWith(
+          isLoading: false,
+          registered: true,
+          contact: email,
+          username: username,
+          password: password,
+          fullName: fullName,
+          isOtpVerified: false,
+        );
+      } else {
+        final contact = phone ?? '';
+        final response = await _repository.login(contact, password);
+        await _repository.createProfile(fullName);
+        state = state.copyWith(
+          isLoading: false,
+          authResponse: response,
+        );
+        _ref.invalidate(profileProvider);
+      }
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    }
+  }
+
+  Future<void> verifyRegistrationOtp(String otpCode) async {
+    final contact = state.contact;
+    final username = state.username;
+    final password = state.password;
+    final fullName = state.fullName;
+
+    if (contact == null || password == null) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Data pendaftaran hilang. Silakan daftarkan ulang akun Anda.',
+      );
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.verifyOtp(contact, otpCode, 'registration');
+
+      final loginIdentifier = username ?? contact;
+      final response = await _repository.login(loginIdentifier, password);
+
+      try {
+        await _repository.createProfile(fullName ?? '');
+      } catch (_) {
+        // best-effort: profile can be filled later from the profile screen
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        isOtpVerified: true,
+        authResponse: response,
+      );
       _ref.invalidate(profileProvider);
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> completeRegistrationAndLogin() async {
+    final contact = state.contact;
+    final username = state.username;
+    final password = state.password;
+    final fullName = state.fullName;
+
+    if (contact == null || password == null) {
+      state = state.copyWith(isLoading: false, error: 'Data kredensial tidak lengkap.');
+      return;
+    }
+
+    if (state.authResponse != null) {
+      state = state.copyWith(clearRegistration: true);
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final loginIdentifier = username ?? contact;
+      final response = await _repository.login(loginIdentifier, password);
+
+      try {
+        await _repository.createProfile(fullName ?? '');
+      } catch (_) {}
+
+      state = state.copyWith(
+        isLoading: false,
+        authResponse: response,
+        clearRegistration: true,
+      );
+      _ref.invalidate(profileProvider);
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  void clearRegistration() {
+    state = state.copyWith(clearRegistration: true);
+  }
+
+  void acknowledgeRegistrationNavigation() {
+    state = state.copyWith(registered: false);
+  }
+
+  Future<bool> resendOtp(String contact, String purpose) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      if (purpose == 'reset') {
+        await _repository.sendForgotPasswordOtp(contact);
+      } else {
+        await _repository.requestOtp(contact, purpose);
+      }
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
     }
   }
 
@@ -119,6 +274,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     ClayApi.instance.clearToken();
     _ref.invalidate(profileProvider);
     state = const AuthState();
+  }
+
+  Future<bool> logoutAll() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.revokeAllSessions();
+      ClayApi.instance.clearToken();
+      _ref.invalidate(profileProvider);
+      state = const AuthState();
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listSessions() async {
+    try {
+      return await _repository.listSessions();
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+      return [];
+    }
+  }
+
+  Future<bool> revokeSession(String sessionId) async {
+    try {
+      await _repository.revokeSession(sessionId);
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+      return false;
+    }
   }
 
   void clearError() {
