@@ -302,6 +302,10 @@ func TestVerifyOTP_Success(t *testing.T) {
 		t.Fatalf("failed to peek OTP: %v", err)
 	}
 
+	mockRepo.EXPECT().
+		SetPhoneVerified(gomock.Any(), "+6281234567890").
+		Return(nil)
+
 	result, err := svc.VerifyOTP(context.Background(), &VerifyOTPRequest{
 		Phone:   "+6281234567890",
 		OTPCode: code,
@@ -313,50 +317,6 @@ func TestVerifyOTP_Success(t *testing.T) {
 	}
 	if !result.Verified {
 		t.Error("expected verified to be true")
-	}
-}
-
-func TestLoginWithOTP_Success(t *testing.T) {
-	svc, mockRepo, otpStore, _ := newTestService(t)
-
-	mockRepo.EXPECT().
-		ExistsByEmailOrPhone(gomock.Any(), "+6281234567890", "+6281234567890").
-		Return(true, nil)
-
-	_, err := svc.RequestOTP(context.Background(), &OTPRequest{
-		Phone: "+6281234567890",
-		Type:  "login",
-	})
-	if err != nil {
-		t.Fatalf("failed to request OTP: %v", err)
-	}
-
-	code, err := otpStore.Peek(context.Background(), "+6281234567890", "login")
-	if err != nil {
-		t.Fatalf("failed to peek OTP: %v", err)
-	}
-
-	mockRepo.EXPECT().
-		FindByIdentifier(gomock.Any(), "+6281234567890").
-		Return(&repository.Credential{
-			ID:            "user-123",
-			Email:         "test@example.com",
-			PasswordHash:  "hashed:pass",
-			Role:          "user",
-			Status:        "active",
-			PhoneVerified: true,
-		}, nil)
-
-	result, err := svc.LoginWithOTP(context.Background(), &OTPLoginRequest{
-		Phone:   "+6281234567890",
-		OTPCode: code,
-	})
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result.TokenType != "Bearer" {
-		t.Errorf("expected Bearer, got %s", result.TokenType)
 	}
 }
 
@@ -472,6 +432,18 @@ func TestResetPassword_Success(t *testing.T) {
 		t.Fatalf("failed to call ForgotPassword: %v", err)
 	}
 
+	mockRepo.EXPECT().
+		ExistsByEmailOrPhone(gomock.Any(), "+6281234567890", "+6281234567890").
+		Return(true, nil)
+
+	_, err = svc.RequestOTP(context.Background(), &OTPRequest{
+		Phone: "+6281234567890",
+		Type:  "reset",
+	})
+	if err != nil {
+		t.Fatalf("failed to call RequestOTP: %v", err)
+	}
+
 	code, err := otpStore.Peek(context.Background(), "+6281234567890", "reset")
 	if err != nil {
 		t.Fatalf("failed to peek OTP: %v", err)
@@ -485,6 +457,10 @@ func TestResetPassword_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to verify OTP: %v", err)
 	}
+
+	mockRepo.EXPECT().
+		FindByIdentifier(gomock.Any(), "+6281234567890").
+		Return(&repository.Credential{ID: "user-123"}, nil)
 
 	mockRepo.EXPECT().
 		UpdatePassword(gomock.Any(), gomock.Any(), gomock.Any()).

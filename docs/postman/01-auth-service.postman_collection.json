@@ -292,36 +292,6 @@
       }
     },
     {
-      "name": "Login (OTP)",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/auth/login/otp",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "auth",
-            "login",
-            "otp"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"otp_code\": \"123456\"\n}"
-        },
-        "auth": {
-          "type": "noauth"
-        }
-      }
-    },
-    {
       "name": "Refresh Token",
       "request": {
         "method": "POST",

@@ -62,7 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (!isLoggedIn && !isAuthRoute) {
         return '/onboarding';
       }
-      if (isLoggedIn && isAuthRoute && state.uri.toString() != '/onboarding') {
+      if (isLoggedIn && isAuthRoute && state.uri.toString() != '/onboarding' && state.uri.toString() != '/otp-verification') {
         return '/home';
       }
       return null;

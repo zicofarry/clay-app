@@ -129,10 +129,10 @@ func (r *AuthRepository) FindByIdentifier(ctx context.Context, identifier string
 }
 
 func (r *AuthRepository) ExistsByEmailOrPhone(ctx context.Context, email, phone string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE (email IS NOT NULL AND email != '' AND email = $1) OR (phone IS NOT NULL AND phone != '' AND phone = $2))`
+	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE (phone IS NOT NULL AND phone != '' AND phone = $1))`
 
 	var exists bool
-	err := r.db.QueryRowContext(ctx, query, email, phone).Scan(&exists)
+	err := r.db.QueryRowContext(ctx, query, phone).Scan(&exists)
 	return exists, err
 }
 

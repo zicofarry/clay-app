@@ -20,8 +20,10 @@ class AuthState {
   // Registration flow
   final bool registered;
   final String? contact;
+  final String? username;
   final String? password;
   final String? fullName;
+  final bool isOtpVerified;
 
   const AuthState({
     this.isLoading = false,
@@ -29,8 +31,10 @@ class AuthState {
     this.authResponse,
     this.registered = false,
     this.contact,
+    this.username,
     this.password,
     this.fullName,
+    this.isOtpVerified = false,
   });
 
   AuthState copyWith({
@@ -40,8 +44,10 @@ class AuthState {
     AuthResponse? authResponse,
     bool? registered,
     String? contact,
+    String? username,
     String? password,
     String? fullName,
+    bool? isOtpVerified,
     bool clearRegistration = false,
   }) {
     return AuthState(
@@ -50,8 +56,10 @@ class AuthState {
       authResponse: authResponse ?? this.authResponse,
       registered: clearRegistration ? false : (registered ?? this.registered),
       contact: clearRegistration ? null : (contact ?? this.contact),
+      username: clearRegistration ? null : (username ?? this.username),
       password: clearRegistration ? null : (password ?? this.password),
       fullName: clearRegistration ? null : (fullName ?? this.fullName),
+      isOtpVerified: clearRegistration ? false : (isOtpVerified ?? this.isOtpVerified),
     );
   }
 }
@@ -98,8 +106,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           isLoading: false,
           registered: true,
           contact: email,
+          username: username,
           password: password,
           fullName: fullName,
+          isOtpVerified: false,
         );
       } else {
         final contact = phone ?? '';
@@ -118,27 +128,88 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> verifyRegistrationOtp(String otpCode) async {
     final contact = state.contact;
-    final password = state.password;
-    final fullName = state.fullName;
-    if (contact == null || password == null) return;
+    
+    print("[DEBUG] verifyRegistrationOtp called: contact=$contact, otpCode=$otpCode");
+    
+    if (contact == null) {
+      print("[DEBUG] verifyRegistrationOtp aborted: contact is null in state");
+      state = state.copyWith(isLoading: false, error: "Data pendaftaran hilang. Silakan daftarkan ulang akun Anda.");
+      return;
+    }
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
+      print("[DEBUG] verifyRegistrationOtp: calling verifyOtp for $contact");
       await _repository.verifyOtp(contact, otpCode, 'registration');
+      print("[DEBUG] verifyRegistrationOtp: verifyOtp succeeded");
 
-      final response = await _repository.login(contact, password);
+      state = state.copyWith(
+        isLoading: false,
+        isOtpVerified: true,
+      );
+    } catch (e, stack) {
+      print("[DEBUG] verifyRegistrationOtp caught exception: $e");
+      print(stack);
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
 
+  Future<void> completeRegistrationAndLogin() async {
+    final contact = state.contact;
+    final username = state.username;
+    final password = state.password;
+    final fullName = state.fullName;
+
+    print("[DEBUG] completeRegistrationAndLogin called: contact=$contact, username=$username, password=$password, fullName=$fullName");
+
+    if (contact == null || password == null) {
+      print("[DEBUG] completeRegistrationAndLogin aborted: contact or password is null in state");
+      state = state.copyWith(isLoading: false, error: "Data kredensial tidak lengkap.");
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final loginIdentifier = username ?? contact;
+      print("[DEBUG] completeRegistrationAndLogin: logging in as $loginIdentifier");
+      final response = await _repository.login(loginIdentifier, password);
+      print("[DEBUG] completeRegistrationAndLogin: login succeeded");
+
+      print("[DEBUG] completeRegistrationAndLogin: creating profile for $fullName");
       await _repository.createProfile(fullName ?? '');
+      print("[DEBUG] completeRegistrationAndLogin: createProfile succeeded");
 
-      state = state.copyWith(isLoading: false, authResponse: response);
+      state = state.copyWith(
+        isLoading: false,
+        authResponse: response,
+        clearRegistration: true,
+      );
       _ref.invalidate(profileProvider);
-    } on AppException catch (e) {
-      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e, stack) {
+      print("[DEBUG] completeRegistrationAndLogin caught exception: $e");
+      print(stack);
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   void clearRegistration() {
     state = state.copyWith(clearRegistration: true);
+  }
+
+  Future<bool> resendOtp(String contact, String purpose) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      if (purpose == 'reset') {
+        await _repository.sendForgotPasswordOtp(contact);
+      } else {
+        await _repository.requestOtp(contact, purpose);
+      }
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    }
   }
 
   Future<bool> forgotPassword(String phone) async {

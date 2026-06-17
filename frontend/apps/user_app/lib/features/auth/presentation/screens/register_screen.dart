@@ -35,14 +35,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     ref.listen<AuthState>(authStateProvider, (prev, state) {
       if (state.authResponse != null) {
-        context.go('/home');
+        if (GoRouterState.of(context).uri.toString() == '/register') {
+          context.go('/home');
+        }
       } else if (state.registered && !state.isLoading) {
-        final contact = state.contact ?? '';
-        ref.read(authStateProvider.notifier).clearRegistration();
-        context.push('/otp-verification', extra: {
-          'contact': contact,
-          'purpose': 'registration',
-        });
+        if (GoRouterState.of(context).uri.toString() == '/register') {
+          final contact = state.contact ?? '';
+          context.push('/otp-verification', extra: {
+            'contact': contact,
+            'purpose': 'registration',
+          });
+        }
       }
     });
 
@@ -64,7 +67,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 32),
                 ClayTextField(
                   label: 'Nama Lengkap',
-                  hint: 'Masukkan nama lengkap',
+                  hint: 'Contoh: John Doe',
                   controller: _nameController,
                   prefixIcon: const Icon(Icons.person_outlined),
                   validator: (v) =>
@@ -73,7 +76,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 20),
                 ClayTextField(
                   label: 'Username',
-                  hint: 'Masukkan username',
+                  hint: 'Contoh: johndoe123',
                   controller: _usernameController,
                   prefixIcon: const Icon(Icons.alternate_email_outlined),
                   validator: (v) =>
@@ -82,7 +85,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 20),
                 ClayTextField(
                   label: 'Email',
-                  hint: 'contoh@email.com',
+                  hint: 'johndoe@email.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.email_outlined),
@@ -90,7 +93,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 20),
                 ClayTextField(
                   label: 'Nomor Telepon',
-                  hint: '+6281234567890',
+                  hint: '0812 3456 7890',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone_outlined),

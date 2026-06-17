@@ -99,7 +99,7 @@ type EmailRecipients struct {
 }
 
 type EmailBody struct {
-	Sender      string          `json:"sender"`
+	Sender      string          `json:"senderAddress"`
 	Recipients  EmailRecipients `json:"recipients"`
 	Content     EmailContent    `json:"content"`
 }

@@ -80,7 +80,6 @@ func main() {
 
 	// Login
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
-	mux.HandleFunc("POST /auth/login/otp", authHandler.LoginWithOTP)
 
 	// Token
 	mux.HandleFunc("POST /auth/refresh-token", authHandler.RefreshToken)

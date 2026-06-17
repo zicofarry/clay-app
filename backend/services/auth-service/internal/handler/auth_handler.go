@@ -95,23 +95,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, result)
 }
 
-// LoginWithOTP handles POST /auth/login/otp
-func (h *AuthHandler) LoginWithOTP(w http.ResponseWriter, r *http.Request) {
-	var req service.OTPLoginRequest
-	if err := validator.DecodeJSON(r, &req); err != nil {
-		response.Error(w, http.StatusBadRequest, "INVALID_INPUT", err.Error())
-		return
-	}
-
-	result, err := h.svc.LoginWithOTP(r.Context(), &req)
-	if err != nil {
-		handleServiceError(w, err)
-		return
-	}
-
-	response.Success(w, http.StatusOK, result)
-}
-
 // ── Token ────────────────────────────────────────────────────────────────────
 
 // RefreshToken handles POST /auth/refresh-token

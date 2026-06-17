@@ -59,6 +59,13 @@ class ClayTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
+        hintStyle: TextStyle(
+          color: isDark ? const Color(0xFF6B7280) : ClayColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        prefixIconColor: isDark ? const Color(0xFF6B7280) : ClayColors.textSecondary,
+        suffixIconColor: isDark ? const Color(0xFF6B7280) : ClayColors.textSecondary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: isDark ? const Color(0xFF333333) : ClayColors.divider),

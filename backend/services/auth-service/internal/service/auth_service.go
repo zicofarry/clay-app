@@ -101,12 +101,6 @@ type LoginRequest struct {
 	DeviceID   string `json:"device_id,omitempty"`
 }
 
-type OTPLoginRequest struct {
-	Phone    string `json:"phone"`
-	OTPCode  string `json:"otp_code"`
-	DeviceID string `json:"device_id,omitempty"`
-}
-
 type AuthTokenResponse struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token"`
@@ -160,7 +154,7 @@ type AuthServiceInterface interface {
 	RequestOTP(ctx context.Context, req *OTPRequest) (*OTPResponse, error)
 	VerifyOTP(ctx context.Context, req *VerifyOTPRequest) (*VerifyOTPResponse, error)
 	Login(ctx context.Context, req *LoginRequest) (*AuthTokenResponse, error)
-	LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*AuthTokenResponse, error)
+
 	RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*AuthTokenResponse, error)
 	Logout(ctx context.Context, userID string, req *LogoutRequest) error
 	LogoutAll(ctx context.Context, userID string) error
@@ -374,27 +368,6 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthTokenR
 	// TODO: Publish auth.login_success Kafka event
 	s.logger.Info("user logged in", slog.String("user_id", cred.ID), slog.String("method", "password"))
 
-	return tokens, nil
-}
-
-func (s *AuthService) LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*AuthTokenResponse, error) {
-	if !isPhoneOnly(req.Phone) {
-		if err := s.otpStore.Verify(ctx, req.Phone, "login", req.OTPCode); err != nil {
-			return nil, ErrOTPInvalid
-		}
-	}
-
-	cred, err := s.repo.FindByIdentifier(ctx, req.Phone)
-	if err != nil {
-		return nil, ErrPhoneNotFound
-	}
-
-	tokens, err := s.generateTokens(ctx, cred, req.DeviceID)
-	if err != nil {
-		return nil, err
-	}
-
-	s.logger.Info("user logged in via OTP", slog.String("phone", req.Phone))
 	return tokens, nil
 }
 
