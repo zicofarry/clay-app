@@ -43,10 +43,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 60),
-                Icon(
-                  Icons.local_taxi,
-                  size: 80,
-                  color: ClayColors.primary,
+                Image.asset(
+                  'assets/logo/logo_utama.png',
+                  height: 48,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -89,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.push('/forgot-password'),
                     child: const Text('Lupa kata sandi?'),
                   ),
                 ),

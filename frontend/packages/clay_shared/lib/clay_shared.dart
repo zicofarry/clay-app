@@ -8,3 +8,5 @@ export 'src/models/auth_response.dart';
 export 'src/constants/api_constants.dart';
 export 'src/constants/app_enums.dart';
 export 'src/exceptions/app_exception.dart';
+export 'src/services/search_service.dart';
+export 'src/services/geo_service.dart';
