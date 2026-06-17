@@ -138,25 +138,7 @@ class AdminProfileScreen extends ConsumerWidget {
                       child: Text('Hak Akses', style: TextStyle(color: subTextColor, fontSize: 13)),
                     ),
                   ),
-                  Divider(color: borderColor, height: 1, indent: 20, endIndent: 20),
-                  ListTile(
-                    onTap: () => context.push('/admin-management'),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white10 : const Color(0xFFF5F7FA),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.people_alt_rounded, color: primaryBlue),
-                    ),
-                    title: Text('Manajemen Tim', style: TextStyle(fontWeight: FontWeight.w600, color: textColor)),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text('Kelola akses admin', style: TextStyle(color: subTextColor, fontSize: 13)),
-                    ),
-                    trailing: Icon(Icons.chevron_right_rounded, color: subTextColor),
-                  ),
+
                 ],
               ),
             ),
