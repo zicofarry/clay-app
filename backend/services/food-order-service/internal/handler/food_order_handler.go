@@ -315,6 +315,59 @@ func (h *FoodOrderHandler) DriverDeliver(w http.ResponseWriter, r *http.Request)
 	response.Success(w, http.StatusOK, order)
 }
 
+// DriverAcceptOrder handles POST /driver/orders/{orderId}/accept.
+func (h *FoodOrderHandler) DriverAcceptOrder(w http.ResponseWriter, r *http.Request) {
+	driverID := middleware.GetUserID(r.Context())
+	orderID := r.PathValue("orderId")
+
+	order, err := h.svc.DriverAcceptOrder(r.Context(), orderID, driverID)
+	if err != nil {
+		h.handleOrderError(w, err)
+		return
+	}
+	response.Success(w, http.StatusOK, order)
+}
+
+// DriverRejectOrder handles POST /driver/orders/{orderId}/reject.
+func (h *FoodOrderHandler) DriverRejectOrder(w http.ResponseWriter, r *http.Request) {
+	driverID := middleware.GetUserID(r.Context())
+	orderID := r.PathValue("orderId")
+
+	var req model.DriverRejectRequest
+	if r.ContentLength > 0 {
+		if err := validator.DecodeJSON(r, &req); err != nil {
+			response.Error(w, http.StatusBadRequest, "INVALID_INPUT", err.Error())
+			return
+		}
+	}
+
+	order, err := h.svc.DriverRejectOrder(r.Context(), orderID, driverID, req)
+	if err != nil {
+		h.handleOrderError(w, err)
+		return
+	}
+	response.Success(w, http.StatusOK, order)
+}
+
+// DriverUpdateStatus handles PUT /driver/orders/{orderId}/status.
+func (h *FoodOrderHandler) DriverUpdateStatus(w http.ResponseWriter, r *http.Request) {
+	driverID := middleware.GetUserID(r.Context())
+	orderID := r.PathValue("orderId")
+
+	var req model.DriverUpdateStatusRequest
+	if err := validator.DecodeJSON(r, &req); err != nil {
+		response.Error(w, http.StatusBadRequest, "INVALID_INPUT", err.Error())
+		return
+	}
+
+	order, err := h.svc.DriverUpdateStatus(r.Context(), orderID, driverID, req)
+	if err != nil {
+		h.handleOrderError(w, err)
+		return
+	}
+	response.Success(w, http.StatusOK, order)
+}
+
 // ── Internal handlers (service-to-service) ───────────────────────────────────
 
 // InternalGetOrder handles GET /internal/orders/{orderId}.
