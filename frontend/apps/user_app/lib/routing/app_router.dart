@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:clay_shared/clay_shared.dart';
+import '../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -21,11 +23,29 @@ import '../features/location/presentation/screens/location_picker_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+const _authRoutes = {'/login', '/register', '/forgot-password', '/reset-password', '/onboarding'};
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/login',
+    initialLocation: '/onboarding',
+    redirect: (context, state) {
+      final isLoggedIn = ClayApi.instance.hasToken();
+      final isAuthRoute = _authRoutes.contains(state.uri.toString());
+
+      if (!isLoggedIn && !isAuthRoute) {
+        return '/onboarding';
+      }
+      if (isLoggedIn && isAuthRoute && state.uri.toString() != '/onboarding') {
+        return '/home';
+      }
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (_, __) => const OnboardingScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (_, __) => const LoginScreen(),

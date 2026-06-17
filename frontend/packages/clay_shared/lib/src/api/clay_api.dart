@@ -30,4 +30,14 @@ class ClayApi {
   void clearToken() {
     dio.options.headers.remove('Authorization');
   }
+
+  bool hasToken() {
+    return dio.options.headers['Authorization'] != null;
+  }
+
+  String? getToken() {
+    final auth = dio.options.headers['Authorization']?.toString();
+    if (auth == null) return null;
+    return auth.replaceFirst('Bearer ', '');
+  }
 }
