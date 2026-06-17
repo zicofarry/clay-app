@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
 import 'package:dio/dio.dart';
@@ -38,6 +39,31 @@ class ProfileNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>>> {
       return true;
     } on DioException catch (_) {
       return false;
+    }
+  }
+
+  Future<String?> uploadAvatar(Uint8List bytes, {String filename = 'avatar.jpg'}) async {
+    try {
+      final formData = FormData.fromMap({
+        'avatar': MultipartFile.fromBytes(bytes, filename: filename),
+      });
+      final response = await _api.dio.put(ApiEndpoints.updateAvatar, data: formData);
+      final data = response.data;
+      String? url;
+      if (data is Map<String, dynamic>) {
+        final inner = data['data'];
+        if (inner is Map<String, dynamic> && inner['avatar_url'] is String) {
+          url = inner['avatar_url'] as String;
+        } else if (data['avatar_url'] is String) {
+          url = data['avatar_url'] as String;
+        }
+      }
+      if (url != null && !url.startsWith('http')) {
+        url = '${_api.dio.options.baseUrl}$url';
+      }
+      return url;
+    } on DioException catch (_) {
+      return null;
     }
   }
 
