@@ -23,6 +23,12 @@ import '../features/send/presentation/screens/send_searching_screen.dart';
 import '../features/send/presentation/screens/send_tracking_screen.dart';
 import '../features/send/presentation/screens/send_complete_screen.dart';
 import '../features/send/presentation/screens/send_rating_screen.dart';
+import '../features/waste/presentation/screens/waste_home_screen.dart';
+import '../features/waste/presentation/screens/waste_confirm_screen.dart';
+import '../features/waste/presentation/screens/waste_searching_screen.dart';
+import '../features/waste/presentation/screens/waste_tracking_screen.dart';
+import '../features/waste/presentation/screens/waste_complete_screen.dart';
+import '../features/waste/presentation/screens/waste_rating_screen.dart';
 import '../features/food/presentation/screens/merchant_list_screen.dart';
 import '../features/food/presentation/screens/menu_screen.dart';
 import '../features/food/presentation/screens/cart_screen.dart';
@@ -231,7 +237,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/waste',
-        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClayWaste'),
+        builder: (_, __) => const WasteHomeScreen(),
+      ),
+      GoRoute(
+        path: '/waste/confirm',
+        builder: (_, __) => const WasteConfirmScreen(),
+      ),
+      GoRoute(
+        path: '/waste/searching',
+        builder: (_, __) => const WasteSearchingScreen(),
+      ),
+      GoRoute(
+        path: '/waste/tracking',
+        builder: (_, __) => const WasteTrackingScreen(),
+      ),
+      GoRoute(
+        path: '/waste/complete',
+        builder: (_, __) => const WasteCompleteScreen(),
+      ),
+      GoRoute(
+        path: '/waste/rating',
+        builder: (_, __) => const WasteRatingScreen(),
       ),
       GoRoute(
         path: '/care',
