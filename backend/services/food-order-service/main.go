@@ -133,6 +133,9 @@ func main() {
 	mux.HandleFunc("PUT /merchant/orders/{orderId}/status", h.MerchantUpdateStatus)
 
 	// Driver Endpoints
+	mux.HandleFunc("POST /driver/orders/{orderId}/accept", h.DriverAcceptOrder)
+	mux.HandleFunc("POST /driver/orders/{orderId}/reject", h.DriverRejectOrder)
+	mux.HandleFunc("PUT /driver/orders/{orderId}/status", h.DriverUpdateStatus)
 	mux.HandleFunc("POST /driver/orders/{orderId}/pickup", h.DriverPickup)
 	mux.HandleFunc("POST /driver/orders/{orderId}/deliver", h.DriverDeliver)
 

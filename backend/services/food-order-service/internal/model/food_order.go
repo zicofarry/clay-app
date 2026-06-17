@@ -186,6 +186,14 @@ type AssignDriverRequest struct {
 	DriverID string `json:"driver_id"`
 }
 
+type DriverRejectRequest struct {
+	Reason string `json:"reason"`
+}
+
+type DriverUpdateStatusRequest struct {
+	Status string `json:"status"`
+}
+
 type FoodOrderListResponse struct {
 	Orders []FoodOrder `json:"orders"`
 	Meta   PaginationMeta `json:"meta"`

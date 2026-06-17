@@ -391,6 +391,27 @@
   auth: "required_roles:[driver]"
   rate_limit: 60
 
+- path: /food/driver/orders/{orderId}/accept
+  methods: [POST]
+  upstream: clay-food-order-service:8080
+  strip_prefix: /food
+  auth: "required_roles:[driver]"
+  rate_limit: 60
+
+- path: /food/driver/orders/{orderId}/reject
+  methods: [POST]
+  upstream: clay-food-order-service:8080
+  strip_prefix: /food
+  auth: "required_roles:[driver]"
+  rate_limit: 60
+
+- path: /food/driver/orders/{orderId}/status
+  methods: [PUT]
+  upstream: clay-food-order-service:8080
+  strip_prefix: /food
+  auth: "required_roles:[driver]"
+  rate_limit: 60
+
 # ══════════════════════════════════════════════════════════════════════════════
 # DELIVERY ORDER SERVICE
 # Upstream: clay-delivery-order-service:8080
@@ -1343,6 +1364,27 @@
 
 - path: /food/driver/orders/{orderId}/deliver
   methods: [POST]
+  upstream: clay-food-order-service:8080
+  strip_prefix: /food
+  auth: "required_roles:[driver]"
+  rate_limit: 30
+
+- path: /food/driver/orders/{orderId}/accept
+  methods: [POST]
+  upstream: clay-food-order-service:8080
+  strip_prefix: /food
+  auth: "required_roles:[driver]"
+  rate_limit: 30
+
+- path: /food/driver/orders/{orderId}/reject
+  methods: [POST]
+  upstream: clay-food-order-service:8080
+  strip_prefix: /food
+  auth: "required_roles:[driver]"
+  rate_limit: 30
+
+- path: /food/driver/orders/{orderId}/status
+  methods: [PUT]
   upstream: clay-food-order-service:8080
   strip_prefix: /food
   auth: "required_roles:[driver]"
