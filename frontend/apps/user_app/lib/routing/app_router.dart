@@ -21,6 +21,9 @@ import '../features/history/presentation/screens/history_screen.dart';
 import '../features/common/presentation/screens/placeholder_screen.dart';
 import '../features/search/presentation/screens/search_screen.dart';
 import '../features/location/presentation/screens/location_picker_screen.dart';
+import '../features/location/presentation/screens/address_list_screen.dart';
+import '../features/payment/presentation/screens/payment_methods_screen.dart';
+import '../features/settings/presentation/screens/notification_settings_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -121,6 +124,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (_, __) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/addresses',
+        builder: (_, __) => const AddressListScreen(),
+      ),
+      GoRoute(
+        path: '/payment-methods',
+        builder: (_, __) => const PaymentMethodsScreen(),
+      ),
+      GoRoute(
+        path: '/notification-settings',
+        builder: (_, __) => const NotificationSettingsScreen(),
       ),
       GoRoute(
         path: '/history',

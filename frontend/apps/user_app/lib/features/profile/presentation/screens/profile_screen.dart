@@ -180,9 +180,12 @@ class ProfileScreen extends ConsumerWidget {
                 _SectionTitle('Pengaturan'),
                 _MenuGroup(
                   items: [
-                    _MenuItemData(Icons.location_on_outlined, Colors.orange, 'Alamat Tersimpan', 'Kelola alamat pengiriman'),
-                    _MenuItemData(Icons.payment_outlined, Colors.blue, 'Metode Pembayaran', 'Kartu, e-wallet, transfer'),
-                    _MenuItemData(Icons.notifications_outlined, Colors.red, 'Notifikasi', 'Atur pemberitahuan'),
+                    _MenuItemData(Icons.location_on_outlined, Colors.orange, 'Alamat Tersimpan', 'Kelola alamat pengiriman',
+                        onTap: () => context.push('/addresses')),
+                    _MenuItemData(Icons.payment_outlined, Colors.blue, 'Metode Pembayaran', 'Kartu, e-wallet, transfer',
+                        onTap: () => context.push('/payment-methods')),
+                    _MenuItemData(Icons.notifications_outlined, Colors.red, 'Notifikasi', 'Atur pemberitahuan',
+                        onTap: () => context.push('/notification-settings')),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -415,7 +418,8 @@ class _MenuItemData {
   final Color iconColor;
   final String title;
   final String subtitle;
-  const _MenuItemData(this.icon, this.iconColor, this.title, this.subtitle);
+  final VoidCallback? onTap;
+  const _MenuItemData(this.icon, this.iconColor, this.title, this.subtitle, {this.onTap});
 }
 
 class _MenuGroup extends StatelessWidget {
@@ -452,7 +456,7 @@ class _MenuGroup extends StatelessWidget {
               title: Text(items[i].title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               subtitle: Text(items[i].subtitle, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
               trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-              onTap: () {},
+              onTap: items[i].onTap,
             ),
           ],
         ],
