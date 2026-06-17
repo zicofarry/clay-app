@@ -63,7 +63,13 @@ func main() {
 	// ── Dependencies ─────────────────────────────────────────────────────
 	walletRepo := repository.NewWalletRepository(db)
 	walletSvc := service.NewWalletService(walletRepo, logger)
-	walletHandler := handler.NewWalletHandler(walletSvc)
+
+	userServiceURL := os.Getenv("USER_SERVICE_URL")
+	if userServiceURL == "" {
+		userServiceURL = "http://clay-user-service:8080"
+	}
+
+	walletHandler := handler.NewWalletHandler(walletSvc, userServiceURL)
 
 	// ── Router ───────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
@@ -76,7 +82,9 @@ func main() {
 	// Wallet
 	mux.HandleFunc("GET /wallet", walletHandler.GetWallet)
 	mux.HandleFunc("POST /wallet/topup", walletHandler.TopUp)
-	
+	mux.HandleFunc("POST /wallet/transfer", walletHandler.Transfer)
+	mux.HandleFunc("GET /wallet/transactions", walletHandler.GetTransactions)
+
 	// Internal Wallet Operations
 	mux.HandleFunc("POST /internal/wallet/debit", walletHandler.Debit)
 

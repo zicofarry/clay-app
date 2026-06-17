@@ -1,17 +1,28 @@
 import 'package:clay_shared/clay_shared.dart';
 import 'package:dio/dio.dart';
 
+String normalizePhone(String phone) {
+  var normalized = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+  if (normalized.startsWith('0')) {
+    normalized = '+62${normalized.substring(1)}';
+  } else if (!normalized.startsWith('+')) {
+    normalized = '+62$normalized';
+  }
+  return normalized;
+}
+
 class AuthRepository {
   final ClayApi _api;
 
   AuthRepository(this._api);
 
   Future<AuthResponse> login(String phoneNumber, String password) async {
+    final phone = normalizePhone(phoneNumber);
     try {
       final response = await _api.dio.post(
         ApiEndpoints.login,
         data: {
-          'identifier': phoneNumber,
+          'identifier': phone,
           'password': password,
         },
       );
@@ -31,13 +42,14 @@ class AuthRepository {
     required String fullName,
     required String password,
   }) async {
+    final phone = normalizePhone(phoneNumber);
     try {
       // 1. Call Backend Register
       await _api.dio.post(
         ApiEndpoints.register,
         data: {
-          'email': '${phoneNumber.replaceAll('+', '')}@clay.com',
-          'phone': phoneNumber,
+          'email': '${phone.replaceAll('+', '')}@clay.com',
+          'phone': phone,
           'password': password,
           'role': 'user',
         },
@@ -47,7 +59,7 @@ class AuthRepository {
       await _api.dio.post(
         ApiEndpoints.verifyOtp,
         data: {
-          'phone': phoneNumber,
+          'phone': phone,
           'otp_code': '123456',
           'type': 'registration',
         },
@@ -57,7 +69,7 @@ class AuthRepository {
       final loginResponse = await _api.dio.post(
         ApiEndpoints.login,
         data: {
-          'identifier': phoneNumber,
+          'identifier': phone,
           'password': password,
         },
       );
@@ -76,6 +88,74 @@ class AuthRepository {
       );
 
       return authResponse;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> sendForgotPasswordOtp(String phoneNumber) async {
+    final phone = normalizePhone(phoneNumber);
+    try {
+      await _api.dio.post(
+        ApiEndpoints.forgotPassword,
+        data: {'phone': phone},
+      );
+
+      await _api.dio.post(
+        ApiEndpoints.requestOtp,
+        data: {
+          'phone': phone,
+          'type': 'reset',
+        },
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<String> verifyOtpForReset(String phoneNumber, String otpCode) async {
+    final phone = normalizePhone(phoneNumber);
+    try {
+      final verifyResponse = await _api.dio.post(
+        ApiEndpoints.verifyOtp,
+        data: {
+          'phone': phone,
+          'otp_code': otpCode,
+          'type': 'reset',
+        },
+      );
+
+      final data = verifyResponse.data;
+      if (data is Map) {
+        final innerData = data['data'];
+        if (innerData is Map && innerData['reset_token'] != null) {
+          return innerData['reset_token'].toString();
+        }
+        if (data['reset_token'] != null) {
+          return data['reset_token'].toString();
+        }
+      }
+      throw AppException('Gagal mendapatkan reset token');
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> resetPassword({
+    required String phoneNumber,
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    final phone = normalizePhone(phoneNumber);
+    try {
+      await _api.dio.post(
+        ApiEndpoints.resetPassword,
+        data: {
+          'phone': phone,
+          'reset_token': resetToken,
+          'new_password': newPassword,
+        },
+      );
     } on DioException catch (e) {
       throw _handleError(e);
     }

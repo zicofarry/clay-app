@@ -39,6 +39,7 @@ type WalletRepository interface {
 	CreateWallet(ctx context.Context, userID uuid.UUID) (*Wallet, error)
 	CreditWallet(ctx context.Context, userID uuid.UUID, amount int64, txType, description string, referenceID uuid.UUID) (*WalletTransaction, error)
 	DebitWallet(ctx context.Context, userID uuid.UUID, amount int64, txType, description string, referenceID uuid.UUID) (*WalletTransaction, error)
+	GetTransactionsByUserID(ctx context.Context, userID uuid.UUID, page, limit int) ([]WalletTransaction, int, error)
 }
 
 type walletRepositoryImpl struct {
@@ -157,7 +158,7 @@ func (r *walletRepositoryImpl) DebitWallet(ctx context.Context, userID uuid.UUID
 		RETURNING id, wallet_id, type, amount, balance_after, reference_id, description, created_at
 	`
 	var wTx WalletTransaction
-	// amount in transaction should be negative for debit conceptually, but we store it as absolute value usually or follow spec. Spec says "amount: IDR (positive = credit, negative = debit)". 
+	// amount in transaction should be negative for debit conceptually, but we store it as absolute value usually or follow spec. Spec says "amount: IDR (positive = credit, negative = debit)".
 	// Let's store negative for debit.
 	err = tx.QueryRowContext(ctx, queryTx, w.ID, txType, -amount, newBalance, referenceID, description).
 		Scan(&wTx.ID, &wTx.WalletID, &wTx.Type, &wTx.Amount, &wTx.BalanceAfter, &wTx.ReferenceID, &wTx.Description, &wTx.CreatedAt)
@@ -169,4 +170,44 @@ func (r *walletRepositoryImpl) DebitWallet(ctx context.Context, userID uuid.UUID
 		return nil, err
 	}
 	return &wTx, nil
+}
+
+func (r *walletRepositoryImpl) GetTransactionsByUserID(ctx context.Context, userID uuid.UUID, page, limit int) ([]WalletTransaction, int, error) {
+	wallet, err := r.GetWalletByUserID(ctx, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var total int
+	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM wallet_transactions WHERE wallet_id = $1`, wallet.ID).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT id, wallet_id, type, amount, balance_after, reference_id, description, created_at
+		 FROM wallet_transactions WHERE wallet_id = $1
+		 ORDER BY created_at DESC
+		 LIMIT $2 OFFSET $3`,
+		wallet.ID, limit, offset,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var txs []WalletTransaction
+	for rows.Next() {
+		var wTx WalletTransaction
+		if err := rows.Scan(&wTx.ID, &wTx.WalletID, &wTx.Type, &wTx.Amount, &wTx.BalanceAfter, &wTx.ReferenceID, &wTx.Description, &wTx.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		txs = append(txs, wTx)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return txs, total, nil
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -11,8 +12,10 @@ import (
 type WalletService interface {
 	GetBalance(ctx context.Context, userID uuid.UUID) (*repository.Wallet, error)
 	TopUp(ctx context.Context, userID uuid.UUID, amount int64, channel string) (*repository.WalletTransaction, error)
+	Transfer(ctx context.Context, senderID, receiverID uuid.UUID, amount int64, note string) (*repository.WalletTransaction, *repository.WalletTransaction, error)
 	Debit(ctx context.Context, userID uuid.UUID, amount int64, refID uuid.UUID, desc string) (*repository.WalletTransaction, error)
 	Credit(ctx context.Context, userID uuid.UUID, amount int64, refID uuid.UUID, txType, desc string) (*repository.WalletTransaction, error)
+	GetTransactions(ctx context.Context, userID uuid.UUID, page, limit int) ([]repository.WalletTransaction, int, error)
 }
 
 type walletServiceImpl struct {
@@ -71,4 +74,44 @@ func (s *walletServiceImpl) Credit(ctx context.Context, userID uuid.UUID, amount
 		return nil, err
 	}
 	return tx, nil
+}
+
+func (s *walletServiceImpl) Transfer(ctx context.Context, senderID, receiverID uuid.UUID, amount int64, note string) (*repository.WalletTransaction, *repository.WalletTransaction, error) {
+	if senderID == receiverID {
+		return nil, nil, fmt.Errorf("cannot transfer to yourself")
+	}
+
+	refID := uuid.New()
+	desc := note
+	if desc == "" {
+		desc = "Transfer"
+	}
+
+	senderTx, err := s.repo.DebitWallet(ctx, senderID, amount, "transfer", desc, refID)
+	if err != nil {
+		s.logger.Error("failed to debit sender", slog.Any("error", err), slog.String("sender_id", senderID.String()))
+		return nil, nil, err
+	}
+
+	receiverTx, err := s.repo.CreditWallet(ctx, receiverID, amount, "transfer", desc, refID)
+	if err != nil {
+		// Rollback: credit sender back
+		_, rollbackErr := s.repo.CreditWallet(ctx, senderID, amount, "transfer_rollback", "Rollback: "+desc, refID)
+		if rollbackErr != nil {
+			s.logger.Error("CRITICAL: failed to rollback sender debit", slog.Any("error", rollbackErr))
+		}
+		s.logger.Error("failed to credit receiver", slog.Any("error", err), slog.String("receiver_id", receiverID.String()))
+		return nil, nil, err
+	}
+
+	return senderTx, receiverTx, nil
+}
+
+func (s *walletServiceImpl) GetTransactions(ctx context.Context, userID uuid.UUID, page, limit int) ([]repository.WalletTransaction, int, error) {
+	txs, total, err := s.repo.GetTransactionsByUserID(ctx, userID, page, limit)
+	if err != nil {
+		s.logger.Error("failed to get transactions", slog.Any("error", err), slog.String("user_id", userID.String()))
+		return nil, 0, err
+	}
+	return txs, total, nil
 }
