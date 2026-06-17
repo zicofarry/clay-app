@@ -69,12 +69,12 @@ class _DriverLoginScreenState extends ConsumerState<DriverLoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 8),
-                      Text('Nomor Telepon', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ClayColors.textSecondary.withValues(alpha: 0.8))),
+                      Text('Username / Email / Telepon', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ClayColors.textSecondary.withValues(alpha: 0.8))),
                       TextFormField(
                         controller: _phoneC,
-                        keyboardType: TextInputType.phone,
+                        keyboardType: TextInputType.text,
                         decoration: const InputDecoration(
-                          hintText: '+6281234567890',
+                          hintText: 'Masukkan username, email, atau nomor telepon',
                           border: InputBorder.none,
                           hintStyle: TextStyle(color: ClayColors.textSecondary),
                         ),
@@ -109,7 +109,15 @@ class _DriverLoginScreenState extends ConsumerState<DriverLoginScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => context.go('/forgot-password'),
+                    child: const Text('Lupa Password?', style: TextStyle(fontSize: 13, color: ClayColors.primary, fontWeight: FontWeight.w500)),
+                  ),
+                ),
+                const SizedBox(height: 20),
 
                 if (state.error != null)
                   Padding(
@@ -135,6 +143,21 @@ class _DriverLoginScreenState extends ConsumerState<DriverLoginScreen> {
                       child: state.isLoading
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Text('Masuk sebagai Driver', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 15)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => context.go('/register'),
+                  child: Container(
+                    width: double.infinity, height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: ClayColors.primary, width: 1.5),
+                      color: ClayColors.card,
+                    ),
+                    child: const Center(
+                      child: Text('Daftar Akun Baru', style: TextStyle(fontWeight: FontWeight.w600, color: ClayColors.primary, fontSize: 15)),
                     ),
                   ),
                 ),

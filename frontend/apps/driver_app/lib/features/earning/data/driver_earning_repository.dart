@@ -1,5 +1,4 @@
 import 'package:clay_shared/clay_shared.dart';
-import 'package:dio/dio.dart';
 
 class DriverEarningRepository {
   final ClayApi _api;
