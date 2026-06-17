@@ -47,7 +47,13 @@ func main() {
 
 	userRepo := repository.NewUserRepository(db, rdb)
 	userSvc := service.NewUserService(userRepo, logger)
-	userHandler := handler.NewUserHandler(userSvc)
+	uploadsDir := os.Getenv("UPLOADS_DIR")
+	if uploadsDir == "" {
+		uploadsDir = "./data/uploads"
+	}
+	userHandler := handler.NewUserHandler(userSvc,
+		handler.WithUploadsDir(uploadsDir),
+	)
 
 	// ── Router ───────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
@@ -63,6 +69,7 @@ func main() {
 	mux.HandleFunc("PUT /users/me", userHandler.UpdateProfile)
 	mux.HandleFunc("GET /users/{userId}", userHandler.GetProfileByUserId)
 	mux.HandleFunc("PUT /users/me/avatar", userHandler.UploadAvatar)
+	mux.HandleFunc("GET /users/me/avatar/file", userHandler.ServeAvatar)
 	mux.HandleFunc("POST /users/me/referral/apply", userHandler.ApplyReferralCode)
 
 	// Address

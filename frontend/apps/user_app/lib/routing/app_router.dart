@@ -21,6 +21,13 @@ import '../features/history/presentation/screens/history_screen.dart';
 import '../features/common/presentation/screens/placeholder_screen.dart';
 import '../features/search/presentation/screens/search_screen.dart';
 import '../features/location/presentation/screens/location_picker_screen.dart';
+import '../features/location/presentation/screens/address_list_screen.dart';
+import '../features/payment/presentation/screens/payment_methods_screen.dart';
+import '../features/settings/presentation/screens/notification_settings_screen.dart';
+import '../features/settings/presentation/screens/language_screen.dart';
+import '../features/about/presentation/screens/about_screen.dart';
+import '../features/about/presentation/screens/rate_app_screen.dart';
+import '../features/help/presentation/screens/help_center_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -121,6 +128,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (_, __) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/addresses',
+        builder: (_, __) => const AddressListScreen(),
+      ),
+      GoRoute(
+        path: '/payment-methods',
+        builder: (_, __) => const PaymentMethodsScreen(),
+      ),
+      GoRoute(
+        path: '/notification-settings',
+        builder: (_, __) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/language',
+        builder: (_, __) => const LanguageScreen(),
+      ),
+      GoRoute(
+        path: '/rate',
+        builder: (_, __) => const RateAppScreen(),
+      ),
+      GoRoute(
+        path: '/help',
+        builder: (_, __) => const HelpCenterScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        builder: (_, __) => const AboutScreen(),
       ),
       GoRoute(
         path: '/history',
