@@ -197,7 +197,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"phone\": \"+6281234567890\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"user\"\n}"
+          "raw": "{\n  \"username\": \"budi\",\n  \"phone\": \"+6281234567890\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"user\"\n}"
         },
         "auth": {
           "type": "noauth"

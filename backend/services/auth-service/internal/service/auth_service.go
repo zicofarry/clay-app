@@ -11,7 +11,9 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/otp"
 	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/repository"
+	"github.com/zicofarry/clay-app/backend/services/auth-service/internal/sender"
 )
 
 type clayClaims struct {
@@ -48,7 +50,8 @@ var (
 	ErrPhoneNotFound       = &ServiceError{http.StatusNotFound, "PHONE_NOT_FOUND", "phone number not registered"}
 	ErrWrongPassword       = &ServiceError{http.StatusUnprocessableEntity, "WRONG_PASSWORD", "current password is incorrect"}
 	ErrTokenRevoked        = &ServiceError{http.StatusUnauthorized, "TOKEN_REVOKED", "token has been revoked"}
-	ErrMissingContact      = &ServiceError{http.StatusBadRequest, "MISSING_CONTACT", "at least one of email, phone, or username is required"}
+	ErrMissingContact      = &ServiceError{http.StatusBadRequest, "MISSING_CONTACT", "at least one of email or phone is required"}
+	ErrUsernameRequired    = &ServiceError{http.StatusBadRequest, "MISSING_USERNAME", "username is required"}
 )
 
 // ── Request/Response DTOs ────────────────────────────────────────────────────
@@ -159,14 +162,13 @@ type AuthServiceInterface interface {
 	Login(ctx context.Context, req *LoginRequest) (*AuthTokenResponse, error)
 	LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*AuthTokenResponse, error)
 	RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*AuthTokenResponse, error)
-	Logout(ctx context.Context, userID, jti string, req *LogoutRequest) error
-	LogoutAll(ctx context.Context, userID, jti string) error
+	Logout(ctx context.Context, userID string, req *LogoutRequest) error
+	LogoutAll(ctx context.Context, userID string) error
 	ListSessions(ctx context.Context, userID string) ([]Session, error)
-	RevokeSession(ctx context.Context, userID, sessionID, jti string) error
+	RevokeSession(ctx context.Context, userID, sessionID string) error
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) (*OTPResponse, error)
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	ChangePassword(ctx context.Context, userID string, req *ChangePasswordRequest) error
-	ValidateToken(ctx context.Context, jti string) bool
 }
 
 // ── Implementation ───────────────────────────────────────────────────────────
@@ -174,6 +176,8 @@ type AuthServiceInterface interface {
 // AuthService implements AuthServiceInterface.
 type AuthService struct {
 	repo            repository.AuthRepositoryInterface
+	otpStore        *otp.Store
+	sender          *sender.Sender
 	logger          *slog.Logger
 	mu              sync.RWMutex
 	tokens          map[string]*repository.Credential // refresh_token -> credential
@@ -183,9 +187,11 @@ type AuthService struct {
 }
 
 // NewAuthService creates a new AuthService.
-func NewAuthService(repo repository.AuthRepositoryInterface, logger *slog.Logger) *AuthService {
+func NewAuthService(repo repository.AuthRepositoryInterface, otpStore *otp.Store, msgSender *sender.Sender, logger *slog.Logger) *AuthService {
 	return &AuthService{
 		repo:            repo,
+		otpStore:        otpStore,
+		sender:          msgSender,
 		logger:          logger,
 		tokens:          make(map[string]*repository.Credential),
 		sessions:        make(map[string][]Session),
@@ -195,7 +201,10 @@ func NewAuthService(repo repository.AuthRepositoryInterface, logger *slog.Logger
 }
 
 func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error) {
-	if req.Email == "" && req.Phone == "" && req.Username == "" {
+	if req.Username == "" {
+		return nil, ErrUsernameRequired
+	}
+	if req.Email == "" && req.Phone == "" {
 		return nil, ErrMissingContact
 	}
 
@@ -248,26 +257,44 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Regi
 }
 
 func (s *AuthService) RequestOTP(ctx context.Context, req *OTPRequest) (*OTPResponse, error) {
-	// TODO: Check rate limit
-	// TODO: Generate OTP, store hashed in Redis + PostgreSQL
-	// TODO: Publish auth.otp_requested Kafka event → SMS Service sends it
+	contact := req.Phone
 
-	s.logger.Info("OTP requested", slog.String("phone", req.Phone), slog.String("type", req.Type))
+	exists, err := s.repo.ExistsByEmailOrPhone(ctx, contact, contact)
+	if err != nil {
+		return nil, err
+	}
+	if !exists && req.Type != "registration" {
+		return nil, ErrPhoneNotFound
+	}
+
+	code, ttl, err := s.otpStore.Generate(ctx, contact, req.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	go s.sender.SendOTP(context.Background(), contact, code, req.Type)
+
+	s.logger.Info("OTP requested",
+		slog.String("contact", contact),
+		slog.String("type", req.Type),
+	)
 
 	return &OTPResponse{
-		Phone:     req.Phone,
-		ExpiresAt: time.Now().Add(5 * time.Minute),
+		Phone:     contact,
+		ExpiresAt: time.Now().Add(ttl),
 		Cooldown:  60,
 	}, nil
 }
 
 func (s *AuthService) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) (*VerifyOTPResponse, error) {
-	if req.OTPCode != "123456" {
+	contact := req.Phone
+
+	if err := s.otpStore.Verify(ctx, contact, req.Type, req.OTPCode); err != nil {
 		return nil, ErrOTPInvalid
 	}
 
 	if req.Type == "registration" {
-		if err := s.repo.SetPhoneVerified(ctx, req.Phone); err != nil {
+		if err := s.repo.SetPhoneVerified(ctx, contact); err != nil {
 			return nil, err
 		}
 	}
@@ -279,11 +306,14 @@ func (s *AuthService) VerifyOTP(ctx context.Context, req *VerifyOTPRequest) (*Ve
 		if s.resetTokens == nil {
 			s.resetTokens = make(map[string]string)
 		}
-		s.resetTokens[resetToken] = req.Phone
+		s.resetTokens[resetToken] = contact
 		s.mu.Unlock()
 	}
 
-	s.logger.Info("OTP verified", slog.String("phone", req.Phone), slog.String("type", req.Type))
+	s.logger.Info("OTP verified",
+		slog.String("contact", contact),
+		slog.String("type", req.Type),
+	)
 
 	return &VerifyOTPResponse{
 		Verified:   true,

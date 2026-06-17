@@ -1,7 +1,7 @@
 import 'package:clay_shared/clay_shared.dart';
 
 class MockAuthRepository {
-  Future<AuthResponse> login(String phoneNumber, String password) async {
+  Future<AuthResponse> login(String identifier, String password) async {
     await Future.delayed(const Duration(seconds: 1));
     if (password.length < 3) {
       throw const AppException('Password salah');
@@ -12,28 +12,41 @@ class MockAuthRepository {
       user: UserModel(
         id: 'user-001',
         fullName: 'Budi Santoso',
-        phoneNumber: phoneNumber,
+        phoneNumber: identifier,
+        username: identifier,
         email: 'budi@clay.com',
         role: 'user',
       ),
     );
   }
 
-  Future<AuthResponse> register({
-    required String phoneNumber,
+  Future<Map<String, dynamic>> register({
     required String fullName,
+    required String username,
+    String? email,
+    String? phone,
     required String password,
   }) async {
     await Future.delayed(const Duration(seconds: 1));
-    return AuthResponse(
-      accessToken: 'mock_access_token_789',
-      refreshToken: 'mock_refresh_token_012',
-      user: UserModel(
-        id: 'user-002',
-        fullName: fullName,
-        phoneNumber: phoneNumber,
-        role: 'user',
-      ),
-    );
+    return {
+      'user_id': 'user-002',
+      'username': username,
+      'email': email,
+      'phone': phone,
+      'role': 'user',
+      'phone_verified': false,
+    };
+  }
+
+  Future<void> requestOtp(String contact, String type) async {
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  Future<void> verifyOtp(String contact, String otpCode, String type) async {
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  Future<void> createProfile(String fullName) async {
+    await Future.delayed(const Duration(seconds: 1));
   }
 }

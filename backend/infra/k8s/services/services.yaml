@@ -45,6 +45,8 @@ spec:
                   key: db-password
             - name: KAFKA_BROKERS
               value: kafka:9092
+            - name: REDIS_ADDR
+              value: redis-auth:6379
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

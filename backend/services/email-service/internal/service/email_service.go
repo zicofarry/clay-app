@@ -3,10 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/zicofarry/clay-app/backend/pkg/acs"
 	"github.com/zicofarry/clay-app/backend/services/email-service/internal/model"
 	"github.com/zicofarry/clay-app/backend/services/email-service/internal/repository"
 )
@@ -25,22 +28,35 @@ type EmailService interface {
 }
 
 type emailService struct {
-	repo   repository.EmailRepository
-	logger *slog.Logger
+	repo     repository.EmailRepository
+	acs      *acs.Client
+	acsReady bool
+	logger   *slog.Logger
 }
 
 func NewEmailService(repo repository.EmailRepository, logger *slog.Logger) EmailService {
-	return &emailService{
+	svc := &emailService{
 		repo:   repo,
 		logger: logger,
 	}
+
+	if cfg, ok := acs.ConfigFromEnv(); ok && cfg.EmailFrom != "" {
+		svc.acs = acs.NewClient(*cfg)
+		svc.acsReady = true
+		logger.Info("ACS Email client initialized",
+			slog.String("from", cfg.EmailFrom),
+		)
+	} else {
+		logger.Info("ACS not configured, emails will be logged to console")
+	}
+
+	return svc
 }
 
 func (s *emailService) SendEmail(ctx context.Context, idempotencyKey string, req model.SendEmailRequest) (*model.SendEmailResponse, error) {
 	s.logger.Info("sending email", slog.String("to", req.To), slog.String("template_id", string(req.TemplateId)))
 
-	// 1. Check if template exists
-	_, err := s.repo.GetTemplate(ctx, req.TemplateId)
+	template, err := s.repo.GetTemplate(ctx, req.TemplateId)
 	if err != nil {
 		if errors.Is(err, repository.ErrTemplateNotFound) {
 			return nil, ErrTemplateNotFound
@@ -48,32 +64,56 @@ func (s *emailService) SendEmail(ctx context.Context, idempotencyKey string, req
 		return nil, err
 	}
 
-	// 2. Rate Limiting logic (Mocked for now)
-	// In reality, we'd check redis: email:rate:{recipient_email}
+	subject := renderTemplate(template.Subject, req.Variables)
+	html := renderTemplate(template.BodyHtml, req.Variables)
 
-	// 3. Mock Provider Integration
 	emailId := uuid.New().String()
-	providerId := "sg-" + uuid.New().String()
 	now := time.Now()
 
 	status := model.EmailStatusResponse{
 		EmailId:    emailId,
 		Status:     "queued",
-		ProviderId: providerId,
+		ProviderId: "acs-" + uuid.New().String(),
 		SentAt:     &now,
 	}
 
-	// 4. Save to db
-	err = s.repo.SaveEmailLog(ctx, status)
-	if err != nil {
+	if s.acsReady {
+		go func() {
+			if err := s.acs.SendEmail(req.To, subject, html); err != nil {
+				s.logger.Error("ACS email failed",
+					slog.String("email_id", emailId),
+					slog.Any("error", err),
+				)
+			} else {
+				s.logger.Info("Email sent via ACS", slog.String("email_id", emailId), slog.String("to", req.To))
+			}
+		}()
+	} else {
+		s.logger.Info("Email (logged, ACS not configured)",
+			slog.String("to", req.To),
+			slog.String("subject", subject),
+			slog.String("html", html),
+		)
+	}
+
+	if err := s.repo.SaveEmailLog(ctx, status); err != nil {
 		return nil, err
 	}
 
 	return &model.SendEmailResponse{
 		EmailId:  emailId,
 		Status:   "queued",
-		Provider: "sendgrid",
+		Provider: "acs",
 	}, nil
+}
+
+func renderTemplate(tmpl string, vars map[string]interface{}) string {
+	result := tmpl
+	for k, v := range vars {
+		placeholder := fmt.Sprintf("{{%s}}", k)
+		result = strings.ReplaceAll(result, placeholder, fmt.Sprintf("%v", v))
+	}
+	return result
 }
 
 func (s *emailService) GetEmailStatus(ctx context.Context, emailId string) (*model.EmailStatusResponse, error) {

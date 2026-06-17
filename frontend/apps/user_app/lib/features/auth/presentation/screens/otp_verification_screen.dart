@@ -6,8 +6,14 @@ import 'package:clay_ui/clay_ui.dart';
 import '../providers/auth_provider.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  final String phoneNumber;
-  const OtpVerificationScreen({super.key, required this.phoneNumber});
+  final String contact;
+  final String purpose; // 'registration' or 'reset'
+
+  const OtpVerificationScreen({
+    super.key,
+    required this.contact,
+    this.purpose = 'reset',
+  });
 
   @override
   ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -41,6 +47,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     final authState = ref.watch(authStateProvider);
 
     ref.listen<AuthState>(authStateProvider, (prev, state) {
+      if (state.authResponse != null && widget.purpose == 'registration') {
+        context.go('/home');
+      }
       if (state.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(state.error!)),
@@ -56,7 +65,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: ClayColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (widget.purpose == 'registration') {
+              ref.read(authStateProvider.notifier).clearRegistration();
+            }
+            context.pop();
+          },
         ),
       ),
       body: SafeArea(
@@ -83,7 +97,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Masukkan kode OTP yang dikirim ke\n${widget.phoneNumber}',
+                  'Masukkan kode OTP yang dikirim ke\n${widget.contact}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 14,
@@ -180,16 +194,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   Future<void> _onVerify() async {
     if (_otpCode.length != 6) return;
 
-    final resetToken = await ref.read(authStateProvider.notifier).verifyResetOtp(
-      widget.phoneNumber,
-      _otpCode,
-    );
+    if (widget.purpose == 'registration') {
+      await ref.read(authStateProvider.notifier).verifyRegistrationOtp(_otpCode);
+    } else {
+      final resetToken = await ref.read(authStateProvider.notifier).verifyResetOtp(
+        widget.contact,
+        _otpCode,
+      );
 
-    if (resetToken != null && mounted) {
-      context.push('/reset-password', extra: {
-        'phone': widget.phoneNumber,
-        'resetToken': resetToken,
-      });
+      if (resetToken != null && mounted) {
+        context.push('/reset-password', extra: {
+          'phone': widget.contact,
+          'resetToken': resetToken,
+        });
+      }
     }
   }
 }
