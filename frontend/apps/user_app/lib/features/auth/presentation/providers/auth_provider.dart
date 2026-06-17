@@ -85,14 +85,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> verifyOtpAndResetPassword({
+  Future<String?> verifyResetOtp(String phone, String otpCode) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final resetToken = await _repository.verifyOtpForReset(phone, otpCode);
+      state = state.copyWith(isLoading: false);
+      return resetToken;
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return null;
+    }
+  }
+
+  Future<void> resetPassword({
     required String phone,
-    required String otpCode,
+    required String resetToken,
     required String newPassword,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final resetToken = await _repository.verifyOtpForReset(phone, otpCode);
       await _repository.resetPassword(
         phoneNumber: phone,
         resetToken: resetToken,

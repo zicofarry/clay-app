@@ -35,6 +35,7 @@ class ApiEndpoints {
   // Wallet
   static const String wallet = '$_prefix/wallet';
   static const String walletTopUp = '$_prefix/wallet/topup';
+  static const String walletTransfer = '$_prefix/wallet/transfer';
   static const String walletTransactions = '$_prefix/wallet/transactions';
 
   // Payment

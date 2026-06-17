@@ -6,6 +6,7 @@ import '../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
 import '../features/ride/presentation/screens/ride_home_screen.dart';
@@ -23,7 +24,7 @@ import '../features/location/presentation/screens/location_picker_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
-const _authRoutes = {'/login', '/register', '/forgot-password', '/reset-password', '/onboarding'};
+const _authRoutes = {'/login', '/register', '/forgot-password', '/otp-verification', '/reset-password', '/onboarding'};
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -59,11 +60,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const ForgotPasswordScreen(),
       ),
       GoRoute(
+        path: '/otp-verification',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, String>? ?? {};
+          return OtpVerificationScreen(
+            phoneNumber: extra['phone'] ?? '',
+          );
+        },
+      ),
+      GoRoute(
         path: '/reset-password',
         builder: (_, state) {
           final extra = state.extra as Map<String, String>? ?? {};
           return ResetPasswordScreen(
             phoneNumber: extra['phone'] ?? '',
+            resetToken: extra['resetToken'] ?? '',
           );
         },
       ),

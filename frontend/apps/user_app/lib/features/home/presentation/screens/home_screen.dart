@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../../../../features/wallet/presentation/screens/wallet_screen.dart';
+import '../../../../features/wallet/presentation/providers/wallet_provider.dart';
 import '../../../../features/profile/presentation/screens/profile_screen.dart';
 
 final _currentTabProvider = StateProvider<int>((ref) => 0);
@@ -46,6 +47,26 @@ class _DashboardTab extends ConsumerStatefulWidget {
 
 class _DashboardTabState extends ConsumerState<_DashboardTab> {
   String _selectedAddress = 'Jl. Buah Batu No.263';
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(walletStateProvider.notifier).loadWallet();
+    });
+  }
+
+  String _formatCurrency(int amount) {
+    final str = amount.abs().toString();
+    final buffer = StringBuffer();
+    var count = 0;
+    for (var i = str.length - 1; i >= 0; i--) {
+      if (count > 0 && count % 3 == 0) buffer.write('.');
+      buffer.write(str[i]);
+      count++;
+    }
+    return buffer.toString().split('').reversed.join();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +204,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
   }
 
   Widget _buildWalletSection() {
+    final walletState = ref.watch(walletStateProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -200,7 +222,8 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   icon: Icons.account_balance_wallet,
                   iconColor: Colors.blue,
                   label: 'Balance +',
-                  value: 'Rp999.999',
+                  value: 'Rp${_formatCurrency(walletState.balance)}',
+                  onTap: () => ref.read(_currentTabProvider.notifier).state = 2,
                 ),
               ),
               const SizedBox(width: 8),
@@ -210,6 +233,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: ClayColors.primary,
                   label: 'Payment',
                   value: 'Here',
+                  onTap: () => ref.read(_currentTabProvider.notifier).state = 2,
                 ),
               ),
               const SizedBox(width: 8),
@@ -219,6 +243,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: ClayColors.primary,
                   label: 'Transaction',
                   value: 'History',
+                  onTap: () => ref.read(_currentTabProvider.notifier).state = 2,
                 ),
               ),
             ],
@@ -293,44 +318,49 @@ class _WalletCard extends StatelessWidget {
   final Color iconColor;
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   const _WalletCard({
     required this.icon,
     required this.iconColor,
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: ClayColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, color: ClayColors.textSecondary),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: ClayColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(fontSize: 10, color: ClayColors.textSecondary),
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ClayColors.textPrimary),
+            ),
+          ],
+        ),
       ),
     );
   }

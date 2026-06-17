@@ -107,7 +107,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       );
 
       if (success && mounted) {
-        context.push('/reset-password', extra: {
+        context.push('/otp-verification', extra: {
           'phone': _phoneController.text.trim(),
         });
       }

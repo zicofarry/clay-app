@@ -6,9 +6,11 @@ import '../providers/auth_provider.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
+  final String resetToken;
   const ResetPasswordScreen({
     super.key,
     required this.phoneNumber,
+    required this.resetToken,
   });
 
   @override
@@ -16,7 +18,6 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
-  final _otpController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -25,7 +26,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   @override
   void dispose() {
-    _otpController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -88,19 +88,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 40),
                 ClayTextField(
-                  label: 'Kode OTP',
-                  hint: 'Masukkan 6 digit kode OTP',
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: const Icon(Icons.pin_outlined),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Masukkan kode OTP';
-                    if (v.length < 6) return 'Kode OTP harus 6 digit';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                ClayTextField(
                   label: 'Kata Sandi Baru',
                   hint: 'Minimal 8 karakter',
                   controller: _newPasswordController,
@@ -157,9 +144,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   Future<void> _onReset() async {
     if (_formKey.currentState?.validate() ?? false) {
-      await ref.read(authStateProvider.notifier).verifyOtpAndResetPassword(
+      await ref.read(authStateProvider.notifier).resetPassword(
         phone: widget.phoneNumber,
-        otpCode: _otpController.text.trim(),
+        resetToken: widget.resetToken,
         newPassword: _newPasswordController.text,
       );
 
