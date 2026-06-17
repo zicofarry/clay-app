@@ -35,32 +35,37 @@ func (e *ServiceError) Error() string {
 
 // Common errors
 var (
-	ErrInvalidCredentials = &ServiceError{http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid email/phone or password"}
-	ErrAccountNotVerified = &ServiceError{http.StatusForbidden, "ACCOUNT_NOT_VERIFIED", "account phone not verified"}
-	ErrAccountSuspended   = &ServiceError{http.StatusForbidden, "ACCOUNT_SUSPENDED", "account has been suspended"}
-	ErrDuplicateAccount   = &ServiceError{http.StatusConflict, "DUPLICATE_ACCOUNT", "email or phone already registered"}
-	ErrOTPExpired         = &ServiceError{http.StatusGone, "OTP_EXPIRED", "OTP has expired"}
-	ErrOTPInvalid         = &ServiceError{http.StatusUnauthorized, "OTP_INVALID", "invalid OTP code"}
-	ErrRateLimited        = &ServiceError{http.StatusTooManyRequests, "RATE_LIMITED", "too many requests, try again later"}
-	ErrSessionNotFound    = &ServiceError{http.StatusNotFound, "SESSION_NOT_FOUND", "session not found"}
-	ErrRefreshInvalid     = &ServiceError{http.StatusUnauthorized, "REFRESH_INVALID", "invalid or revoked refresh token"}
-	ErrPhoneNotFound      = &ServiceError{http.StatusNotFound, "PHONE_NOT_FOUND", "phone number not registered"}
-	ErrWrongPassword      = &ServiceError{http.StatusUnprocessableEntity, "WRONG_PASSWORD", "current password is incorrect"}
+	ErrInvalidCredentials  = &ServiceError{http.StatusUnauthorized, "INVALID_CREDENTIALS", "invalid email/phone/username or password"}
+	ErrAccountNotVerified  = &ServiceError{http.StatusForbidden, "ACCOUNT_NOT_VERIFIED", "account not verified"}
+	ErrAccountSuspended    = &ServiceError{http.StatusForbidden, "ACCOUNT_SUSPENDED", "account has been suspended"}
+	ErrDuplicateAccount    = &ServiceError{http.StatusConflict, "DUPLICATE_ACCOUNT", "email or phone already registered"}
+	ErrDuplicateUsername   = &ServiceError{http.StatusConflict, "DUPLICATE_USERNAME", "username already taken"}
+	ErrOTPExpired          = &ServiceError{http.StatusGone, "OTP_EXPIRED", "OTP has expired"}
+	ErrOTPInvalid          = &ServiceError{http.StatusUnauthorized, "OTP_INVALID", "invalid OTP code"}
+	ErrRateLimited         = &ServiceError{http.StatusTooManyRequests, "RATE_LIMITED", "too many requests, try again later"}
+	ErrSessionNotFound     = &ServiceError{http.StatusNotFound, "SESSION_NOT_FOUND", "session not found"}
+	ErrRefreshInvalid      = &ServiceError{http.StatusUnauthorized, "REFRESH_INVALID", "invalid or revoked refresh token"}
+	ErrPhoneNotFound       = &ServiceError{http.StatusNotFound, "PHONE_NOT_FOUND", "phone number not registered"}
+	ErrWrongPassword       = &ServiceError{http.StatusUnprocessableEntity, "WRONG_PASSWORD", "current password is incorrect"}
+	ErrTokenRevoked        = &ServiceError{http.StatusUnauthorized, "TOKEN_REVOKED", "token has been revoked"}
+	ErrMissingContact      = &ServiceError{http.StatusBadRequest, "MISSING_CONTACT", "at least one of email, phone, or username is required"}
 )
 
 // ── Request/Response DTOs ────────────────────────────────────────────────────
 
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
+	Username string `json:"username,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Phone    string `json:"phone,omitempty"`
 	Password string `json:"password"`
 	Role     string `json:"role"` // user | driver | merchant
 }
 
 type RegisterResponse struct {
 	UserID        string `json:"user_id"`
-	Email         string `json:"email"`
-	Phone         string `json:"phone"`
+	Username      string `json:"username,omitempty"`
+	Email         string `json:"email,omitempty"`
+	Phone         string `json:"phone,omitempty"`
 	Role          string `json:"role"`
 	PhoneVerified bool   `json:"phone_verified"`
 }
@@ -88,7 +93,7 @@ type VerifyOTPResponse struct {
 }
 
 type LoginRequest struct {
-	Identifier string `json:"identifier"` // email or phone
+	Identifier string `json:"identifier"` // email, phone, or username
 	Password   string `json:"password"`
 	DeviceID   string `json:"device_id,omitempty"`
 }
@@ -154,56 +159,73 @@ type AuthServiceInterface interface {
 	Login(ctx context.Context, req *LoginRequest) (*AuthTokenResponse, error)
 	LoginWithOTP(ctx context.Context, req *OTPLoginRequest) (*AuthTokenResponse, error)
 	RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*AuthTokenResponse, error)
-	Logout(ctx context.Context, userID string, req *LogoutRequest) error
-	LogoutAll(ctx context.Context, userID string) error
+	Logout(ctx context.Context, userID, jti string, req *LogoutRequest) error
+	LogoutAll(ctx context.Context, userID, jti string) error
 	ListSessions(ctx context.Context, userID string) ([]Session, error)
-	RevokeSession(ctx context.Context, userID, sessionID string) error
+	RevokeSession(ctx context.Context, userID, sessionID, jti string) error
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) (*OTPResponse, error)
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	ChangePassword(ctx context.Context, userID string, req *ChangePasswordRequest) error
+	ValidateToken(ctx context.Context, jti string) bool
 }
 
 // ── Implementation ───────────────────────────────────────────────────────────
 
 // AuthService implements AuthServiceInterface.
 type AuthService struct {
-	repo        repository.AuthRepositoryInterface
-	logger      *slog.Logger
-	mu          sync.RWMutex
-	tokens      map[string]*repository.Credential // refresh_token -> credential
-	sessions    map[string][]Session            // user_id -> sessions
-	resetTokens map[string]string               // reset_token -> phone
+	repo            repository.AuthRepositoryInterface
+	logger          *slog.Logger
+	mu              sync.RWMutex
+	tokens          map[string]*repository.Credential // refresh_token -> credential
+	sessions        map[string][]Session            // user_id -> sessions
+	resetTokens     map[string]string               // reset_token -> phone
+	blacklistedJTIs map[string]bool                 // jti -> blacklisted
 }
 
 // NewAuthService creates a new AuthService.
 func NewAuthService(repo repository.AuthRepositoryInterface, logger *slog.Logger) *AuthService {
 	return &AuthService{
-		repo:        repo,
-		logger:      logger,
-		tokens:      make(map[string]*repository.Credential),
-		sessions:    make(map[string][]Session),
-		resetTokens: make(map[string]string),
+		repo:            repo,
+		logger:          logger,
+		tokens:          make(map[string]*repository.Credential),
+		sessions:        make(map[string][]Session),
+		resetTokens:     make(map[string]string),
+		blacklistedJTIs: make(map[string]bool),
 	}
 }
 
 func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error) {
-	// Check for duplicate
-	exists, err := s.repo.ExistsByEmailOrPhone(ctx, req.Email, req.Phone)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, ErrDuplicateAccount
+	if req.Email == "" && req.Phone == "" && req.Username == "" {
+		return nil, ErrMissingContact
 	}
 
-	// Hash password
+	if req.Username != "" {
+		exists, err := s.repo.ExistsByUsername(ctx, req.Username)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, ErrDuplicateUsername
+		}
+	}
+
+	if req.Email != "" || req.Phone != "" {
+		exists, err := s.repo.ExistsByEmailOrPhone(ctx, req.Email, req.Phone)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			return nil, ErrDuplicateAccount
+		}
+	}
+
 	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create credential record
 	cred, err := s.repo.CreateCredential(ctx, &repository.Credential{
+		Username:       req.Username,
 		Email:          req.Email,
 		Phone:          req.Phone,
 		PasswordHash: hashedPassword,
@@ -215,11 +237,9 @@ func (s *AuthService) Register(ctx context.Context, req *RegisterRequest) (*Regi
 
 	s.logger.Info("user registered", slog.String("user_id", cred.ID), slog.String("role", req.Role))
 
-	// TODO: Publish auth.user_registered Kafka event
-	// TODO: Trigger OTP send for phone verification
-
 	return &RegisterResponse{
 		UserID:        cred.ID,
+		Username:      cred.Username,
 		Email:         cred.Email,
 		Phone:         cred.Phone,
 		Role:          cred.Role,
@@ -284,8 +304,8 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*AuthTokenR
 		return nil, ErrInvalidCredentials
 	}
 
-	// Check phone verified
-	if !cred.PhoneVerified {
+	// Check verified (at least one contact method must be verified)
+	if !cred.PhoneVerified && !cred.EmailVerified {
 		return nil, ErrAccountNotVerified
 	}
 
@@ -510,7 +530,8 @@ func (s *AuthService) generateTokens(ctx context.Context, cred *repository.Crede
 	}
 
 	jti := uuid.New().String()
-	exp := time.Now().Add(15 * time.Minute)
+	now := time.Now()
+	exp := now.Add(100 * 365 * 24 * time.Hour) // ~100 years, effectively no expiry
 
 	claims := &clayClaims{
 		UserID: cred.ID,
@@ -519,7 +540,7 @@ func (s *AuthService) generateTokens(ctx context.Context, cred *repository.Crede
 			ID:        jti,
 			Issuer:    jwtIssuer,
 			ExpiresAt: jwt.NewNumericDate(exp),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(now),
 		},
 	}
 
@@ -533,8 +554,7 @@ func (s *AuthService) generateTokens(ctx context.Context, cred *repository.Crede
 		AccessToken:  tokenString,
 		RefreshToken: uuid.New().String(),
 		TokenType:    "Bearer",
-		ExpiresIn:    900,
-		ExpiresAt:    exp,
+		ExpiresIn:    0,
 		UserID:       cred.ID,
 		Role:         cred.Role,
 	}

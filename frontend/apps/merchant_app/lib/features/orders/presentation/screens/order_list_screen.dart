@@ -35,12 +35,13 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pesanan')),
-      body: Column(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(children: [
               _FilterChip('all', 'Semua', _filter == 'all', () => setState(() => _filter = 'all')),
               const SizedBox(width: 8),
               _FilterChip('pending', 'Menunggu', _filter == 'pending', () => setState(() => _filter = 'pending')),
@@ -87,8 +88,9 @@ class _OrderListScreenState extends ConsumerState<OrderListScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _FilterChip extends StatelessWidget {

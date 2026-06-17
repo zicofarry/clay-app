@@ -201,7 +201,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"lat\": -6.2088,\n  \"lng\": 106.8456,\n  \"service_types\": [\n    \"gocar\",\n    \"goride\"\n  ]\n}"
+          "raw": "{\n  \"service_type\": \"ride\",\n  \"lat\": -6.2088,\n  \"lng\": 106.8456\n}"
         }
       }
     },

@@ -64,6 +64,15 @@ type FoodOrderServiceInterface interface {
 	// DriverDeliver marks the order as delivered (POST /driver/orders/{orderId}/deliver).
 	DriverDeliver(ctx context.Context, orderID, driverID string) (*model.FoodOrder, error)
 
+	// DriverAcceptOrder confirms a driver accepts the assigned food order (POST /driver/orders/{orderId}/accept).
+	DriverAcceptOrder(ctx context.Context, orderID, driverID string) (*model.FoodOrder, error)
+
+	// DriverRejectOrder rejects the food order assignment (POST /driver/orders/{orderId}/reject).
+	DriverRejectOrder(ctx context.Context, orderID, driverID string, req model.DriverRejectRequest) (*model.FoodOrder, error)
+
+	// DriverUpdateStatus transitions delivery status (PUT /driver/orders/{orderId}/status).
+	DriverUpdateStatus(ctx context.Context, orderID, driverID string, req model.DriverUpdateStatusRequest) (*model.FoodOrder, error)
+
 	// AssignDriver assigns a driver internally (POST /internal/orders/{orderId}/assign-driver).
 	AssignDriver(ctx context.Context, orderID, driverID string) (*model.FoodOrder, error)
 
@@ -446,6 +455,83 @@ func (s *FoodOrderService) DriverDeliver(ctx context.Context, orderID, driverID 
 	_ = s.producer.Publish(ctx, TopicTripCompleted, orderID, event)
 
 	order.Status = model.StatusDelivered
+	return order, nil
+}
+
+// DriverAcceptOrder confirms the assigned driver accepts the food order.
+func (s *FoodOrderService) DriverAcceptOrder(ctx context.Context, orderID, driverID string) (*model.FoodOrder, error) {
+	order, err := s.repo.GetByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order == nil {
+		return nil, ErrOrderNotFound
+	}
+	if order.Status != model.StatusReady {
+		return nil, ErrInvalidStateTransition
+	}
+	if order.DriverID == nil || *order.DriverID != driverID {
+		return nil, ErrForbidden
+	}
+	return order, nil
+}
+
+// DriverRejectOrder rejects the driver assignment, unassigning the driver.
+func (s *FoodOrderService) DriverRejectOrder(ctx context.Context, orderID, driverID string, req model.DriverRejectRequest) (*model.FoodOrder, error) {
+	order, err := s.repo.GetByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order == nil {
+		return nil, ErrOrderNotFound
+	}
+	if order.Status != model.StatusReady {
+		return nil, ErrInvalidStateTransition
+	}
+	if order.DriverID == nil || *order.DriverID != driverID {
+		return nil, ErrForbidden
+	}
+
+	if err := s.repo.UpdateStatus(ctx, orderID, model.StatusReady, map[string]interface{}{"driver_id": nil}); err != nil {
+		return nil, err
+	}
+	order.DriverID = nil
+	return order, nil
+}
+
+// DriverUpdateStatus transitions the delivery status for driver actions.
+func (s *FoodOrderService) DriverUpdateStatus(ctx context.Context, orderID, driverID string, req model.DriverUpdateStatusRequest) (*model.FoodOrder, error) {
+	order, err := s.repo.GetByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order == nil {
+		return nil, ErrOrderNotFound
+	}
+	if order.DriverID == nil || *order.DriverID != driverID {
+		return nil, ErrForbidden
+	}
+
+	var newStatus model.OrderStatus
+	switch req.Status {
+	case "picked_up":
+		if order.Status != model.StatusReady {
+			return nil, ErrInvalidStateTransition
+		}
+		newStatus = model.StatusPickedUp
+	case "on_delivery":
+		if order.Status != model.StatusPickedUp {
+			return nil, ErrInvalidStateTransition
+		}
+		newStatus = model.StatusOnDelivery
+	default:
+		return nil, ErrInvalidStateTransition
+	}
+
+	if err := s.repo.UpdateStatus(ctx, orderID, newStatus, nil); err != nil {
+		return nil, err
+	}
+	order.Status = newStatus
 	return order, nil
 }
 

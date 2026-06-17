@@ -200,7 +200,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Warung Budi\",\n  \"category\": \"indonesian\",\n  \"address\": \"Jl. Kemang Raya No. 5, Jakarta Selatan\",\n  \"lat\": -6.2608,\n  \"lng\": 106.816,\n  \"phone\": \"+62211234567\",\n  \"description\": \"Authentic Indonesian cuisine\"\n}"
+          "raw": "{\n  \"name\": \"Warung Budi\",\n  \"description\": \"Authentic Indonesian cuisine\",\n  \"category\": \"food\",\n  \"phone_number\": \"+62211234567\",\n  \"address\": \"Jl. Kemang Raya No. 5, Jakarta Selatan\",\n  \"city\": \"Jakarta\",\n  \"lat\": -6.2608,\n  \"lng\": 106.816,\n  \"min_order_cents\": 15000,\n  \"est_delivery_min\": 45\n}"
         }
       }
     },
@@ -313,7 +313,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"is_open\": true\n}"
+          "raw": "{\n  \"status\": \"active\"\n}"
         }
       }
     },
@@ -371,7 +371,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"hours\": [\n    {\n      \"day\": \"monday\",\n      \"open\": \"08:00\",\n      \"close\": \"22:00\",\n      \"is_closed\": false\n    },\n    {\n      \"day\": \"sunday\",\n      \"is_closed\": true\n    }\n  ]\n}"
+          "raw": "{\n  \"hours\": [\n    {\n      \"day_of_week\": 1,\n      \"open_time\": \"08:00\",\n      \"close_time\": \"22:00\",\n      \"is_closed\": false\n    },\n    {\n      \"day_of_week\": 0,\n      \"open_time\": \"00:00\",\n      \"close_time\": \"00:00\",\n      \"is_closed\": true\n    }\n  ]\n}"
         }
       }
     },
