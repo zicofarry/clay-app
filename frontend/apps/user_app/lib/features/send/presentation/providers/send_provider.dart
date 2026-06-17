@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'package:clay_shared/clay_shared.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/ride_repository.dart';
+import '../../data/send_repository.dart';
 
-final rideRepoProvider = Provider<RideRepository>((ref) {
-  return RideRepository(ClayApi.instance);
+final sendRepoProvider = Provider<SendRepository>((ref) {
+  return SendRepository(ClayApi.instance);
 });
 
-final rideStateProvider = StateNotifierProvider<RideNotifier, RideState>((ref) {
-  return RideNotifier(ref.watch(rideRepoProvider));
+final sendStateProvider = StateNotifierProvider<SendNotifier, SendState>((ref) {
+  return SendNotifier(ref.watch(sendRepoProvider));
 });
 
-// ── Ride State ────────────────────────────────────────────────────────────
+// ── Send State ────────────────────────────────────────────────────────────
 
-class RideState {
+class SendState {
   final bool isLoading;
   final String? error;
 
@@ -25,13 +25,24 @@ class RideState {
   final double? destLng;
   final String destAddress;
 
+  // Package
+  final String packageCategory;
+  final String packageSize;
+  final double packageWeight;
+  final String packageDescription;
+  final bool isFragile;
+  final double insuranceValue;
+
+  // Sender / Recipient
+  final String senderName;
+  final String senderPhone;
+  final String recipientName;
+  final String recipientPhone;
+
   // Estimate
   final Map<String, dynamic>? estimate;
   final double distanceKm;
   final int durationMin;
-
-  // Selected service
-  final Map<String, dynamic>? selectedService;
 
   // Order
   final String paymentMethod;
@@ -41,13 +52,11 @@ class RideState {
 
   // Driver
   final Map<String, dynamic>? driverInfo;
-  final String? otpCode;
-  final int etaSeconds;
 
   // Fare
   final Map<String, dynamic>? fareBreakdown;
 
-  const RideState({
+  const SendState({
     this.isLoading = false,
     this.error,
     this.pickupLat,
@@ -56,21 +65,28 @@ class RideState {
     this.destLat,
     this.destLng,
     this.destAddress = '',
+    this.packageCategory = '',
+    this.packageSize = '',
+    this.packageWeight = 0,
+    this.packageDescription = '',
+    this.isFragile = false,
+    this.insuranceValue = 0,
+    this.senderName = '',
+    this.senderPhone = '',
+    this.recipientName = '',
+    this.recipientPhone = '',
     this.estimate,
     this.distanceKm = 0,
     this.durationMin = 0,
-    this.selectedService,
     this.paymentMethod = 'clay_wallet',
     this.promoCode,
     this.activeOrder,
     this.orderStatus = '',
     this.driverInfo,
-    this.otpCode,
-    this.etaSeconds = 0,
     this.fareBreakdown,
   });
 
-  RideState copyWith({
+  SendState copyWith({
     bool? isLoading,
     String? error,
     double? pickupLat,
@@ -79,26 +95,32 @@ class RideState {
     double? destLat,
     double? destLng,
     String? destAddress,
+    String? packageCategory,
+    String? packageSize,
+    double? packageWeight,
+    String? packageDescription,
+    bool? isFragile,
+    double? insuranceValue,
+    String? senderName,
+    String? senderPhone,
+    String? recipientName,
+    String? recipientPhone,
     Map<String, dynamic>? estimate,
     double? distanceKm,
     int? durationMin,
-    Map<String, dynamic>? selectedService,
     String? paymentMethod,
     String? promoCode,
     Map<String, dynamic>? activeOrder,
     String? orderStatus,
     Map<String, dynamic>? driverInfo,
-    String? otpCode,
-    int? etaSeconds,
     Map<String, dynamic>? fareBreakdown,
     bool clearError = false,
     bool clearEstimate = false,
-    bool clearSelectedService = false,
     bool clearActiveOrder = false,
     bool clearDriverInfo = false,
     bool clearFareBreakdown = false,
   }) {
-    return RideState(
+    return SendState(
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       pickupLat: pickupLat ?? this.pickupLat,
@@ -107,30 +129,37 @@ class RideState {
       destLat: destLat ?? this.destLat,
       destLng: destLng ?? this.destLng,
       destAddress: destAddress ?? this.destAddress,
+      packageCategory: packageCategory ?? this.packageCategory,
+      packageSize: packageSize ?? this.packageSize,
+      packageWeight: packageWeight ?? this.packageWeight,
+      packageDescription: packageDescription ?? this.packageDescription,
+      isFragile: isFragile ?? this.isFragile,
+      insuranceValue: insuranceValue ?? this.insuranceValue,
+      senderName: senderName ?? this.senderName,
+      senderPhone: senderPhone ?? this.senderPhone,
+      recipientName: recipientName ?? this.recipientName,
+      recipientPhone: recipientPhone ?? this.recipientPhone,
       estimate: clearEstimate ? null : (estimate ?? this.estimate),
       distanceKm: distanceKm ?? this.distanceKm,
       durationMin: durationMin ?? this.durationMin,
-      selectedService: clearSelectedService ? null : (selectedService ?? this.selectedService),
       paymentMethod: paymentMethod ?? this.paymentMethod,
       promoCode: promoCode ?? this.promoCode,
       activeOrder: clearActiveOrder ? null : (activeOrder ?? this.activeOrder),
       orderStatus: orderStatus ?? this.orderStatus,
       driverInfo: clearDriverInfo ? null : (driverInfo ?? this.driverInfo),
-      otpCode: otpCode ?? this.otpCode,
-      etaSeconds: etaSeconds ?? this.etaSeconds,
       fareBreakdown: clearFareBreakdown ? null : (fareBreakdown ?? this.fareBreakdown),
     );
   }
 }
 
-// ── Ride Notifier ─────────────────────────────────────────────────────────
+// ── Send Notifier ─────────────────────────────────────────────────────────
 
-class RideNotifier extends StateNotifier<RideState> {
-  final RideRepository _repo;
+class SendNotifier extends StateNotifier<SendState> {
+  final SendRepository _repo;
   Timer? _pollTimer;
   String? _lastDriverId;
 
-  RideNotifier(this._repo) : super(const RideState());
+  SendNotifier(this._repo) : super(const SendState());
 
   @override
   void dispose() {
@@ -158,10 +187,54 @@ class RideNotifier extends StateNotifier<RideState> {
     );
   }
 
+  // ── Package ──
+
+  void setPackageInfo({
+    String? category,
+    String? size,
+    double? weight,
+    String? description,
+    bool? isFragile,
+    double? insuranceValue,
+  }) {
+    state = state.copyWith(
+      packageCategory: category ?? state.packageCategory,
+      packageSize: size ?? state.packageSize,
+      packageWeight: weight ?? state.packageWeight,
+      packageDescription: description ?? state.packageDescription,
+      isFragile: isFragile ?? state.isFragile,
+      insuranceValue: insuranceValue ?? state.insuranceValue,
+      clearError: true,
+      clearEstimate: true,
+    );
+  }
+
+  // ── Sender / Recipient ──
+
+  void setSenderInfo(String name, String phone) {
+    state = state.copyWith(senderName: name, senderPhone: phone);
+  }
+
+  void setRecipientInfo(String name, String phone) {
+    state = state.copyWith(recipientName: name, recipientPhone: phone);
+  }
+
+  // ── Payment ──
+
+  void setPaymentMethod(String method) {
+    state = state.copyWith(paymentMethod: method);
+  }
+
+  void setPromoCode(String? code) {
+    state = state.copyWith(promoCode: code);
+  }
+
   // ── Estimate ──
 
   Future<void> estimateFare() async {
     if (state.pickupLat == null || state.destLat == null) return;
+    if (state.packageCategory.isEmpty || state.packageSize.isEmpty) return;
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repo.estimate(
@@ -169,6 +242,10 @@ class RideNotifier extends StateNotifier<RideState> {
         pickupLng: state.pickupLng!,
         destLat: state.destLat!,
         destLng: state.destLng!,
+        packageCategory: state.packageCategory,
+        packageSize: state.packageSize,
+        packageWeight: state.packageWeight,
+        insuranceValue: state.insuranceValue,
       );
       state = state.copyWith(
         isLoading: false,
@@ -181,38 +258,35 @@ class RideNotifier extends StateNotifier<RideState> {
     }
   }
 
-  // ── Select Service ──
-
-  void selectService(Map<String, dynamic> service) {
-    state = state.copyWith(selectedService: service, clearError: true);
-  }
-
-  void setPaymentMethod(String method) {
-    state = state.copyWith(paymentMethod: method);
-  }
-
-  void setPromoCode(String? code) {
-    state = state.copyWith(promoCode: code);
-  }
-
   // ── Create Order ──
 
   Future<void> confirmOrder() async {
-    if (state.selectedService == null) return;
     if (state.pickupLat == null || state.destLat == null) return;
+    if (state.senderName.isEmpty || state.recipientName.isEmpty) return;
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
+      final fareEstimate = state.estimate?['fare_estimate'] as int? ?? 0;
+
       final order = await _repo.createOrder(
+        senderName: state.senderName,
+        senderPhone: state.senderPhone,
         pickupLat: state.pickupLat!,
         pickupLng: state.pickupLng!,
         pickupAddress: state.pickupAddress,
+        recipientName: state.recipientName,
+        recipientPhone: state.recipientPhone,
         destLat: state.destLat!,
         destLng: state.destLng!,
         destAddress: state.destAddress,
-        vehicleType: state.selectedService!['vehicle_type'] as String,
-        fareEstimate: state.selectedService!['fare_estimate'] as int,
         paymentMethod: state.paymentMethod,
+        packageCategory: state.packageCategory,
+        packageSize: state.packageSize,
+        packageWeight: state.packageWeight,
+        packageDescription: state.packageDescription,
+        isFragile: state.isFragile,
+        insuranceValue: state.insuranceValue,
+        fareEstimate: fareEstimate,
         promoCode: state.promoCode,
       );
 
@@ -220,7 +294,6 @@ class RideNotifier extends StateNotifier<RideState> {
         isLoading: false,
         activeOrder: order,
         orderStatus: order['status'] as String,
-        otpCode: order['otp_code'] as String?,
       );
 
       _startPolling(order['order_id'] as String);
@@ -244,31 +317,22 @@ class RideNotifier extends StateNotifier<RideState> {
         final newStatus = detail['status'] as String;
         final driverId = detail['driver_id'] as String?;
 
-        // Update status in state
-        state = state.copyWith(
-          orderStatus: newStatus,
-          otpCode: detail['otp_code'] as String? ?? state.otpCode,
-        );
+        state = state.copyWith(orderStatus: newStatus);
 
-        // Fetch driver info when driver is assigned
         if (driverId != null && driverId.isNotEmpty && driverId != _lastDriverId) {
           _lastDriverId = driverId;
           _fetchDriverInfo(driverId);
         }
 
-        // Fetch fare breakdown on completion
-        if (newStatus == 'completed') {
+        if (newStatus == 'delivered') {
           _stopPolling();
           _fetchFareBreakdown(orderId);
         }
 
-        // Stop polling on terminal states
         if (newStatus == 'cancelled') {
           _stopPolling();
         }
-      } catch (_) {
-        // Silently retry on next tick
-      }
+      } catch (_) {}
     });
   }
 
@@ -282,9 +346,7 @@ class RideNotifier extends StateNotifier<RideState> {
       final info = await _repo.getDriverInfo(driverId);
       if (!mounted) return;
       state = state.copyWith(driverInfo: info);
-    } catch (_) {
-      // Non-critical — UI will show placeholders
-    }
+    } catch (_) {}
   }
 
   Future<void> _fetchFareBreakdown(String orderId) async {
@@ -292,9 +354,7 @@ class RideNotifier extends StateNotifier<RideState> {
       final breakdown = await _repo.getFareBreakdown(orderId);
       if (!mounted) return;
       state = state.copyWith(fareBreakdown: breakdown);
-    } catch (_) {
-      // Non-critical
-    }
+    } catch (_) {}
   }
 
   // ── Cancel ──
@@ -340,9 +400,9 @@ class RideNotifier extends StateNotifier<RideState> {
 
   // ── Reset ──
 
-  void resetRide() {
+  void resetSend() {
     _stopPolling();
     _lastDriverId = null;
-    state = const RideState();
+    state = const SendState();
   }
 }

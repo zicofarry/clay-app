@@ -79,5 +79,4 @@ class ClayTheme {
       textTheme: ThemeData(brightness: brightness).textTheme.apply(bodyColor: onSurface, displayColor: onSurface),
     );
   }
-
 }

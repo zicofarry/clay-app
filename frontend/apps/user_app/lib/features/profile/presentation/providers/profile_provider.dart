@@ -20,8 +20,10 @@ class ProfileNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>>> {
       final response = await _api.dio.get(ApiEndpoints.getProfile);
       final data = response.data as Map<String, dynamic>;
       state = AsyncValue.data(data['data'] as Map<String, dynamic>? ?? data);
-    } on DioException catch (e, st) {
-      state = AsyncValue.error(e.message ?? 'Failed to load profile', st);
+    } on DioException catch (e) {
+      state = AsyncValue.error(e, e.stackTrace ?? StackTrace.current);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 

@@ -73,6 +73,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+
+
   Future<void> register({
     required String fullName,
     required String username,
@@ -185,6 +187,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     ClayApi.instance.clearToken();
     _ref.invalidate(profileProvider);
     state = const AuthState();
+  }
+
+  Future<bool> logoutAll() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.revokeAllSessions();
+      ClayApi.instance.clearToken();
+      _ref.invalidate(profileProvider);
+      state = const AuthState();
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listSessions() async {
+    try {
+      return await _repository.listSessions();
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+      return [];
+    }
+  }
+
+  Future<bool> revokeSession(String sessionId) async {
+    try {
+      await _repository.revokeSession(sessionId);
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+      return false;
+    }
   }
 
   void clearError() {

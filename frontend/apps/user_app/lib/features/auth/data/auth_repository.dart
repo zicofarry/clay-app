@@ -185,6 +185,38 @@ class AuthRepository {
     }
   }
 
+  Future<void> revokeAllSessions() async {
+    try {
+      await _api.dio.post(ApiEndpoints.revokeAllSessions);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listSessions() async {
+    try {
+      final response = await _api.dio.get(ApiEndpoints.sessions);
+      final data = response.data;
+      if (data is Map && data['data'] is List) {
+        return List<Map<String, dynamic>>.from(data['data'] as List);
+      }
+      if (data is List) {
+        return List<Map<String, dynamic>>.from(data);
+      }
+      return [];
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<void> revokeSession(String sessionId) async {
+    try {
+      await _api.dio.delete(ApiEndpoints.revokeSession(sessionId));
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   AppException _handleError(DioException e) {
     final errorMsg = e.response?.data?['message']?.toString();
     final message = errorMsg ?? (e.message ?? 'Unknown error');

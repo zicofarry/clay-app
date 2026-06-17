@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -79,8 +80,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: 'Kata Sandi',
                   hint: 'Masukkan kata sandi',
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   prefixIcon: const Icon(Icons.lock_outlined),
+                  suffixIcon: GestureDetector(
+                    onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                    child: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: ClayColors.textSecondary,
+                    ),
+                  ),
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Masukkan kata sandi' : null,
                 ),
@@ -106,6 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: authState.isLoading,
                   onPressed: _onLogin,
                 ),
+
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -133,4 +142,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     }
   }
+
+
 }
