@@ -174,12 +174,24 @@ class FoodNotifier extends StateNotifier<FoodState> {
   }
 
   Future<void> loadActiveOrder() async {
-    final order = await _repo.getActiveOrder();
-    state = state.copyWith(activeOrder: order);
+    try {
+      final order = await _repo.getActiveOrder();
+      state = state.copyWith(activeOrder: order);
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 
   Future<void> loadHistory() async {
-    final list = await _repo.getHistory();
-    state = state.copyWith(history: list);
+    try {
+      final list = await _repo.getHistory();
+      state = state.copyWith(history: list);
+    } on AppException catch (e) {
+      state = state.copyWith(error: e.message);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
   }
 }
