@@ -54,6 +54,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+
+
   Future<void> register({
     required String phone,
     required String name,

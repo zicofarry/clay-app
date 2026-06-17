@@ -10,7 +10,12 @@ import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
 import '../features/ride/presentation/screens/ride_home_screen.dart';
+import '../features/ride/presentation/screens/ride_confirm_screen.dart';
+import '../features/ride/presentation/screens/ride_searching_screen.dart';
 import '../features/ride/presentation/screens/ride_tracking_screen.dart';
+import '../features/ride/presentation/screens/ride_on_trip_screen.dart';
+import '../features/ride/presentation/screens/ride_complete_screen.dart';
+import '../features/ride/presentation/screens/ride_rating_screen.dart';
 import '../features/food/presentation/screens/merchant_list_screen.dart';
 import '../features/food/presentation/screens/menu_screen.dart';
 import '../features/food/presentation/screens/cart_screen.dart';
@@ -102,8 +107,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RideHomeScreen(),
       ),
       GoRoute(
+        path: '/ride/confirm',
+        builder: (_, __) => const RideConfirmScreen(),
+      ),
+      GoRoute(
+        path: '/ride/searching',
+        builder: (_, __) => const RideSearchingScreen(),
+      ),
+      GoRoute(
         path: '/ride/tracking',
         builder: (_, __) => const RideTrackingScreen(),
+      ),
+      GoRoute(
+        path: '/ride/on-trip',
+        builder: (_, __) => const RideOnTripScreen(),
+      ),
+      GoRoute(
+        path: '/ride/complete',
+        builder: (_, __) => const RideCompleteScreen(),
+      ),
+      GoRoute(
+        path: '/ride/rating',
+        builder: (_, __) => const RideRatingScreen(),
       ),
       GoRoute(
         path: '/food',
@@ -163,7 +188,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/car',
-        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClayCar'),
+        builder: (_, __) => const RideHomeScreen(),
       ),
       GoRoute(
         path: '/send',

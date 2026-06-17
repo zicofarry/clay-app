@@ -19,18 +19,27 @@ class ApiEndpoints {
   static const String updateAvatar = '$_prefix/users/me/avatar';
   static const String addresses = '$_prefix/addresses';
   static const String settings = '$_prefix/settings';
+  static String userById(String userId) => '$_prefix/users/$userId';
 
   // Ride
   static const String rideEstimate = '$_prefix/ride/orders/estimate';
   static const String rideCreate = '$_prefix/ride/orders';
   static const String rideActive = '$_prefix/ride/orders/active';
   static const String rideHistory = '$_prefix/ride/orders/history';
+  static String rideOrder(String orderId) => '$_prefix/ride/orders/$orderId';
+  static String cancelRideOrder(String orderId) => '$_prefix/ride/orders/$orderId/cancel';
+  static String rateRideOrder(String orderId) => '$_prefix/ride/orders/$orderId/rate';
+  static String fareBreakdownRide(String orderId) => '$_prefix/ride/orders/$orderId/fare-breakdown';
 
   // Food
   static const String foodEstimate = '$_prefix/food/orders/estimate';
   static const String foodCreate = '$_prefix/food/orders';
   static const String foodActive = '$_prefix/food/orders/active';
   static const String foodHistory = '$_prefix/food/orders/history';
+  static String foodOrder(String orderId) => '$_prefix/food/orders/$orderId';
+  static String cancelFoodOrder(String orderId) => '$_prefix/food/orders/$orderId/cancel';
+  static String rateFoodOrder(String orderId) => '$_prefix/food/orders/$orderId/rate';
+  static String fareBreakdownFood(String orderId) => '$_prefix/food/orders/$orderId/fare-breakdown';
 
   // Wallet
   static const String wallet = '$_prefix/wallet';
