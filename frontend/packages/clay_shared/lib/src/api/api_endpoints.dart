@@ -34,6 +34,16 @@ class ApiEndpoints {
   static String rateRideOrder(String orderId) => '$_prefix/ride/orders/$orderId/rate';
   static String fareBreakdownRide(String orderId) => '$_prefix/ride/orders/$orderId/fare-breakdown';
 
+  // Delivery (ClaySend)
+  static const String deliveryEstimate = '$_prefix/delivery/orders/estimate';
+  static const String deliveryCreate = '$_prefix/delivery/orders';
+  static const String deliveryActive = '$_prefix/delivery/orders/active';
+  static const String deliveryHistory = '$_prefix/delivery/orders/history';
+  static String deliveryOrder(String orderId) => '$_prefix/delivery/orders/$orderId';
+  static String cancelDeliveryOrder(String orderId) => '$_prefix/delivery/orders/$orderId/cancel';
+  static String rateDeliveryOrder(String orderId) => '$_prefix/delivery/orders/$orderId/rate';
+  static String fareBreakdownDelivery(String orderId) => '$_prefix/delivery/orders/$orderId/fare-breakdown';
+
   // Food
   static const String foodEstimate = '$_prefix/food/orders/estimate';
   static const String foodCreate = '$_prefix/food/orders';

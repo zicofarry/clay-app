@@ -17,6 +17,12 @@ import '../features/ride/presentation/screens/ride_tracking_screen.dart';
 import '../features/ride/presentation/screens/ride_on_trip_screen.dart';
 import '../features/ride/presentation/screens/ride_complete_screen.dart';
 import '../features/ride/presentation/screens/ride_rating_screen.dart';
+import '../features/send/presentation/screens/send_home_screen.dart';
+import '../features/send/presentation/screens/send_confirm_screen.dart';
+import '../features/send/presentation/screens/send_searching_screen.dart';
+import '../features/send/presentation/screens/send_tracking_screen.dart';
+import '../features/send/presentation/screens/send_complete_screen.dart';
+import '../features/send/presentation/screens/send_rating_screen.dart';
 import '../features/food/presentation/screens/merchant_list_screen.dart';
 import '../features/food/presentation/screens/menu_screen.dart';
 import '../features/food/presentation/screens/cart_screen.dart';
@@ -197,7 +203,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/send',
-        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClaySend'),
+        builder: (_, __) => const SendHomeScreen(),
+      ),
+      GoRoute(
+        path: '/send/confirm',
+        builder: (_, __) => const SendConfirmScreen(),
+      ),
+      GoRoute(
+        path: '/send/searching',
+        builder: (_, __) => const SendSearchingScreen(),
+      ),
+      GoRoute(
+        path: '/send/tracking',
+        builder: (_, __) => const SendTrackingScreen(),
+      ),
+      GoRoute(
+        path: '/send/complete',
+        builder: (_, __) => const SendCompleteScreen(),
+      ),
+      GoRoute(
+        path: '/send/rating',
+        builder: (_, __) => const SendRatingScreen(),
       ),
       GoRoute(
         path: '/pet',
