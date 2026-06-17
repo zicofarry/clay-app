@@ -39,6 +39,9 @@ Thumbs.db
 .pub-cache/
 .pub/
 build/
+ios/
+macos/
+linux/
 
 # ── Logs ──
 *.log
