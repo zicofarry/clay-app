@@ -4,9 +4,9 @@ class ClayColors {
   ClayColors._();
 
   // FE-Clay inspired palette
-  static const Color primary = Color(0xFF3B82F6);
-  static const Color primaryLight = Color(0xFF60A5FA);
-  static const Color primaryDark = Color(0xFF2563EB);
+  static const Color primary = Color(0xFF97C5F5);
+  static const Color primaryLight = Color(0xFFB8D9FA);
+  static const Color primaryDark = Color(0xFF6FA7E6);
   static const Color accent = Color(0xFFEF4444);
   static const Color green = Color(0xFF52D49F);
   static const Color greenDark = Color(0xFF3BBF88);
