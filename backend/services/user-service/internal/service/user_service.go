@@ -17,6 +17,7 @@ type UserServiceInterface interface {
 	GetProfile(ctx context.Context, userID uuid.UUID) (*models.ProfileResponse, error)
 	CreateProfile(ctx context.Context, userID uuid.UUID, req models.CreateProfileRequest) (*models.ProfileResponse, error)
 	UpdateProfile(ctx context.Context, userID uuid.UUID, req models.UpdateProfileRequest) (*models.ProfileResponse, error)
+	SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) (*models.ProfileResponse, error)
 	GetPublicProfile(ctx context.Context, targetUserID uuid.UUID) (*models.PublicProfileResponse, error)
 	ApplyReferralCode(ctx context.Context, userID uuid.UUID, referralCode string) error
 
@@ -195,6 +196,22 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, req m
 
 	err = s.repo.UpdateProfile(ctx, p)
 	if err != nil {
+		return nil, err
+	}
+	return mapProfile(p), nil
+}
+
+func (s *UserService) SetAvatarURL(ctx context.Context, userID uuid.UUID, url string) (*models.ProfileResponse, error) {
+	p, err := s.repo.GetProfileByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, errors.New("profile not found")
+	}
+	p.AvatarURL = url
+	p.UpdatedAt = time.Now()
+	if err := s.repo.UpdateProfile(ctx, p); err != nil {
 		return nil, err
 	}
 	return mapProfile(p), nil
