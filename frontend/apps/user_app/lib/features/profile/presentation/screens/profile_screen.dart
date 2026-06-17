@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
-import 'package:clay_shared/clay_shared.dart';
 import '../providers/profile_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../settings/presentation/providers/preferences_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -30,6 +30,8 @@ class ProfileScreen extends ConsumerWidget {
     final birthDate = profile['birth_date']?.toString() ?? '';
     final gender = profile['gender']?.toString() ?? '';
     final referral = profile['referral_code']?.toString() ?? '-';
+    final themeState = ref.watch(themeProvider);
+    final langState = ref.watch(languageProvider);
 
     return RefreshIndicator(
       onRefresh: () => ref.read(profileProvider.notifier).loadProfile(),
@@ -192,8 +194,36 @@ class ProfileScreen extends ConsumerWidget {
                 _SectionTitle('Preferensi'),
                 _MenuGroup(
                   items: [
-                    _MenuItemData(Icons.language, Colors.green, 'Bahasa', 'Indonesia'),
-                    _MenuItemData(Icons.dark_mode_outlined, Colors.indigo, 'Tema Gelap', 'Nonaktif'),
+                    _MenuItemData(
+                      Icons.language,
+                      Colors.green,
+                      'Bahasa',
+                      langState.label,
+                      onTap: () => context.push('/language'),
+                    ),
+                    _MenuItemData(
+                      Icons.dark_mode_outlined,
+                      Colors.indigo,
+                      'Tema Gelap',
+                      themeState.isDark ? 'Aktif' : 'Nonaktif',
+                      trailing: Switch.adaptive(
+                        value: themeState.isDark,
+                        activeColor: ClayColors.primary,
+                        onChanged: (v) async {
+                          final notifier = ref.read(themeProvider.notifier);
+                          if (v == notifier.isDark) return;
+                          await notifier.toggle();
+                          if (!context.mounted) return;
+                          final nowDark = ref.read(themeProvider).isDark;
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(SnackBar(
+                              content: Text('Tema ${nowDark ? 'gelap' : 'terang'} diaktifkan'),
+                              backgroundColor: Colors.green,
+                            ));
+                        },
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -419,7 +449,8 @@ class _MenuItemData {
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
-  const _MenuItemData(this.icon, this.iconColor, this.title, this.subtitle, {this.onTap});
+  final Widget? trailing;
+  const _MenuItemData(this.icon, this.iconColor, this.title, this.subtitle, {this.onTap, this.trailing});
 }
 
 class _MenuGroup extends StatelessWidget {
@@ -455,8 +486,8 @@ class _MenuGroup extends StatelessWidget {
               ),
               title: Text(items[i].title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               subtitle: Text(items[i].subtitle, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
-              trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-              onTap: items[i].onTap,
+              trailing: items[i].trailing ?? const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+              onTap: items[i].trailing != null ? null : items[i].onTap,
             ),
           ],
         ],

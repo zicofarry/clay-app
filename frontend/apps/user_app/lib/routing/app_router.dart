@@ -24,6 +24,7 @@ import '../features/location/presentation/screens/location_picker_screen.dart';
 import '../features/location/presentation/screens/address_list_screen.dart';
 import '../features/payment/presentation/screens/payment_methods_screen.dart';
 import '../features/settings/presentation/screens/notification_settings_screen.dart';
+import '../features/settings/presentation/screens/language_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -136,6 +137,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notification-settings',
         builder: (_, __) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/language',
+        builder: (_, __) => const LanguageScreen(),
       ),
       GoRoute(
         path: '/history',
