@@ -65,6 +65,13 @@ func NewAuthRepository(db *sql.DB, redis interface{}) *AuthRepository {
 	return &AuthRepository{db: db, redis: redis}
 }
 
+func nullIfEmpty(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
 func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential) (*Credential, error) {
 	query := `
 		INSERT INTO credentials (username, email, phone, password_hash, role, status, email_verified, phone_verified)
@@ -73,7 +80,7 @@ func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential)
 	`
 
 	err := r.db.QueryRowContext(ctx, query,
-		cred.Username, cred.Email, cred.Phone, cred.PasswordHash, cred.Role,
+		cred.Username, nullIfEmpty(cred.Email), nullIfEmpty(cred.Phone), cred.PasswordHash, cred.Role,
 	).Scan(&cred.ID, &cred.CreatedAt, &cred.UpdatedAt)
 
 	if err != nil {
@@ -87,7 +94,7 @@ func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential)
 
 func (r *AuthRepository) FindByID(ctx context.Context, id string) (*Credential, error) {
 	query := `
-		SELECT id, username, email, phone, password_hash, role, status, email_verified, phone_verified, created_at, updated_at
+		SELECT id, COALESCE(username, ''), COALESCE(email, ''), COALESCE(phone, ''), password_hash, role, status, email_verified, phone_verified, created_at, updated_at
 		FROM credentials WHERE id = $1
 	`
 
@@ -105,7 +112,7 @@ func (r *AuthRepository) FindByID(ctx context.Context, id string) (*Credential, 
 
 func (r *AuthRepository) FindByIdentifier(ctx context.Context, identifier string) (*Credential, error) {
 	query := `
-		SELECT id, username, email, phone, password_hash, role, status, email_verified, phone_verified, created_at, updated_at
+		SELECT id, COALESCE(username, ''), COALESCE(email, ''), COALESCE(phone, ''), password_hash, role, status, email_verified, phone_verified, created_at, updated_at
 		FROM credentials WHERE email = $1 OR phone = $1 OR username = $1
 	`
 
@@ -144,7 +151,13 @@ func (r *AuthRepository) UpdatePassword(ctx context.Context, userID, passwordHas
 }
 
 func (r *AuthRepository) SetPhoneVerified(ctx context.Context, phone string) error {
-	query := `UPDATE credentials SET phone_verified = true, updated_at = NOW() WHERE phone = $1`
+	query := `
+		UPDATE credentials 
+		SET phone_verified = CASE WHEN phone = $1 THEN true ELSE phone_verified END,
+		    email_verified = CASE WHEN email = $1 THEN true ELSE email_verified END,
+		    updated_at = NOW()
+		WHERE phone = $1 OR email = $1
+	`
 	_, err := r.db.ExecContext(ctx, query, phone)
 	return err
 }

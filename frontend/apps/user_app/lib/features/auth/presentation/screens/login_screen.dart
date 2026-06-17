@@ -12,14 +12,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -67,13 +67,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
                 ClayTextField(
-                  label: 'Nomor Telepon',
-                  hint: '+6281234567890',
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  label: 'Username / Email / Telepon',
+                  hint: 'Masukkan username, email, atau telepon',
+                  controller: _identifierController,
+                  keyboardType: TextInputType.text,
+                  prefixIcon: const Icon(Icons.person_outlined),
                   validator: (v) =>
-                      v == null || v.isEmpty ? 'Masukkan nomor telepon' : null,
+                      v == null || v.isEmpty ? 'Masukkan username, email, atau telepon' : null,
                 ),
                 const SizedBox(height: 20),
                 ClayTextField(
@@ -137,7 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _onLogin() {
     if (_formKey.currentState?.validate() ?? false) {
       ref.read(authStateProvider.notifier).login(
-        _phoneController.text.trim(),
+        _identifierController.text.trim(),
         _passwordController.text,
       );
     }

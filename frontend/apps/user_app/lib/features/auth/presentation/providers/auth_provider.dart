@@ -17,10 +17,20 @@ class AuthState {
   final String? error;
   final AuthResponse? authResponse;
 
+  // Registration flow
+  final bool registered;
+  final String? contact;
+  final String? password;
+  final String? fullName;
+
   const AuthState({
     this.isLoading = false,
     this.error,
     this.authResponse,
+    this.registered = false,
+    this.contact,
+    this.password,
+    this.fullName,
   });
 
   AuthState copyWith({
@@ -28,11 +38,20 @@ class AuthState {
     String? error,
     bool clearError = false,
     AuthResponse? authResponse,
+    bool? registered,
+    String? contact,
+    String? password,
+    String? fullName,
+    bool clearRegistration = false,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       authResponse: authResponse ?? this.authResponse,
+      registered: clearRegistration ? false : (registered ?? this.registered),
+      contact: clearRegistration ? null : (contact ?? this.contact),
+      password: clearRegistration ? null : (password ?? this.password),
+      fullName: clearRegistration ? null : (fullName ?? this.fullName),
     );
   }
 }
@@ -43,10 +62,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._repository, this._ref) : super(const AuthState());
 
-  Future<void> login(String phone, String password) async {
+  Future<void> login(String identifier, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await _repository.login(phone, password);
+      final response = await _repository.login(identifier, password);
       state = state.copyWith(isLoading: false, authResponse: response);
       _ref.invalidate(profileProvider);
     } on AppException catch (e) {
@@ -57,22 +76,69 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
 
   Future<void> register({
-    required String phone,
-    required String name,
+    required String fullName,
+    required String username,
+    String? email,
+    String? phone,
     required String password,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await _repository.register(
-        phoneNumber: phone,
-        fullName: name,
+      await _repository.register(
+        fullName: fullName,
+        username: username,
+        email: email,
+        phone: phone,
         password: password,
       );
+
+      if (email != null && email.isNotEmpty) {
+        await _repository.requestOtp(email, 'registration');
+        state = state.copyWith(
+          isLoading: false,
+          registered: true,
+          contact: email,
+          password: password,
+          fullName: fullName,
+        );
+      } else {
+        final contact = phone ?? '';
+        final response = await _repository.login(contact, password);
+        await _repository.createProfile(fullName);
+        state = state.copyWith(
+          isLoading: false,
+          authResponse: response,
+        );
+        _ref.invalidate(profileProvider);
+      }
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    }
+  }
+
+  Future<void> verifyRegistrationOtp(String otpCode) async {
+    final contact = state.contact;
+    final password = state.password;
+    final fullName = state.fullName;
+    if (contact == null || password == null) return;
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.verifyOtp(contact, otpCode, 'registration');
+
+      final response = await _repository.login(contact, password);
+
+      await _repository.createProfile(fullName ?? '');
+
       state = state.copyWith(isLoading: false, authResponse: response);
       _ref.invalidate(profileProvider);
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
     }
+  }
+
+  void clearRegistration() {
+    state = state.copyWith(clearRegistration: true);
   }
 
   Future<bool> forgotPassword(String phone) async {

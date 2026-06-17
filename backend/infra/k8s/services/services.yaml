@@ -45,11 +45,17 @@ spec:
                   key: db-password
             - name: KAFKA_BROKERS
               value: kafka:9092
+            - name: REDIS_ADDR
+              value: redis-auth:6379
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: clay-secrets
                   key: jwt-secret
+            - name: SMS_SERVICE_URL
+              value: "http://clay-sms-service:8080"
+            - name: EMAIL_SERVICE_URL
+              value: "http://clay-email-service:8080"
           readinessProbe:
             httpGet:
               path: /health
@@ -885,8 +891,18 @@ spec:
                 secretKeyRef:
                   name: clay-secrets
                   key: db-password
-            - name: REDIS_ADDR
-              value: redis-email:6379
+            - name: REDIS_URL
+              value: redis://redis-email:6379/0
+            - name: ACS_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: clay-secrets
+                  key: acs-connection-string
+            - name: ACS_EMAIL_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: clay-secrets
+                  key: acs-email-from
           readinessProbe:
             httpGet:
               path: /health

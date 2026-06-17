@@ -4,12 +4,45 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/dashboard_provider.dart';
 import '../../../auth/presentation/providers/admin_auth_provider.dart';
+import '../../../admins/presentation/screens/admin_management_screen.dart';
+import '../../../security/presentation/screens/security_fraud_screen.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  int _selectedIndex = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final adminState = ref.watch(adminAuthProvider);
     final statsAsync = ref.watch(dashboardStatsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -27,8 +60,38 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: CustomScrollView(
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: cardColor,
+        indicatorColor: softBlue,
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_rounded),
+            selectedIcon: Icon(Icons.dashboard_rounded, color: primaryBlue),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.admin_panel_settings_rounded),
+            label: 'Manajemen Admin',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.security_rounded),
+            label: 'Security',
+          ),
+        ],
+      ),
+      body: PageView(
+        controller: _pageController,
         physics: const BouncingScrollPhysics(),
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
         slivers: [
           // App bar
           SliverAppBar(
@@ -195,18 +258,23 @@ class DashboardScreen extends ConsumerWidget {
                     color: textColor,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Stats Grid (styled like Promo cards or Services)
                 statsAsync.when(
-                  data: (stats) => GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.4,
-                    children: [
+                  data: (stats) => MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    removeBottom: true,
+                    child: GridView.count(
+                      padding: EdgeInsets.zero,
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.4,
+                      children: [
                       _StatCard(
                         title: 'Pengguna',
                         value: stats.totalUsers.toString(),
@@ -252,7 +320,7 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.push('/transactions'),
                       ),
                     ],
-                  ),
+                  ),),
                   loading: () => const SizedBox(
                     height: 150,
                     child: Center(child: CircularProgressIndicator(color: primaryBlue)),
@@ -269,56 +337,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ),
 
-                const SizedBox(height: 32),
 
-                // Quick Actions (Styled like Services grid)
-                Text(
-                  'Quick Actions',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _QuickAction(
-                      icon: Icons.person_add_rounded,
-                      label: 'Add User',
-                      color: primaryBlue,
-                      bgColor: softBlue,
-                      textColor: textColor,
-                      onTap: () => context.push('/users'),
-                    ),
-                    _QuickAction(
-                      icon: Icons.how_to_reg_rounded,
-                      label: 'Verify',
-                      color: primaryBlue,
-                      bgColor: softBlue,
-                      textColor: textColor,
-                      onTap: () => context.push('/drivers'),
-                    ),
-                    _QuickAction(
-                      icon: Icons.storefront_rounded,
-                      label: 'Approve',
-                      color: primaryBlue,
-                      bgColor: softBlue,
-                      textColor: textColor,
-                      onTap: () => context.push('/merchants'),
-                    ),
-                    _QuickAction(
-                      icon: Icons.security_rounded,
-                      label: 'Security',
-                      color: const Color(0xFFD32F2F),
-                      bgColor: const Color(0xFFFFEBEE),
-                      textColor: textColor,
-                      onTap: () => context.push('/security'),
-                    ),
-                  ],
-                ),
                 
                 const SizedBox(height: 32),
                 
@@ -331,7 +350,7 @@ class DashboardScreen extends ConsumerWidget {
                     color: textColor,
                   ),
                 ),
-                const SizedBox(height: 16),
+                 const SizedBox(height: 12),
                 
                 Container(
                   decoration: BoxDecoration(
@@ -371,10 +390,14 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 100),
               ]),
             ),
           ),
+        ],
+      ),
+          const AdminManagementScreen(),
+          const SecurityFraudScreen(),
         ],
       ),
     );
@@ -458,56 +481,6 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final Color bgColor;
-  final Color textColor;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.bgColor,
-    required this.textColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-        ],
       ),
     );
   }

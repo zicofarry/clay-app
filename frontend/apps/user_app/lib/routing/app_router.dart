@@ -87,9 +87,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/otp-verification',
         builder: (_, state) {
-          final extra = state.extra as Map<String, String>? ?? {};
+          final extra = state.extra as Map<String, dynamic>? ?? {};
           return OtpVerificationScreen(
-            phoneNumber: extra['phone'] ?? '',
+            contact: extra['contact']?.toString() ?? extra['phone']?.toString() ?? '',
+            purpose: extra['purpose']?.toString() ?? 'reset',
           );
         },
       ),

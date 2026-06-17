@@ -6,8 +6,14 @@ import 'package:clay_ui/clay_ui.dart';
 import '../providers/auth_provider.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
-  final String phoneNumber;
-  const OtpVerificationScreen({super.key, required this.phoneNumber});
+  final String contact;
+  final String purpose; // 'registration' or 'reset'
+
+  const OtpVerificationScreen({
+    super.key,
+    required this.contact,
+    this.purpose = 'reset',
+  });
 
   @override
   ConsumerState<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
@@ -41,9 +47,68 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     final authState = ref.watch(authStateProvider);
 
     ref.listen<AuthState>(authStateProvider, (prev, state) {
+      if (state.authResponse != null && widget.purpose == 'registration') {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.all(24),
+            icon: const Icon(Icons.check_circle_rounded, color: Colors.green, size: 56),
+            title: const Text(
+              'Verifikasi Berhasil',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: ClayColors.textPrimary),
+            ),
+            content: const Text(
+              'Selamat! Akun Anda telah berhasil diverifikasi dan aktif. Silakan masuk untuk mulai menggunakan Clay.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: ClayColors.textSecondary, height: 1.4),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ClayButton(
+                  label: 'Masuk Ke Aplikasi',
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    context.go('/home');
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       if (state.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.error!)),
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.all(24),
+            icon: const Icon(Icons.error_outline_rounded, color: ClayColors.error, size: 56),
+            title: const Text(
+              'Verifikasi Gagal',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: ClayColors.textPrimary),
+            ),
+            content: Text(
+              state.error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: ClayColors.textSecondary, height: 1.4),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ClayButton(
+                  label: 'Coba Lagi',
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ),
+            ],
+          ),
         );
         ref.read(authStateProvider.notifier).clearError();
       }
@@ -56,7 +121,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: ClayColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (widget.purpose == 'registration') {
+              ref.read(authStateProvider.notifier).clearRegistration();
+            }
+            context.pop();
+          },
         ),
       ),
       body: SafeArea(
@@ -83,7 +153,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Masukkan kode OTP yang dikirim ke\n${widget.phoneNumber}',
+                  'Masukkan kode OTP yang dikirim ke\n${widget.contact}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 14,
@@ -180,16 +250,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   Future<void> _onVerify() async {
     if (_otpCode.length != 6) return;
 
-    final resetToken = await ref.read(authStateProvider.notifier).verifyResetOtp(
-      widget.phoneNumber,
-      _otpCode,
-    );
+    if (widget.purpose == 'registration') {
+      await ref.read(authStateProvider.notifier).verifyRegistrationOtp(_otpCode);
+    } else {
+      final resetToken = await ref.read(authStateProvider.notifier).verifyResetOtp(
+        widget.contact,
+        _otpCode,
+      );
 
-    if (resetToken != null && mounted) {
-      context.push('/reset-password', extra: {
-        'phone': widget.phoneNumber,
-        'resetToken': resetToken,
-      });
+      if (resetToken != null && mounted) {
+        context.push('/reset-password', extra: {
+          'phone': widget.contact,
+          'resetToken': resetToken,
+        });
+      }
     }
   }
 }
