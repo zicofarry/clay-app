@@ -8,6 +8,7 @@ class ClayTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final String? Function(String?)? validator;
   final TextInputType keyboardType;
+  final Widget? suffixIcon;
 
   const ClayTextField({
     super.key,
@@ -16,6 +17,7 @@ class ClayTextField extends StatelessWidget {
     this.controller,
     this.obscureText = false,
     this.prefixIcon,
+    this.suffixIcon,
     this.validator,
     this.keyboardType = TextInputType.text,
   });
@@ -41,6 +43,7 @@ class ClayTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
           ),
         ),
       ],

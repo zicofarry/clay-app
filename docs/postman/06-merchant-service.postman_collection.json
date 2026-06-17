@@ -1,0 +1,838 @@
+{
+  "info": {
+    "_postman_id": "clay-platform-collection-v2",
+    "name": "Clay Platform API - 06 - Merchant Service",
+    "description": "Complete API collection for the Clay superapp platform (23 microservices). All requests go through the API Gateway at port 8080. Set the `base_url` variable to your gateway URL (e.g. http://localhost:8080).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://172.188.169.107",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "address_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "method_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tx_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "verification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "flag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "block_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "log_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feed_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dispatch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_type",
+      "value": "driver",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Clay Platform API - Pre-request script",
+          "// Set auth_token variable after login"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Register Merchant",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Warung Budi\",\n  \"description\": \"Authentic Indonesian cuisine\",\n  \"category\": \"food\",\n  \"phone_number\": \"+62211234567\",\n  \"address\": \"Jl. Kemang Raya No. 5, Jakarta Selatan\",\n  \"city\": \"Jakarta\",\n  \"lat\": -6.2608,\n  \"lng\": 106.816,\n  \"min_order_cents\": 15000,\n  \"est_delivery_min\": 45\n}"
+        }
+      }
+    },
+    {
+      "name": "Get My Merchant",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "me"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update My Merchant",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "me"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Warung Budi Updated\",\n  \"description\": \"Best Indonesian food in town\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Merchant by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Merchant Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "status"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"active\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Operating Hours",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/operating-hours",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "operating-hours"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Operating Hours",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/operating-hours",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "operating-hours"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"hours\": [\n    {\n      \"day_of_week\": 1,\n      \"open_time\": \"08:00\",\n      \"close_time\": \"22:00\",\n      \"is_closed\": false\n    },\n    {\n      \"day_of_week\": 0,\n      \"open_time\": \"00:00\",\n      \"close_time\": \"00:00\",\n      \"is_closed\": true\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "List Bank Accounts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/bank-accounts",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "bank-accounts"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Bank Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/bank-accounts",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "bank-accounts"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bank_name\": \"BCA\",\n  \"account_number\": \"1234567890\",\n  \"account_holder\": \"Budi Santoso\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Bank Account",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/bank-accounts/{{account_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "bank-accounts",
+            "{{account_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Set Primary Bank Account",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/bank-accounts/{{account_id}}/set-primary",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "bank-accounts",
+            "{{account_id}}",
+            "set-primary"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "List Menu Categories",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "categories"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Menu Category",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "categories"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Main Course\",\n  \"description\": \"Our signature dishes\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Update Menu Category",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/categories/{{category_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "categories",
+            "{{category_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Main Dishes\",\n  \"description\": \"Updated description\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Menu Category",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/categories/{{category_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "categories",
+            "{{category_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reorder Menu Categories",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/categories/reorder",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "categories",
+            "reorder"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"category_ids\": [\n    \"{{category_id}}\",\n    \"{{category_id_2}}\"\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "List Menu Items",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "items"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Menu Item",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "items"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Nasi Goreng Spesial\",\n  \"category_id\": \"{{category_id}}\",\n  \"price\": 25000,\n  \"description\": \"Fried rice with egg and chicken\",\n  \"image_url\": \"https://storage.clay.id/menu/nasi-goreng.jpg\",\n  \"is_available\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Menu Item",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/items/{{item_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "items",
+            "{{item_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Menu Item",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/items/{{item_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "items",
+            "{{item_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": 27000,\n  \"description\": \"Updated description\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Menu Item",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/items/{{item_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "items",
+            "{{item_id}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Item Availability",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/merchants/{{merchant_id}}/menu/items/{{item_id}}/availability",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "merchants",
+            "{{merchant_id}}",
+            "menu",
+            "items",
+            "{{item_id}}",
+            "availability"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"is_available\": false\n}"
+        }
+      }
+    }
+  ]
+}
