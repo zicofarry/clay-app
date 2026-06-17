@@ -10,6 +10,8 @@ class ApiEndpoints {
   static const String verifyOtp = '$_prefix/auth/verify-otp';
   static const String refreshToken = '$_prefix/auth/refresh-token';
   static const String logout = '$_prefix/auth/logout';
+  static const String forgotPassword = '$_prefix/auth/password/forgot';
+  static const String resetPassword = '$_prefix/auth/password/reset';
 
   // User
   static const String getProfile = '$_prefix/users/me';
@@ -52,4 +54,22 @@ class ApiEndpoints {
   // History
   static const String historyOrders = '$_prefix/history/orders';
   static const String historyTransactions = '$_prefix/history/transactions';
+
+  // Search
+  static const String searchMerchants = '$_prefix/search/merchants';
+  static const String searchMenuItems = '$_prefix/search/menu-items';
+  static const String searchSuggest = '$_prefix/search/suggest';
+  static const String searchTrending = '$_prefix/search/trending';
+  static const String searchPopular = '$_prefix/search/popular';
+
+  // Geo
+  static const String mapsAutocomplete = '$_prefix/maps/places/autocomplete';
+  static const String mapsPlaceDetails = '$_prefix/maps/places/details';
+  static const String mapsGeocode = '$_prefix/maps/geocode';
+  static const String mapsReverseGeocode = '$_prefix/maps/reverse-geocode';
+  static const String mapsEstimate = '$_prefix/maps/estimate';
+  static const String mapsPolyline = '$_prefix/maps/polyline';
+  static const String mapsRouting = '$_prefix/maps/routing';
+  static const String distance = '$_prefix/distance';
+  static const String driversNearby = '$_prefix/drivers/nearby';
 }

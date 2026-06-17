@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
 import '../features/ride/presentation/screens/ride_home_screen.dart';
 import '../features/ride/presentation/screens/ride_tracking_screen.dart';
@@ -13,6 +15,9 @@ import '../features/food/presentation/screens/checkout_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/history/presentation/screens/history_screen.dart';
+import '../features/common/presentation/screens/placeholder_screen.dart';
+import '../features/search/presentation/screens/search_screen.dart';
+import '../features/location/presentation/screens/location_picker_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -30,8 +35,29 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RegisterScreen(),
       ),
       GoRoute(
+        path: '/forgot-password',
+        builder: (_, __) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, String>? ?? {};
+          return ResetPasswordScreen(
+            phoneNumber: extra['phone'] ?? '',
+          );
+        },
+      ),
+      GoRoute(
         path: '/home',
         builder: (_, __) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (_, __) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: '/location-picker',
+        builder: (_, __) => const LocationPickerScreen(),
       ),
       GoRoute(
         path: '/ride',
@@ -68,6 +94,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/history',
         builder: (_, __) => const HistoryScreen(),
+      ),
+      GoRoute(
+        path: '/car',
+        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClayCar'),
+      ),
+      GoRoute(
+        path: '/send',
+        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClaySend'),
+      ),
+      GoRoute(
+        path: '/pet',
+        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClayPet'),
+      ),
+      GoRoute(
+        path: '/waste',
+        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClayWaste'),
+      ),
+      GoRoute(
+        path: '/care',
+        builder: (_, __) => const PlaceholderScreen(serviceName: 'ClayCare'),
+      ),
+      GoRoute(
+        path: '/other',
+        builder: (_, __) => const PlaceholderScreen(serviceName: 'Other'),
       ),
     ],
   );
