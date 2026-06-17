@@ -8,10 +8,6 @@ class ClayTheme {
     return _build(Brightness.light);
   }
 
-  static ThemeData get dark {
-    return _build(Brightness.dark);
-  }
-
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final surface = isDark ? const Color(0xFF1E1E1E) : ClayColors.surface;
