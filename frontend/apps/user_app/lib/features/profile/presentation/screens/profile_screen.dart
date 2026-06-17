@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
-import 'package:clay_shared/clay_shared.dart';
 import '../providers/profile_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../settings/presentation/providers/preferences_provider.dart';
+import 'avatar_picker_sheet.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -30,6 +32,8 @@ class ProfileScreen extends ConsumerWidget {
     final birthDate = profile['birth_date']?.toString() ?? '';
     final gender = profile['gender']?.toString() ?? '';
     final referral = profile['referral_code']?.toString() ?? '-';
+    final themeState = ref.watch(themeProvider);
+    final langState = ref.watch(languageProvider);
 
     return RefreshIndicator(
       onRefresh: () => ref.read(profileProvider.notifier).loadProfile(),
@@ -71,29 +75,32 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 36,
-                              backgroundColor: Colors.white.withValues(alpha: 0.3),
-                              backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                              child: avatarUrl.isEmpty
-                                  ? const Icon(Icons.person, size: 36, color: Colors.white)
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.camera_alt, size: 14, color: ClayColors.primary),
+                        GestureDetector(
+                          onTap: () => _changeAvatar(context, ref, avatarUrl.isNotEmpty),
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 36,
+                                backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                                child: avatarUrl.isEmpty
+                                    ? const Icon(Icons.person, size: 36, color: Colors.white)
+                                    : null,
                               ),
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.camera_alt, size: 14, color: ClayColors.primary),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -180,26 +187,60 @@ class ProfileScreen extends ConsumerWidget {
                 _SectionTitle('Pengaturan'),
                 _MenuGroup(
                   items: [
-                    _MenuItemData(Icons.location_on_outlined, Colors.orange, 'Alamat Tersimpan', 'Kelola alamat pengiriman'),
-                    _MenuItemData(Icons.payment_outlined, Colors.blue, 'Metode Pembayaran', 'Kartu, e-wallet, transfer'),
-                    _MenuItemData(Icons.notifications_outlined, Colors.red, 'Notifikasi', 'Atur pemberitahuan'),
+                    _MenuItemData(Icons.location_on_outlined, Colors.orange, 'Alamat Tersimpan', 'Kelola alamat pengiriman',
+                        onTap: () => context.push('/addresses')),
+                    _MenuItemData(Icons.payment_outlined, Colors.blue, 'Metode Pembayaran', 'Kartu, e-wallet, transfer',
+                        onTap: () => context.push('/payment-methods')),
+                    _MenuItemData(Icons.notifications_outlined, Colors.red, 'Notifikasi', 'Atur pemberitahuan',
+                        onTap: () => context.push('/notification-settings')),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _SectionTitle('Preferensi'),
                 _MenuGroup(
                   items: [
-                    _MenuItemData(Icons.language, Colors.green, 'Bahasa', 'Indonesia'),
-                    _MenuItemData(Icons.dark_mode_outlined, Colors.indigo, 'Tema Gelap', 'Nonaktif'),
+                    _MenuItemData(
+                      Icons.language,
+                      Colors.green,
+                      'Bahasa',
+                      langState.label,
+                      onTap: () => context.push('/language'),
+                    ),
+                    _MenuItemData(
+                      Icons.dark_mode_outlined,
+                      Colors.indigo,
+                      'Tema Gelap',
+                      themeState.isDark ? 'Aktif' : 'Nonaktif',
+                      trailing: Switch.adaptive(
+                        value: themeState.isDark,
+                        activeColor: ClayColors.primary,
+                        onChanged: (v) async {
+                          final notifier = ref.read(themeProvider.notifier);
+                          if (v == notifier.isDark) return;
+                          await notifier.toggle();
+                          if (!context.mounted) return;
+                          final nowDark = ref.read(themeProvider).isDark;
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(SnackBar(
+                              content: Text('Tema ${nowDark ? 'gelap' : 'terang'} diaktifkan'),
+                              backgroundColor: Colors.green,
+                            ));
+                        },
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _SectionTitle('Lainnya'),
                 _MenuGroup(
                   items: [
-                    _MenuItemData(Icons.star_outline, Colors.amber, 'Beri Rating', 'Bantu kami berkembang'),
-                    _MenuItemData(Icons.help_outline, Colors.teal, 'Pusat Bantuan', 'FAQ & hubungi kami'),
-                    _MenuItemData(Icons.info_outline, Colors.grey, 'Tentang', 'Versi 1.0.0'),
+                    _MenuItemData(Icons.star_outline, Colors.amber, 'Beri Rating', 'Bantu kami berkembang',
+                        onTap: () => context.push('/rate')),
+                    _MenuItemData(Icons.help_outline, Colors.teal, 'Pusat Bantuan', 'FAQ & hubungi kami',
+                        onTap: () => context.push('/help')),
+                    _MenuItemData(Icons.info_outline, Colors.grey, 'Tentang', 'Versi 1.0.0',
+                        onTap: () => context.push('/about')),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -242,6 +283,38 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _changeAvatar(BuildContext context, WidgetRef ref, bool hasExisting) async {
+    final picked = await AvatarPickerSheet.show(context, hasExisting: hasExisting);
+    if (picked == null && !hasExisting) return;
+
+    final notifier = ref.read(profileProvider.notifier);
+    bool ok;
+    String message;
+
+    if (picked == null) {
+      ok = await notifier.updateAvatar('');
+      message = ok ? 'Foto profil dihapus' : 'Gagal menghapus foto profil';
+    } else {
+      final bytes = await File(picked.path).readAsBytes();
+      final url = await notifier.uploadAvatar(bytes, filename: picked.name);
+      if (url == null || url.isEmpty) {
+        ok = false;
+        message = 'Upload foto gagal — server menolak berkas';
+      } else {
+        ok = await notifier.updateAvatar(url);
+        message = ok ? 'Foto profil diperbarui' : 'Gagal memperbarui foto profil';
+      }
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: ok ? Colors.green : ClayColors.error,
+      ));
   }
 
   String _genderLabel(String g) {
@@ -415,7 +488,9 @@ class _MenuItemData {
   final Color iconColor;
   final String title;
   final String subtitle;
-  const _MenuItemData(this.icon, this.iconColor, this.title, this.subtitle);
+  final VoidCallback? onTap;
+  final Widget? trailing;
+  const _MenuItemData(this.icon, this.iconColor, this.title, this.subtitle, {this.onTap, this.trailing});
 }
 
 class _MenuGroup extends StatelessWidget {
@@ -451,8 +526,8 @@ class _MenuGroup extends StatelessWidget {
               ),
               title: Text(items[i].title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               subtitle: Text(items[i].subtitle, style: const TextStyle(fontSize: 11, color: ClayColors.textSecondary)),
-              trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-              onTap: () {},
+              trailing: items[i].trailing ?? const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+              onTap: items[i].trailing != null ? null : items[i].onTap,
             ),
           ],
         ],

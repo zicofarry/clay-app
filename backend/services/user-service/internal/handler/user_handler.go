@@ -3,7 +3,10 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/zicofarry/clay-app/backend/pkg/middleware"
@@ -13,11 +16,31 @@ import (
 )
 
 type UserHandler struct {
-	svc service.UserServiceInterface
+	svc             service.UserServiceInterface
+	uploadsDir      string
+	publicURLPrefix string
 }
 
-func NewUserHandler(svc service.UserServiceInterface) *UserHandler {
-	return &UserHandler{svc: svc}
+type HandlerOption func(*UserHandler)
+
+func WithUploadsDir(dir string) HandlerOption {
+	return func(h *UserHandler) { h.uploadsDir = dir }
+}
+
+func WithPublicURLPrefix(prefix string) HandlerOption {
+	return func(h *UserHandler) { h.publicURLPrefix = prefix }
+}
+
+func NewUserHandler(svc service.UserServiceInterface, opts ...HandlerOption) *UserHandler {
+	h := &UserHandler{
+		svc:             svc,
+		uploadsDir:      "./data/uploads",
+		publicURLPrefix: "/users/me/avatar/file",
+	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h
 }
 
 // Mocking getting UserID from context. In a real app, middleware sets this.
@@ -93,7 +116,82 @@ func (h *UserHandler) GetProfileByUserId(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
-	response.Success(w, http.StatusOK, map[string]string{"avatar_url": "https://example.com/avatar.jpg"})
+	userID := getUserIDFromContext(r.Context())
+	if err := r.ParseMultipartForm(2 << 20); err != nil {
+		response.Error(w, http.StatusBadRequest, "BAD_REQUEST", "avatar terlalu besar (maks 2MB)")
+		return
+	}
+	file, header, err := r.FormFile("avatar")
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "BAD_REQUEST", "field 'avatar' wajib diisi")
+		return
+	}
+	defer file.Close()
+
+	ct := header.Header.Get("Content-Type")
+	switch ct {
+	case "image/jpeg", "image/png", "image/webp":
+		// ok
+	default:
+		response.Error(w, http.StatusBadRequest, "BAD_REQUEST", "format foto harus jpeg/png/webp")
+		return
+	}
+
+	if err := os.MkdirAll(h.uploadsDir, 0o755); err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+
+	ext := ".jpg"
+	switch ct {
+	case "image/png":
+		ext = ".png"
+	case "image/webp":
+		ext = ".webp"
+	}
+	filename := userID.String() + ext
+	dstPath := filepath.Join(h.uploadsDir, filename)
+
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	defer dst.Close()
+	if _, err := io.Copy(dst, file); err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+
+	avatarURL := h.publicURLPrefix
+
+	_, err = h.svc.SetAvatarURL(r.Context(), userID, avatarURL)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	response.Success(w, http.StatusOK, map[string]string{"avatar_url": avatarURL})
+}
+
+func (h *UserHandler) ServeAvatar(w http.ResponseWriter, r *http.Request) {
+	userID := getUserIDFromContext(r.Context())
+	for _, ext := range []string{".jpg", ".png", ".webp"} {
+		path := filepath.Join(h.uploadsDir, userID.String()+ext)
+		if _, err := os.Stat(path); err == nil {
+			switch ext {
+			case ".png":
+				w.Header().Set("Content-Type", "image/png")
+			case ".webp":
+				w.Header().Set("Content-Type", "image/webp")
+			default:
+				w.Header().Set("Content-Type", "image/jpeg")
+			}
+			w.Header().Set("Cache-Control", "public, max-age=300")
+			http.ServeFile(w, r, path)
+			return
+		}
+	}
+	http.NotFound(w, r)
 }
 
 func (h *UserHandler) ApplyReferralCode(w http.ResponseWriter, r *http.Request) {

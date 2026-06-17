@@ -5,22 +5,42 @@ class ClayTheme {
   ClayTheme._();
 
   static ThemeData get light {
+    return _build(Brightness.light);
+  }
+
+  static ThemeData get dark {
+    return _build(Brightness.dark);
+  }
+
+  static ThemeData _build(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final surface = isDark ? const Color(0xFF1E1E1E) : ClayColors.surface;
+    final background = isDark ? const Color(0xFF121212) : ClayColors.background;
+    final onSurface = isDark ? const Color(0xFFE6E6E6) : const Color(0xFF1A1A1A);
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
+      brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
         seedColor: ClayColors.primary,
+        brightness: brightness,
         primary: ClayColors.primary,
         secondary: ClayColors.primaryLight,
-        surface: ClayColors.surface,
+        surface: surface,
         error: ClayColors.error,
       ),
-      scaffoldBackgroundColor: ClayColors.background,
+      scaffoldBackgroundColor: background,
       appBarTheme: const AppBarTheme(
         backgroundColor: ClayColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+      ),
+      cardTheme: const CardThemeData(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -38,14 +58,14 @@ class ClayTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ClayColors.background,
+        fillColor: surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: ClayColors.divider),
+          borderSide: BorderSide(color: isDark ? const Color(0xFF333333) : ClayColors.divider),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: ClayColors.divider),
+          borderSide: BorderSide(color: isDark ? const Color(0xFF333333) : ClayColors.divider),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -56,6 +76,7 @@ class ClayTheme {
           vertical: 14,
         ),
       ),
+      textTheme: ThemeData(brightness: brightness).textTheme.apply(bodyColor: onSurface, displayColor: onSurface),
     );
   }
 

@@ -128,6 +128,12 @@
   auth: required
   rate_limit: 5
 
+- path: /users/me/avatar/file
+  methods: [GET]
+  upstream: clay-user-service:8080
+  auth: none
+  rate_limit: 120
+
 - path: /users/{userId}
   methods: [GET]
   upstream: clay-user-service:8080
