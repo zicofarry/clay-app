@@ -12,6 +12,9 @@ class ApiEndpoints {
   static const String logout = '$_prefix/auth/logout';
   static const String forgotPassword = '$_prefix/auth/password/forgot';
   static const String resetPassword = '$_prefix/auth/password/reset';
+  static const String sessions = '$_prefix/auth/sessions';
+  static const String revokeAllSessions = '$_prefix/auth/sessions/revoke-all';
+  static String revokeSession(String sessionId) => '$_prefix/auth/sessions/$sessionId';
 
   // User
   static const String getProfile = '$_prefix/users/me';

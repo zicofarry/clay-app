@@ -8,6 +8,7 @@ import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/screens/reset_password_screen.dart';
+import '../features/auth/presentation/screens/sessions_screen.dart';
 import '../features/home/presentation/screens/home_screen.dart';
 import '../features/ride/presentation/screens/ride_home_screen.dart';
 import '../features/ride/presentation/screens/ride_confirm_screen.dart';
@@ -153,6 +154,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (_, __) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/sessions',
+        builder: (_, __) => const SessionsScreen(),
       ),
       GoRoute(
         path: '/addresses',

@@ -232,6 +232,14 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+                _SectionTitle('Keamanan'),
+                _MenuGroup(
+                  items: [
+                    _MenuItemData(Icons.devices_outlined, Colors.purple, 'Perangkat Aktif', 'Kelola sesi login',
+                        onTap: () => context.push('/sessions')),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _SectionTitle('Lainnya'),
                 _MenuGroup(
                   items: [
