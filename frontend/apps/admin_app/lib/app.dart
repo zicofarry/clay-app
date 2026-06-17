@@ -8,6 +8,13 @@ class AdminApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    return MaterialApp.router(title: 'Clay - Admin', debugShowCheckedModeBanner: false, theme: ClayTheme.light, routerConfig: router);
+    return MaterialApp.router(
+      title: 'Clay - Admin',
+      debugShowCheckedModeBanner: false,
+      theme: ClayTheme.light,
+      darkTheme: ClayTheme.dark,
+      themeMode: ThemeMode.system,
+      routerConfig: router,
+    );
   }
 }
