@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:clay_ui/clay_ui.dart';
 import '../providers/profile_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../settings/presentation/providers/preferences_provider.dart';
+import 'avatar_picker_sheet.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -73,29 +75,32 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 36,
-                              backgroundColor: Colors.white.withValues(alpha: 0.3),
-                              backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                              child: avatarUrl.isEmpty
-                                  ? const Icon(Icons.person, size: 36, color: Colors.white)
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.camera_alt, size: 14, color: ClayColors.primary),
+                        GestureDetector(
+                          onTap: () => _changeAvatar(context, ref, avatarUrl.isNotEmpty),
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 36,
+                                backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                                child: avatarUrl.isEmpty
+                                    ? const Icon(Icons.person, size: 36, color: Colors.white)
+                                    : null,
                               ),
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.camera_alt, size: 14, color: ClayColors.primary),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -230,9 +235,12 @@ class ProfileScreen extends ConsumerWidget {
                 _SectionTitle('Lainnya'),
                 _MenuGroup(
                   items: [
-                    _MenuItemData(Icons.star_outline, Colors.amber, 'Beri Rating', 'Bantu kami berkembang'),
-                    _MenuItemData(Icons.help_outline, Colors.teal, 'Pusat Bantuan', 'FAQ & hubungi kami'),
-                    _MenuItemData(Icons.info_outline, Colors.grey, 'Tentang', 'Versi 1.0.0'),
+                    _MenuItemData(Icons.star_outline, Colors.amber, 'Beri Rating', 'Bantu kami berkembang',
+                        onTap: () => context.push('/rate')),
+                    _MenuItemData(Icons.help_outline, Colors.teal, 'Pusat Bantuan', 'FAQ & hubungi kami',
+                        onTap: () => context.push('/help')),
+                    _MenuItemData(Icons.info_outline, Colors.grey, 'Tentang', 'Versi 1.0.0',
+                        onTap: () => context.push('/about')),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -275,6 +283,38 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _changeAvatar(BuildContext context, WidgetRef ref, bool hasExisting) async {
+    final picked = await AvatarPickerSheet.show(context, hasExisting: hasExisting);
+    if (picked == null && !hasExisting) return;
+
+    final notifier = ref.read(profileProvider.notifier);
+    bool ok;
+    String message;
+
+    if (picked == null) {
+      ok = await notifier.updateAvatar('');
+      message = ok ? 'Foto profil dihapus' : 'Gagal menghapus foto profil';
+    } else {
+      final bytes = await File(picked.path).readAsBytes();
+      final url = await notifier.uploadAvatar(bytes, filename: picked.name);
+      if (url == null || url.isEmpty) {
+        ok = false;
+        message = 'Upload foto gagal — server menolak berkas';
+      } else {
+        ok = await notifier.updateAvatar(url);
+        message = ok ? 'Foto profil diperbarui' : 'Gagal memperbarui foto profil';
+      }
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: ok ? Colors.green : ClayColors.error,
+      ));
   }
 
   String _genderLabel(String g) {

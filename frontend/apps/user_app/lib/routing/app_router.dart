@@ -25,6 +25,9 @@ import '../features/location/presentation/screens/address_list_screen.dart';
 import '../features/payment/presentation/screens/payment_methods_screen.dart';
 import '../features/settings/presentation/screens/notification_settings_screen.dart';
 import '../features/settings/presentation/screens/language_screen.dart';
+import '../features/about/presentation/screens/about_screen.dart';
+import '../features/about/presentation/screens/rate_app_screen.dart';
+import '../features/help/presentation/screens/help_center_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -141,6 +144,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/language',
         builder: (_, __) => const LanguageScreen(),
+      ),
+      GoRoute(
+        path: '/rate',
+        builder: (_, __) => const RateAppScreen(),
+      ),
+      GoRoute(
+        path: '/help',
+        builder: (_, __) => const HelpCenterScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        builder: (_, __) => const AboutScreen(),
       ),
       GoRoute(
         path: '/history',
