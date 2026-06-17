@@ -1,5 +1,8 @@
 import 'package:clay_shared/clay_shared.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const _kAuthTokenKey = 'auth_token';
 
 bool _isPhone(String value) {
   return RegExp(r'^\+?[\d\s\-\(\)]+$').hasMatch(value.trim());
@@ -24,8 +27,28 @@ String? normalizeContact(String contact) {
 
 class AuthRepository {
   final ClayApi _api;
+  final SharedPreferences? _prefs;
 
-  AuthRepository(this._api);
+  AuthRepository(this._api, [this._prefs]);
+
+  Future<void> restoreToken() async {
+    final saved = _prefs?.getString(_kAuthTokenKey);
+    if (saved != null && saved.isNotEmpty) {
+      _api.restoreToken(saved);
+    }
+  }
+
+  Future<void> _persistToken(String token) async {
+    if (_prefs != null) {
+      await _prefs!.setString(_kAuthTokenKey, token);
+    }
+  }
+
+  Future<void> _clearPersistedToken() async {
+    if (_prefs != null) {
+      await _prefs!.remove(_kAuthTokenKey);
+    }
+  }
 
   Future<Map<String, dynamic>> register({
     required String fullName,

@@ -6,6 +6,9 @@ class ClayApi {
   static ClayApi? _instance;
   late final Dio dio;
 
+  static Future<void> Function(String token)? onTokenSet;
+  static Future<void> Function()? onTokenCleared;
+
   ClayApi._() {
     dio = Dio(
       BaseOptions(
@@ -25,10 +28,18 @@ class ClayApi {
 
   void setToken(String token) {
     dio.options.headers['Authorization'] = 'Bearer $token';
+    onTokenSet?.call(token);
   }
 
   void clearToken() {
     dio.options.headers.remove('Authorization');
+    onTokenCleared?.call();
+  }
+
+  void restoreToken(String token) {
+    if (token.isNotEmpty) {
+      dio.options.headers['Authorization'] = 'Bearer $token';
+    }
   }
 
   bool hasToken() {

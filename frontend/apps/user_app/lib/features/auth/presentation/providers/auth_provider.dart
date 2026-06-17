@@ -128,28 +128,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> verifyRegistrationOtp(String otpCode) async {
     final contact = state.contact;
-    
-    print("[DEBUG] verifyRegistrationOtp called: contact=$contact, otpCode=$otpCode");
-    
-    if (contact == null) {
-      print("[DEBUG] verifyRegistrationOtp aborted: contact is null in state");
-      state = state.copyWith(isLoading: false, error: "Data pendaftaran hilang. Silakan daftarkan ulang akun Anda.");
+    final username = state.username;
+    final password = state.password;
+    final fullName = state.fullName;
+
+    if (contact == null || password == null) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Data pendaftaran hilang. Silakan daftarkan ulang akun Anda.',
+      );
       return;
     }
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      print("[DEBUG] verifyRegistrationOtp: calling verifyOtp for $contact");
       await _repository.verifyOtp(contact, otpCode, 'registration');
-      print("[DEBUG] verifyRegistrationOtp: verifyOtp succeeded");
+
+      final loginIdentifier = username ?? contact;
+      final response = await _repository.login(loginIdentifier, password);
+
+      try {
+        await _repository.createProfile(fullName ?? '');
+      } catch (_) {
+        // best-effort: profile can be filled later from the profile screen
+      }
 
       state = state.copyWith(
         isLoading: false,
         isOtpVerified: true,
+        authResponse: response,
       );
-    } catch (e, stack) {
-      print("[DEBUG] verifyRegistrationOtp caught exception: $e");
-      print(stack);
+      _ref.invalidate(profileProvider);
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -160,24 +172,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final password = state.password;
     final fullName = state.fullName;
 
-    print("[DEBUG] completeRegistrationAndLogin called: contact=$contact, username=$username, password=$password, fullName=$fullName");
-
     if (contact == null || password == null) {
-      print("[DEBUG] completeRegistrationAndLogin aborted: contact or password is null in state");
-      state = state.copyWith(isLoading: false, error: "Data kredensial tidak lengkap.");
+      state = state.copyWith(isLoading: false, error: 'Data kredensial tidak lengkap.');
+      return;
+    }
+
+    if (state.authResponse != null) {
+      state = state.copyWith(clearRegistration: true);
       return;
     }
 
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final loginIdentifier = username ?? contact;
-      print("[DEBUG] completeRegistrationAndLogin: logging in as $loginIdentifier");
       final response = await _repository.login(loginIdentifier, password);
-      print("[DEBUG] completeRegistrationAndLogin: login succeeded");
 
-      print("[DEBUG] completeRegistrationAndLogin: creating profile for $fullName");
-      await _repository.createProfile(fullName ?? '');
-      print("[DEBUG] completeRegistrationAndLogin: createProfile succeeded");
+      try {
+        await _repository.createProfile(fullName ?? '');
+      } catch (_) {}
 
       state = state.copyWith(
         isLoading: false,
@@ -185,15 +197,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
         clearRegistration: true,
       );
       _ref.invalidate(profileProvider);
-    } catch (e, stack) {
-      print("[DEBUG] completeRegistrationAndLogin caught exception: $e");
-      print(stack);
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   void clearRegistration() {
     state = state.copyWith(clearRegistration: true);
+  }
+
+  void acknowledgeRegistrationNavigation() {
+    state = state.copyWith(registered: false);
   }
 
   Future<bool> resendOtp(String contact, String purpose) async {

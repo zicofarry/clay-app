@@ -175,7 +175,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> w
     final authState = ref.watch(authStateProvider);
 
     ref.listen<AuthState>(authStateProvider, (prev, state) {
-      if (state.isOtpVerified && widget.purpose == 'registration' && !(prev?.isOtpVerified ?? false)) {
+      if (state.authResponse != null &&
+          widget.purpose == 'registration' &&
+          prev?.authResponse == null) {
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -189,7 +191,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> w
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: ClayColors.textPrimary),
             ),
             content: const Text(
-              'Selamat! Akun Anda telah berhasil diverifikasi dan aktif. Silakan masuk untuk mulai menggunakan Clay.',
+              'Selamat! Akun Anda telah berhasil diverifikasi dan aktif. Tap tombol di bawah untuk mulai menggunakan Clay.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: ClayColors.textSecondary, height: 1.4),
             ),
@@ -197,22 +199,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> w
             actions: [
               SizedBox(
                 width: double.infinity,
-                child: Consumer(
-                  builder: (dialogContext, dialogRef, child) {
-                    final currentAuthState = dialogRef.watch(authStateProvider);
-
-                    return ClayButton(
-                      label: 'Masuk Ke Aplikasi',
-                      isLoading: currentAuthState.isLoading,
-                      onPressed: () async {
-                        await dialogRef.read(authStateProvider.notifier).completeRegistrationAndLogin();
-                        final updatedState = dialogRef.read(authStateProvider);
-                        if (updatedState.authResponse != null && ctx.mounted) {
-                          Navigator.of(ctx).pop();
-                          context.go('/home');
-                        }
-                      },
-                    );
+                child: ClayButton(
+                  label: 'Masuk Ke Aplikasi',
+                  onPressed: () {
+                    ref.read(authStateProvider.notifier).clearRegistration();
+                    Navigator.of(ctx).pop();
+                    context.go('/home');
                   },
                 ),
               ),
@@ -220,17 +212,24 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> w
           ),
         );
       }
-      if (state.error != null) {
+      if (state.error != null && !state.isOtpVerified) {
         setState(() {
           _localError = state.error;
-          // Clear inputs on error so they can re-type
           for (final c in _otpControllers) {
             c.clear();
           }
           _otpCode = '';
         });
         _shakeController.forward(from: 0.0);
-        _focusNodes[0].requestFocus(); // Refocus first box
+        _focusNodes[0].requestFocus();
+        ref.read(authStateProvider.notifier).clearError();
+      } else if (state.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: ClayColors.error,
+          ),
+        );
         ref.read(authStateProvider.notifier).clearError();
       }
     });

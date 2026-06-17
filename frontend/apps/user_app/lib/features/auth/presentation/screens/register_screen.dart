@@ -45,6 +45,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             'contact': contact,
             'purpose': 'registration',
           });
+          ref.read(authStateProvider.notifier).acknowledgeRegistrationNavigation();
         }
       }
     });
