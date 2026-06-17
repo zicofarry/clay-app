@@ -52,6 +52,7 @@ linux/
 
 # ── Android (future) ──
 .gradle/
+.kotlin/
 build/
 local.properties
 *.apk
