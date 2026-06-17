@@ -12,6 +12,7 @@ import (
 // Credential represents a row in the `credentials` table.
 type Credential struct {
 	ID             string    `json:"id"`
+	Username       string    `json:"username"`
 	Email          string    `json:"email"`
 	Phone          string    `json:"phone"`
 	PasswordHash   string    `json:"-"`
@@ -41,6 +42,9 @@ type AuthRepositoryInterface interface {
 	// ExistsByEmailOrPhone checks if an account with the given email or phone exists.
 	ExistsByEmailOrPhone(ctx context.Context, email, phone string) (bool, error)
 
+	// ExistsByUsername checks if an account with the given username exists.
+	ExistsByUsername(ctx context.Context, username string) (bool, error)
+
 	// UpdatePassword updates the hashed password for a user.
 	UpdatePassword(ctx context.Context, userID, hashedPassword string) error
 
@@ -63,13 +67,13 @@ func NewAuthRepository(db *sql.DB, redis interface{}) *AuthRepository {
 
 func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential) (*Credential, error) {
 	query := `
-		INSERT INTO credentials (email, phone, password_hash, role, status, email_verified, phone_verified)
-		VALUES ($1, $2, $3, $4, 'active', false, false)
+		INSERT INTO credentials (username, email, phone, password_hash, role, status, email_verified, phone_verified)
+		VALUES ($1, $2, $3, $4, $5, 'active', false, false)
 		RETURNING id, created_at, updated_at
 	`
 
 	err := r.db.QueryRowContext(ctx, query,
-		cred.Email, cred.Phone, cred.PasswordHash, cred.Role,
+		cred.Username, cred.Email, cred.Phone, cred.PasswordHash, cred.Role,
 	).Scan(&cred.ID, &cred.CreatedAt, &cred.UpdatedAt)
 
 	if err != nil {
@@ -83,13 +87,13 @@ func (r *AuthRepository) CreateCredential(ctx context.Context, cred *Credential)
 
 func (r *AuthRepository) FindByID(ctx context.Context, id string) (*Credential, error) {
 	query := `
-		SELECT id, email, phone, password_hash, role, status, email_verified, phone_verified, created_at, updated_at
+		SELECT id, username, email, phone, password_hash, role, status, email_verified, phone_verified, created_at, updated_at
 		FROM credentials WHERE id = $1
 	`
 
 	cred := &Credential{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&cred.ID, &cred.Email, &cred.Phone, &cred.PasswordHash,
+		&cred.ID, &cred.Username, &cred.Email, &cred.Phone, &cred.PasswordHash,
 		&cred.Role, &cred.Status, &cred.EmailVerified, &cred.PhoneVerified,
 		&cred.CreatedAt, &cred.UpdatedAt,
 	)
@@ -101,13 +105,13 @@ func (r *AuthRepository) FindByID(ctx context.Context, id string) (*Credential, 
 
 func (r *AuthRepository) FindByIdentifier(ctx context.Context, identifier string) (*Credential, error) {
 	query := `
-		SELECT id, email, phone, password_hash, role, status, email_verified, phone_verified, created_at, updated_at
-		FROM credentials WHERE email = $1 OR phone = $1
+		SELECT id, username, email, phone, password_hash, role, status, email_verified, phone_verified, created_at, updated_at
+		FROM credentials WHERE email = $1 OR phone = $1 OR username = $1
 	`
 
 	cred := &Credential{}
 	err := r.db.QueryRowContext(ctx, query, identifier).Scan(
-		&cred.ID, &cred.Email, &cred.Phone, &cred.PasswordHash,
+		&cred.ID, &cred.Username, &cred.Email, &cred.Phone, &cred.PasswordHash,
 		&cred.Role, &cred.Status, &cred.EmailVerified, &cred.PhoneVerified,
 		&cred.CreatedAt, &cred.UpdatedAt,
 	)
@@ -118,10 +122,18 @@ func (r *AuthRepository) FindByIdentifier(ctx context.Context, identifier string
 }
 
 func (r *AuthRepository) ExistsByEmailOrPhone(ctx context.Context, email, phone string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE email = $1 OR phone = $2)`
+	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE (email IS NOT NULL AND email != '' AND email = $1) OR (phone IS NOT NULL AND phone != '' AND phone = $2))`
 
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, email, phone).Scan(&exists)
+	return exists, err
+}
+
+func (r *AuthRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE username = $1)`
+
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, username).Scan(&exists)
 	return exists, err
 }
 

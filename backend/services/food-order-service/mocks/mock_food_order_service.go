@@ -219,6 +219,51 @@ func (mr *MockFoodOrderServiceInterfaceMockRecorder) DriverDeliver(ctx, orderID,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DriverDeliver", reflect.TypeOf((*MockFoodOrderServiceInterface)(nil).DriverDeliver), ctx, orderID, driverID)
 }
 
+// DriverAcceptOrder mocks base method.
+func (m *MockFoodOrderServiceInterface) DriverAcceptOrder(ctx context.Context, orderID, driverID string) (*model.FoodOrder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DriverAcceptOrder", ctx, orderID, driverID)
+	ret0, _ := ret[0].(*model.FoodOrder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DriverAcceptOrder indicates an expected call of DriverAcceptOrder.
+func (mr *MockFoodOrderServiceInterfaceMockRecorder) DriverAcceptOrder(ctx, orderID, driverID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DriverAcceptOrder", reflect.TypeOf((*MockFoodOrderServiceInterface)(nil).DriverAcceptOrder), ctx, orderID, driverID)
+}
+
+// DriverRejectOrder mocks base method.
+func (m *MockFoodOrderServiceInterface) DriverRejectOrder(ctx context.Context, orderID, driverID string, req model.DriverRejectRequest) (*model.FoodOrder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DriverRejectOrder", ctx, orderID, driverID, req)
+	ret0, _ := ret[0].(*model.FoodOrder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DriverRejectOrder indicates an expected call of DriverRejectOrder.
+func (mr *MockFoodOrderServiceInterfaceMockRecorder) DriverRejectOrder(ctx, orderID, driverID, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DriverRejectOrder", reflect.TypeOf((*MockFoodOrderServiceInterface)(nil).DriverRejectOrder), ctx, orderID, driverID, req)
+}
+
+// DriverUpdateStatus mocks base method.
+func (m *MockFoodOrderServiceInterface) DriverUpdateStatus(ctx context.Context, orderID, driverID string, req model.DriverUpdateStatusRequest) (*model.FoodOrder, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DriverUpdateStatus", ctx, orderID, driverID, req)
+	ret0, _ := ret[0].(*model.FoodOrder)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DriverUpdateStatus indicates an expected call of DriverUpdateStatus.
+func (mr *MockFoodOrderServiceInterfaceMockRecorder) DriverUpdateStatus(ctx, orderID, driverID, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DriverUpdateStatus", reflect.TypeOf((*MockFoodOrderServiceInterface)(nil).DriverUpdateStatus), ctx, orderID, driverID, req)
+}
+
 // AssignDriver mocks base method.
 func (m *MockFoodOrderServiceInterface) AssignDriver(ctx context.Context, orderID, driverID string) (*model.FoodOrder, error) {
 	m.ctrl.T.Helper()
