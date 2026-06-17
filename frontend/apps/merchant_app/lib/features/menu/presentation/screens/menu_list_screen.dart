@@ -12,10 +12,25 @@ class MenuListScreen extends ConsumerStatefulWidget {
 }
 
 class _MenuListScreenState extends ConsumerState<MenuListScreen> {
+  final _searchC = TextEditingController();
+  String _selectedCategory = 'Semua';
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(menuProvider.notifier).loadMenu());
+    _searchC.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _searchC.removeListener(_onSearchChanged);
+    _searchC.dispose();
+    super.dispose();
   }
 
   void _showForm([MenuItem? item]) {
@@ -28,40 +43,42 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(isEdit ? 'Edit Menu' : 'Tambah Menu', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              ClayTextField(label: 'Nama Menu', controller: nameC),
-              const SizedBox(height: 16),
-              ClayTextField(label: 'Kategori', controller: categoryC),
-              const SizedBox(height: 16),
-              ClayTextField(label: 'Harga', controller: priceC, keyboardType: TextInputType.number),
-              const SizedBox(height: 24),
-              ClayButton(label: isEdit ? 'Simpan' : 'Tambah', onPressed: () {
-                if (formKey.currentState?.validate() ?? false) {
-                  final newItem = MenuItem(
-                    id: item?.id ?? 'M-${DateTime.now().millisecondsSinceEpoch}',
-                    name: nameC.text.trim(),
-                    category: categoryC.text.trim(),
-                    price: int.tryParse(priceC.text) ?? 0,
-                    available: item?.available ?? true,
-                  );
-                  if (isEdit) {
-                    ref.read(menuProvider.notifier).updateItem(newItem);
-                  } else {
-                    ref.read(menuProvider.notifier).addItem(newItem);
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 16),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(isEdit ? 'Edit Menu' : 'Tambah Menu', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                ClayTextField(label: 'Nama Menu', controller: nameC),
+                const SizedBox(height: 16),
+                ClayTextField(label: 'Kategori', controller: categoryC),
+                const SizedBox(height: 16),
+                ClayTextField(label: 'Harga', controller: priceC, keyboardType: TextInputType.number),
+                const SizedBox(height: 24),
+                ClayButton(label: isEdit ? 'Simpan' : 'Tambah', onPressed: () {
+                  if (formKey.currentState?.validate() ?? false) {
+                    final newItem = MenuItem(
+                      id: item?.id ?? 'M-${DateTime.now().millisecondsSinceEpoch}',
+                      name: nameC.text.trim(),
+                      category: categoryC.text.trim(),
+                      price: int.tryParse(priceC.text) ?? 0,
+                      available: item?.available ?? true,
+                    );
+                    if (isEdit) {
+                      ref.read(menuProvider.notifier).updateItem(newItem);
+                    } else {
+                      ref.read(menuProvider.notifier).addItem(newItem);
+                    }
+                    Navigator.pop(context);
                   }
-                  Navigator.pop(context);
-                }
-              }),
-            ],
+                }),
+              ],
+            ),
           ),
         ),
       ),
@@ -72,51 +89,121 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(menuProvider);
 
+    // Dapatkan list unik kategori
+    final categories = ['Semua', ...state.items.map((i) => i.category).toSet()];
+
+    // Filter menu berdasarkan search query & kategori terpilih
+    final filtered = state.items.where((item) {
+      final matchesSearch = item.name.toLowerCase().contains(_searchC.text.toLowerCase()) ||
+          item.category.toLowerCase().contains(_searchC.text.toLowerCase());
+      final matchesCategory = _selectedCategory == 'Semua' || item.category == _selectedCategory;
+      return matchesSearch && matchesCategory;
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Menu')),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () => _showForm(),
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : state.items.isEmpty
-              ? const Center(child: Text('Belum ada menu'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.items.length,
-                  itemBuilder: (_, i) {
-                    final item = state.items[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: item.available ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
-                          child: Icon(item.available ? Icons.restaurant : Icons.restaurant, color: item.available ? Colors.green : Colors.grey),
-                        ),
-                        title: Text(item.name, style: item.available ? null : const TextStyle(color: Colors.grey)),
-                        subtitle: Text('${item.category} • Rp ${item.price}'),
-                        trailing: PopupMenuButton(
-                          itemBuilder: (_) => [
-                            PopupMenuItem(value: 'edit', child: const Text('Edit')),
-                            PopupMenuItem(value: 'toggle', child: Text(item.available ? 'Nonaktifkan' : 'Aktifkan')),
-                            PopupMenuItem(value: 'delete', child: const Text('Hapus', style: TextStyle(color: Colors.red))),
-                          ],
-                          onSelected: (v) {
-                            switch (v) {
-                              case 'edit':
-                                _showForm(item);
-                              case 'toggle':
-                                ref.read(menuProvider.notifier).toggleAvailability(item.id);
-                              case 'delete':
-                                ref.read(menuProvider.notifier).deleteItem(item.id);
-                            }
-                          },
-                        ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: ClayTextField(
+                label: 'Cari Menu',
+                hint: 'Masukkan nama atau kategori menu...',
+                controller: _searchC,
+                prefixIcon: const Icon(Icons.search),
+              ),
+            ),
+            if (state.items.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: categories.map((cat) {
+                    final isSelected = _selectedCategory == cat;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(cat),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _selectedCategory = cat);
+                          }
+                        },
                       ),
                     );
-                  },
+                  }).toList(),
                 ),
+              ),
+            Expanded(
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filtered.isEmpty
+                      ? Center(
+                          child: Text(
+                            state.items.isEmpty
+                                ? 'Belum ada menu'
+                                : 'Menu tidak ditemukan',
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filtered.length,
+                          itemBuilder: (_, i) {
+                            final item = filtered[i];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: item.available
+                                      ? Colors.green.withValues(alpha: 0.1)
+                                      : Colors.grey.withValues(alpha: 0.1),
+                                  child: Icon(
+                                    item.available ? Icons.restaurant : Icons.restaurant,
+                                    color: item.available ? Colors.green : Colors.grey,
+                                  ),
+                                ),
+                                title: Text(
+                                  item.name,
+                                  style: item.available ? null : const TextStyle(color: Colors.grey),
+                                ),
+                                subtitle: Text('${item.category} • Rp ${item.price}'),
+                                trailing: PopupMenuButton(
+                                  itemBuilder: (_) => [
+                                    PopupMenuItem(value: 'edit', child: const Text('Edit')),
+                                    PopupMenuItem(
+                                      value: 'toggle',
+                                      child: Text(item.available ? 'Nonaktifkan' : 'Aktifkan'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                  onSelected: (v) {
+                                    switch (v) {
+                                      case 'edit':
+                                        _showForm(item);
+                                      case 'toggle':
+                                        ref.read(menuProvider.notifier).toggleAvailability(item.id);
+                                      case 'delete':
+                                        ref.read(menuProvider.notifier).deleteItem(item.id);
+                                    }
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
