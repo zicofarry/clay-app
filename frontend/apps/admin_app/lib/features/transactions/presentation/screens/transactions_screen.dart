@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
-class DriversListScreen extends StatelessWidget {
-  const DriversListScreen({super.key});
+class TransactionsScreen extends StatelessWidget {
+  const TransactionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final drivers = List.generate(8, (i) => {
-      'name': 'Driver ${i + 1}', 'phone': '+6281234567${i}', 'vehicle': 'Toyota Avanza', 'plate': 'B ${1000 + i} ABC', 'status': i % 4 == 0 ? 'offline' : 'online', 'rating': 4.5 + (i * 0.1),
-    });
+    final transactions = [
+      {'id': 'TRX-9921', 'type': 'ClayRide', 'user': 'Budi S.', 'amount': 'Rp 12.000', 'status': 'success', 'date': 'Hari ini, 08:45'},
+      {'id': 'TRX-9920', 'type': 'ClayFood', 'user': 'Siska', 'amount': 'Rp 45.000', 'status': 'success', 'date': 'Hari ini, 07:30'},
+      {'id': 'TRX-9919', 'type': 'ClayWallet', 'user': 'Ahmad', 'amount': 'Rp 150.000', 'status': 'pending', 'date': 'Kemarin, 20:15'},
+      {'id': 'TRX-9918', 'type': 'ClayCar', 'user': 'Diana', 'amount': 'Rp 42.000', 'status': 'success', 'date': 'Kemarin, 18:00'},
+      {'id': 'TRX-9917', 'type': 'ClaySend', 'user': 'Rina M.', 'amount': 'Rp 15.000', 'status': 'failed', 'date': 'Kemarin, 14:20'},
+    ];
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFFAFAFA);
@@ -21,7 +25,7 @@ class DriversListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('Driver', style: TextStyle(fontWeight: FontWeight.w700, color: textColor)),
+        title: Text('Transaksi', style: TextStyle(fontWeight: FontWeight.w700, color: textColor)),
         backgroundColor: bgColor,
         surfaceTintColor: Colors.transparent,
         iconTheme: IconThemeData(color: textColor),
@@ -30,10 +34,33 @@ class DriversListScreen extends StatelessWidget {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        itemCount: drivers.length,
+        itemCount: transactions.length,
         itemBuilder: (_, i) {
-          final d = drivers[i];
-          final isOnline = d['status'] == 'online';
+          final t = transactions[i];
+          final isSuccess = t['status'] == 'success';
+          final isPending = t['status'] == 'pending';
+          
+          Color statusColor;
+          Color statusBg;
+          if (isSuccess) {
+            statusColor = const Color(0xFF4CAF50);
+            statusBg = const Color(0xFFE8F5E9);
+          } else if (isPending) {
+            statusColor = const Color(0xFFFFA000);
+            statusBg = const Color(0xFFFFF8E1);
+          } else {
+            statusColor = const Color(0xFFD32F2F);
+            statusBg = const Color(0xFFFFEBEE);
+          }
+
+          IconData getIcon(String type) {
+            if (type == 'ClayRide') return Icons.two_wheeler_rounded;
+            if (type == 'ClayFood') return Icons.fastfood_rounded;
+            if (type == 'ClayWallet') return Icons.account_balance_wallet_rounded;
+            if (type == 'ClayCar') return Icons.directions_car_rounded;
+            return Icons.local_shipping_rounded;
+          }
+
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
@@ -51,36 +78,29 @@ class DriversListScreen extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(color: softBlue, borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.directions_car_rounded, color: primaryBlue),
+                child: Icon(getIcon(t['type'] as String), color: primaryBlue),
               ),
-              title: Text('${d['name']}', style: TextStyle(fontWeight: FontWeight.w700, color: textColor)),
+              title: Text('${t['type']} • ${t['user']}', style: TextStyle(fontWeight: FontWeight.w700, color: textColor, fontSize: 14)),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('${d['vehicle']} • ${d['plate']}', style: TextStyle(color: subTextColor, fontSize: 13, fontWeight: FontWeight.w500)),
+                child: Text('${t['id']} • ${t['date']}', style: TextStyle(color: subTextColor, fontSize: 12, fontWeight: FontWeight.w500)),
               ),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
-                      const SizedBox(width: 4),
-                      Text('${d['rating']}', style: TextStyle(fontWeight: FontWeight.w700, color: textColor, fontSize: 12)),
-                    ],
-                  ),
+                  Text('${t['amount']}', style: TextStyle(fontWeight: FontWeight.w800, color: textColor, fontSize: 13)),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (isOnline ? const Color(0xFFE8F5E9) : isDark ? Colors.white10 : const Color(0xFFF5F5F5)),
+                      color: statusBg,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '${d['status']}'.toUpperCase(),
+                      '${t['status']}'.toUpperCase(),
                       style: TextStyle(
-                        color: isOnline ? const Color(0xFF4CAF50) : subTextColor,
+                        color: statusColor,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
