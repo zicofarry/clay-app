@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../providers/food_provider.dart';
+import 'package:user_app/features/wallet/presentation/providers/wallet_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -17,6 +18,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _paymentMethod = 'qris'; // default selection
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(walletStateProvider.notifier).loadWallet();
+    });
+  }
+
+  @override
   void dispose() {
     _addressController.dispose();
     _notesController.dispose();
@@ -27,6 +36,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(foodStateProvider);
     final notifier = ref.read(foodStateProvider.notifier);
+    final walletState = ref.watch(walletStateProvider);
 
     _addressController.text = state.selectedAddress ?? 'Jl. Sudirman No. 1, Jakarta';
 
@@ -41,6 +51,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           const SnackBar(
             content: Text('Pesanan berhasil dibuat! Silakan cek di tab Orders.'),
             backgroundColor: ClayColors.greenDark,
+          ),
+        );
+      }
+      if (state.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: ClayColors.error,
           ),
         );
       }
@@ -365,7 +383,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'ClayPay',
+                                  'E-Wallet',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -381,55 +399,134 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   if (_paymentMethod == 'qris') ...[
                     const SizedBox(height: 16),
-                    Center(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: ClayColors.background,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: ClayColors.divider),
-                        ),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'QRIS CLAY',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: ClayColors.textPrimary,
-                                letterSpacing: 1.2,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: ClayColors.primary.withOpacity(0.15), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: ClayColors.primary.withOpacity(0.04),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Image.network(
+                                'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg',
+                                height: 20,
+                                errorBuilder: (_, __, ___) => const Text(
+                                  'QRIS',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: ClayColors.primary,
+                                  ),
+                                ),
                               ),
+                              const Text(
+                                'CLAY WALLET',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                  color: ClayColors.textSecondary,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: ClayColors.divider),
                             ),
-                            const SizedBox(height: 12),
-                            ClipRRect(
+                            child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ClayAppPayment',
-                                width: 150,
-                                height: 150,
-                                fit: BoxFit.cover,
+                                'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ClayFood-${DateTime.now().millisecondsSinceEpoch}',
+                                width: 160,
+                                height: 160,
+                                fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
-                                    width: 150,
-                                    height: 150,
-                                    color: Colors.grey.shade200,
-                                    child: const Icon(Icons.qr_code, size: 64, color: Colors.grey),
+                                    width: 160,
+                                    height: 160,
+                                    color: Colors.grey.shade100,
+                                    child: const Icon(Icons.qr_code_2, size: 64, color: Colors.grey),
                                   );
                                 },
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Pindai kode QR untuk melakukan pembayaran',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: ClayColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: ClayColors.muted.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
-                        ),
+                            child: Column(
+                              children: [
+                                Image.network(
+                                  'https://bwipjs-api.metafloor.com/?bcid=code128&text=CLAYPAY$totalPayment&scale=2&rotate=N&includeText=false&height=12',
+                                  height: 40,
+                                  width: double.infinity,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox(
+                                      height: 40,
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.linear_scale, color: ClayColors.textSecondary),
+                                          SizedBox(width: 8),
+                                          Text('Barcode Preview', style: TextStyle(fontSize: 12, color: ClayColors.textSecondary)),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'CLAYPAY$totalPayment',
+                                  style: const TextStyle(
+                                    fontFamily: 'Courier',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2.0,
+                                    color: ClayColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.info_outline, size: 14, color: ClayColors.textSecondary),
+                              SizedBox(width: 6),
+                              Text(
+                                'Scan QRIS atau tunjukkan Barcode ke kasir/kurir',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: ClayColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ] else if (_paymentMethod == 'claypay') ...[
@@ -453,7 +550,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'ClayPay E-Wallet',
+                                    'Clay E-Wallet',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
@@ -472,9 +569,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                               ),
                             ],
                           ),
-                          const Text(
-                            'Rp 150.000',
-                            style: TextStyle(
+                          Text(
+                            'Rp ${walletState.balance}',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: ClayColors.textPrimary,
@@ -483,6 +580,29 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         ],
                       ),
                     ),
+                    if (walletState.balance < totalPayment) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: ClayColors.error.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: ClayColors.error.withOpacity(0.15)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.error_outline, color: ClayColors.error, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Saldo E-Wallet Anda tidak mencukupi untuk melakukan pesanan ini.',
+                                style: TextStyle(color: ClayColors.error, fontSize: 11, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
@@ -630,15 +750,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ),
         child: SafeArea(
           child: ClayButton(
-            label: state.isLoading ? 'Memproses Pesanan...' : 'Pesan Sekarang (Rp $totalPayment)',
+            label: state.isLoading
+                ? 'Memproses Pesanan...'
+                : (_paymentMethod == 'claypay' && walletState.balance < totalPayment)
+                    ? 'Saldo E-Wallet Tidak Cukup'
+                    : 'Pesan Sekarang (Rp $totalPayment)',
             isLoading: state.isLoading,
-            onPressed: () {
-              notifier.createOrder(
-                merchantId: state.selectedMerchantId ?? '',
-                address: _addressController.text,
-                paymentMethod: _paymentMethod,
-              );
-            },
+            onPressed: (_paymentMethod == 'claypay' && walletState.balance < totalPayment)
+                ? null
+                : () {
+                    notifier.createOrder(
+                      merchantId: state.selectedMerchantId ?? '',
+                      address: _addressController.text,
+                      paymentMethod: _paymentMethod,
+                    );
+                  },
           ),
         ),
       ),
