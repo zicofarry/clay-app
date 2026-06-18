@@ -6,9 +6,9 @@ import '../../../auth/presentation/providers/merchant_auth_provider.dart';
 import '../../../menu/presentation/screens/menu_list_screen.dart';
 import '../../../orders/presentation/screens/order_list_screen.dart';
 import '../../../profile/presentation/screens/merchant_profile_screen.dart';
+import '../../../profile/presentation/providers/merchant_profile_provider.dart';
 
 final _currentTabProvider = StateProvider<int>((ref) => 0);
-final _isOpenProvider = StateProvider<bool>((ref) => true);
 
 class MerchantHomeScreen extends ConsumerWidget {
   const MerchantHomeScreen({super.key});
@@ -49,7 +49,7 @@ class _DashboardTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final merchant = ref.watch(merchantAuthProvider).merchant;
-    final isOpen = ref.watch(_isOpenProvider);
+    final isOpen = merchant?['status'] == 'active';
 
     return Scaffold(
       appBar: AppBar(
@@ -103,7 +103,15 @@ class _DashboardTab extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Text('Toko ${isOpen ? "Buka" : "Tutup"}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 const Spacer(),
-                Switch(value: isOpen, activeColor: Colors.green, onChanged: (v) => ref.read(_isOpenProvider.notifier).state = v),
+                Switch(
+                  value: isOpen,
+                  activeColor: Colors.green,
+                  onChanged: (v) {
+                    if (merchant != null && merchant['id'] != null) {
+                      ref.read(merchantProfileProvider.notifier).updateStatus(merchant['id'], v ? 'active' : 'closed');
+                    }
+                  },
+                ),
               ]),
             ),
             const SizedBox(height: 24),
