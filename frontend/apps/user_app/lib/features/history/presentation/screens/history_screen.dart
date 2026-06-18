@@ -15,6 +15,13 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _scaffoldBg => _isDark ? const Color(0xFF121212) : ClayColors.background;
+  Color get _surfaceColor => _isDark ? const Color(0xFF1E1E1E) : Colors.white;
+  Color get _textPrimary => _isDark ? Colors.white : ClayColors.textPrimary;
+  Color get _textSecondary => _isDark ? Colors.white70 : ClayColors.textSecondary;
+  Color get _borderColor => _isDark ? Colors.white12 : ClayColors.divider;
+
   @override
   void initState() {
     super.initState();
@@ -38,15 +45,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     final notifier = ref.read(foodStateProvider.notifier);
 
     return Scaffold(
-      backgroundColor: ClayColors.background,
+      backgroundColor: _scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _surfaceColor,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(
+        title: Text(
           'Pesanan Saya',
           style: TextStyle(
-            color: ClayColors.textPrimary,
+            color: _textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -54,7 +61,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
         bottom: TabBar(
           controller: _tabController,
           labelColor: ClayColors.primary,
-          unselectedLabelColor: ClayColors.textSecondary,
+          unselectedLabelColor: _textSecondary,
           indicatorColor: ClayColors.primary,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
@@ -87,12 +94,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 80, color: ClayColors.textSecondary.withValues(alpha: 0.5)),
+            Icon(Icons.receipt_long_outlined, size: 80, color: _textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Tidak ada pesanan aktif',
               style: TextStyle(
-                color: ClayColors.textSecondary,
+                color: _textSecondary,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -102,7 +109,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
               width: 200,
               child: ClayButton(
                 label: 'Pesan Sekarang',
-                onPressed: () => context.go('/food'),
+                onPressed: () => context.push('/food'),
               ),
             ),
           ],
@@ -139,7 +146,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
       padding: const EdgeInsets.all(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _surfaceColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -160,9 +167,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                   children: [
                     const Icon(Icons.restaurant, color: ClayColors.primary, size: 20),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'ClayFood Order',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: ClayColors.textPrimary),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _textPrimary),
                     ),
                   ],
                 ),
@@ -184,7 +191,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
               ],
             ),
             const SizedBox(height: 16),
-            const Divider(color: ClayColors.divider),
+            Divider(color: _borderColor),
             const SizedBox(height: 12),
 
             // Order ID & Price
@@ -194,15 +201,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('ID PESANAN', style: TextStyle(color: ClayColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text('ID PESANAN', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
-                    Text(orderId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(orderId, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('TOTAL HARGA', style: TextStyle(color: ClayColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text('TOTAL HARGA', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
                     Text('Rp $total', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: ClayColors.primary)),
                   ],
@@ -220,18 +227,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: ClayColors.divider,
+                    backgroundColor: _borderColor,
                     color: statusColor,
                     minHeight: 8,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Dipesan', style: TextStyle(fontSize: 10, color: ClayColors.textSecondary, fontWeight: FontWeight.bold)),
-                    Text('Disiapkan', style: TextStyle(fontSize: 10, color: ClayColors.textSecondary, fontWeight: FontWeight.bold)),
-                    Text('Dikirim', style: TextStyle(fontSize: 10, color: ClayColors.textSecondary, fontWeight: FontWeight.bold)),
+                    Text('Dipesan', style: TextStyle(fontSize: 10, color: _textSecondary, fontWeight: FontWeight.bold)),
+                    Text('Disiapkan', style: TextStyle(fontSize: 10, color: _textSecondary, fontWeight: FontWeight.bold)),
+                    Text('Dikirim', style: TextStyle(fontSize: 10, color: _textSecondary, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],
@@ -240,9 +247,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
             const SizedBox(height: 20),
 
             // Delivery Destination Address
-            const Text(
+            Text(
               'TUJUAN PENGIRIMAN',
-              style: TextStyle(color: ClayColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+              style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Row(
@@ -252,7 +259,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
                 Expanded(
                   child: Text(
                     address,
-                    style: const TextStyle(fontSize: 13, color: ClayColors.textPrimary),
+                    style: TextStyle(fontSize: 13, color: _textPrimary),
                   ),
                 ),
               ],
@@ -286,10 +293,33 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
 
   Widget _buildHistoryTab(FoodState state, FoodNotifier notifier) {
     if (state.history.isEmpty) {
-      return const Center(
-        child: Text(
-          'Belum ada riwayat pesanan',
-          style: TextStyle(color: ClayColors.textSecondary),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 80,
+              color: _textSecondary.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Belum ada riwayat pesanan',
+              style: TextStyle(
+                color: _textSecondary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pesanan makanan lezatmu akan muncul di sini',
+              style: TextStyle(
+                color: _textSecondary.withValues(alpha: 0.7),
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -297,13 +327,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     return RefreshIndicator(
       onRefresh: () => notifier.loadHistory(),
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: state.history.length,
         itemBuilder: (context, i) {
           final o = state.history[i];
           final String orderId = o['order_id'] ?? '';
           final String date = o['date'] ?? '';
           final String merchant = o['merchant'] ?? 'ClayFood Resto';
+          final String merchantId = o['merchant_id'] ?? '';
           final int total = o['total'] ?? 0;
           final String status = o['status'] ?? 'completed';
 
@@ -312,81 +343,242 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _surfaceColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: ClayColors.divider),
+              border: Border.all(color: _borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Material(
               color: Colors.transparent,
               clipBehavior: Clip.antiAlias,
               borderRadius: BorderRadius.circular(16),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ClayColors.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+              child: InkWell(
+                onTap: () => _showOrderDetailBottomSheet(context, orderId, merchant, merchantId, total, status, date),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: ClayColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.restaurant, color: ClayColors.primary, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'ClayFood',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: ClayColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '•',
+                                      style: TextStyle(
+                                        color: _textSecondary.withValues(alpha: 0.5),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        date.length > 10 ? date.substring(0, 10) : date,
+                                        style: TextStyle(
+                                          color: _textSecondary,
+                                          fontSize: 11,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isCancelled
+                                  ? ClayColors.error.withValues(alpha: 0.1)
+                                  : ClayColors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isCancelled ? 'Batal' : 'Selesai',
+                              style: TextStyle(
+                                color: isCancelled ? ClayColors.error : ClayColors.greenDark,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Divider(color: _borderColor, height: 1),
+                      const SizedBox(height: 12),
+
+                      // Merchant & Total Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  merchant,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: _textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'ID Pesanan: ${orderId.length > 8 ? orderId.substring(0, 8) : orderId}...',
+                                  style: TextStyle(
+                                    color: _textSecondary.withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Total Belanja',
+                                style: TextStyle(
+                                  color: _textSecondary.withValues(alpha: 0.7),
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Rp $total',
+                                style: TextStyle(
+                                  color: _textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
+
+                      // Quick Action Row
+                      Row(
+                        children: [
+                          if (!isCancelled) ...[
+                            OutlinedButton.icon(
+                              onPressed: () => _showRatingDialog(context, orderId, merchant),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: ClayColors.primary),
+                                foregroundColor: ClayColors.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              ),
+                              icon: const Icon(Icons.star_border, size: 16),
+                              label: const Text(
+                                'Beri Ulasan',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
+                          const Spacer(),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              // Show generic loading overlay/snackbar
+                              scaffoldMessenger.showSnackBar(
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text('Menyiapkan pesanan ulang...'),
+                                    ],
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+
+                              final success = await notifier.reorder(orderId, merchantId, merchant);
+                              if (success) {
+                                scaffoldMessenger.clearSnackBars();
+                                scaffoldMessenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text('Menu dari $merchant berhasil ditambahkan ke keranjang!'),
+                                    backgroundColor: ClayColors.greenDark,
+                                    action: SnackBarAction(
+                                      label: 'LIHAT',
+                                      textColor: Colors.white,
+                                      onPressed: () => context.push('/food/cart'),
+                                    ),
+                                  ),
+                                );
+                                context.push('/food/cart');
+                              } else {
+                                scaffoldMessenger.clearSnackBars();
+                                // Fallback: navigate to merchant menu
+                                notifier.selectMerchant(merchantId, merchant);
+                                context.push('/food/menu/$merchantId');
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ClayColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.replay_rounded, size: 16),
+                            label: const Text(
+                              'Pesan Lagi',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Icon(Icons.restaurant, color: ClayColors.primary, size: 22),
               ),
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'GoFood',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: ClayColors.primary),
-                  ),
-                  Text(
-                    date.length > 10 ? date.substring(0, 10) : date,
-                    style: const TextStyle(color: ClayColors.textSecondary, fontSize: 11),
-                  ),
-                ],
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text(
-                    merchant,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: ClayColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Rp $total',
-                    style: const TextStyle(
-                      color: ClayColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isCancelled
-                      ? ClayColors.error.withValues(alpha: 0.1)
-                      : ClayColors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isCancelled ? 'Batal' : 'Selesai',
-                  style: TextStyle(
-                    color: isCancelled ? ClayColors.error : ClayColors.greenDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-              onTap: () => _showOrderDetailDialog(context, orderId, merchant, total, status, date),
             ),
-          ),
-        );
+          );
         },
       ),
     );
@@ -471,85 +663,454 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     );
   }
 
-  void _showOrderDetailDialog(
+  void _showOrderDetailBottomSheet(
     BuildContext context,
     String orderId,
     String merchant,
+    String merchantId,
     int total,
     String status,
     String date,
   ) {
-    showDialog(
+    final isCancelled = status == 'cancelled' || status == 'rejected';
+
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: _surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) {
-        final isCancelled = status == 'cancelled' || status == 'rejected';
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              const Icon(Icons.receipt, color: ClayColors.primary),
-              const SizedBox(width: 8),
-              const Text('Detail Transaksi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailItem('ID Pesanan', orderId),
-              _buildDetailItem('Restoran', merchant),
-              _buildDetailItem('Tanggal', date.length > 16 ? date.substring(0, 16) : date),
-              _buildDetailItem('Total Belanja', 'Rp $total'),
-              const Divider(color: ClayColors.divider, height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Status', style: TextStyle(color: ClayColors.textSecondary, fontSize: 13)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isCancelled
-                          ? ClayColors.error.withValues(alpha: 0.1)
-                          : ClayColors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      isCancelled ? 'Dibatalkan' : 'Selesai',
-                      style: TextStyle(
-                        color: isCancelled ? ClayColors.error : ClayColors.greenDark,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+        return DraggableScrollableSheet(
+          initialChildSize: 0.65,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return FutureBuilder<Map<String, dynamic>?>(
+              future: ref.read(foodRepositoryProvider).getOrderDetails(orderId),
+              builder: (context, snapshot) {
+                final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                final orderDetails = snapshot.data;
+                final items = orderDetails != null ? (orderDetails['items'] as List?) : null;
+
+                return SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Drag Handle
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: _borderColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 20),
+
+                      // Title
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Detail Transaksi',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _textPrimary,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isCancelled
+                                  ? ClayColors.error.withValues(alpha: 0.1)
+                                  : ClayColors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isCancelled ? 'Dibatalkan' : 'Selesai',
+                              style: TextStyle(
+                                color: isCancelled ? ClayColors.error : ClayColors.greenDark,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(color: ClayColors.divider),
+                      const SizedBox(height: 12),
+
+                      // Summary Details
+                      _buildDetailItem('ID Pesanan', orderId),
+                      _buildDetailItem('Restoran', merchant),
+                      _buildDetailItem('Waktu Pemesanan', date),
+                      const SizedBox(height: 16),
+
+                      const Text(
+                        'Rincian Pesanan',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: ClayColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      if (isLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: CircularProgressIndicator(color: ClayColors.primary),
+                          ),
+                        )
+                      else if (items == null || items.isEmpty)
+                        Text(
+                          'Detail item tidak tersedia',
+                          style: TextStyle(color: _textSecondary, fontSize: 13),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: items.length,
+                          itemBuilder: (context, idx) {
+                            final item = items[idx];
+                            final String itemName = item['name'] ?? 'Menu Makanan';
+                            final int itemQty = item['quantity'] ?? 1;
+                            final int itemPrice = item['unit_price_cents'] ?? item['price'] ?? 0;
+                            final int subtotal = item['subtotal_cents'] ?? (itemPrice * itemQty);
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${itemQty}x $itemName',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: _textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rp $subtotal',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                      const SizedBox(height: 16),
+                      Divider(color: _borderColor),
+                      const SizedBox(height: 12),
+
+                      // Billing Breakdown
+                      _buildDetailItem(
+                        'Subtotal',
+                        'Rp ${orderDetails != null ? (orderDetails['subtotal_cents'] ?? total) : total}',
+                      ),
+                      _buildDetailItem(
+                        'Biaya Ongkir',
+                        'Rp ${orderDetails != null ? (orderDetails['delivery_fee_cents'] ?? 0) : 0}',
+                      ),
+                      if (orderDetails != null && (orderDetails['discount_cents'] ?? 0) > 0)
+                        _buildDetailItem(
+                          'Diskon Promo',
+                          '-Rp ${orderDetails['discount_cents']}',
+                          valueColor: ClayColors.primary,
+                        ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Pembayaran',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: _textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Rp $total',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: ClayColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+                      Divider(color: _borderColor),
+                      const SizedBox(height: 12),
+
+                      // Address Section
+                      Text(
+                        'Alamat Pengiriman',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: _textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.location_on, color: ClayColors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              orderDetails != null ? (orderDetails['delivery_address'] ?? 'Alamat terdaftar') : 'Alamat terdaftar',
+                              style: TextStyle(
+                                color: _textSecondary.withValues(alpha: 0.9),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Reorder Action inside BottomSheet
+                      SizedBox(
+                        width: double.infinity,
+                        child: ClayButton(
+                          label: 'Pesan Lagi Menu Ini',
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            final notifier = ref.read(foodStateProvider.notifier);
+                            final scaffoldMessenger = ScaffoldMessenger.of(context);
+                            
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(
+                                content: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Menyiapkan pesanan ulang...'),
+                                  ],
+                                ),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+
+                            final success = await notifier.reorder(orderId, merchantId, merchant);
+                            if (success) {
+                              scaffoldMessenger.clearSnackBars();
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Menu dari $merchant berhasil ditambahkan ke keranjang!'),
+                                  backgroundColor: ClayColors.greenDark,
+                                  action: SnackBarAction(
+                                    label: 'LIHAT',
+                                    textColor: Colors.white,
+                                    onPressed: () => context.push('/food/cart'),
+                                  ),
+                                ),
+                              );
+                              context.push('/food/cart');
+                            } else {
+                              scaffoldMessenger.clearSnackBars();
+                              notifier.selectMerchant(merchantId, merchant);
+                              context.push('/food/menu/$merchantId');
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup', style: TextStyle(color: ClayColors.primary, fontWeight: FontWeight.bold)),
-            ),
-          ],
+                );
+              },
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildDetailItem(String label, String value) {
+  void _showRatingDialog(BuildContext context, String orderId, String merchant) {
+    int driverStars = 5;
+    int merchantStars = 5;
+    final commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 24),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Beri Ulasan $merchant',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bagaimana kinerja driver Anda?',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _textPrimary),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: List.generate(5, (index) {
+                        final starIndex = index + 1;
+                        return GestureDetector(
+                          onTap: () => setDialogState(() => driverStars = starIndex),
+                          child: Icon(
+                            starIndex <= driverStars ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 36,
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Bagaimana rasa makanan restoran?',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _textPrimary),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: List.generate(5, (index) {
+                        final starIndex = index + 1;
+                        return GestureDetector(
+                          onTap: () => setDialogState(() => merchantStars = starIndex),
+                          child: Icon(
+                            starIndex <= merchantStars ? Icons.star : Icons.star_border,
+                            color: Colors.amber,
+                            size: 36,
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Komentar Anda (Opsional)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _textPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: commentController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Tulis tanggapan Anda mengenai pelayanan ini...',
+                        hintStyle: TextStyle(color: _textSecondary.withValues(alpha: 0.6), fontSize: 13),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: _borderColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: ClayColors.primary),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Batal', style: TextStyle(color: _textSecondary, fontWeight: FontWeight.bold)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final success = await ref.read(foodStateProvider.notifier).submitRating(
+                          orderId: orderId,
+                          driverRating: driverStars,
+                          merchantRating: merchantStars,
+                          comment: commentController.text,
+                        );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? 'Ulasan Anda berhasil dikirim! Terima kasih.'
+                                : 'Gagal mengirim ulasan.',
+                          ),
+                          backgroundColor: success ? ClayColors.greenDark : ClayColors.error,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ClayColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Kirim', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailItem(String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: ClayColors.textSecondary, fontSize: 13)),
+          Text(
+            label,
+            style: TextStyle(
+              color: _textSecondary.withValues(alpha: 0.8),
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: const TextStyle(color: ClayColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+              style: TextStyle(
+                color: valueColor ?? _textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),

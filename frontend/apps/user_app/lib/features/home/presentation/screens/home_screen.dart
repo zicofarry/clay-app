@@ -5,15 +5,16 @@ import 'package:clay_ui/clay_ui.dart';
 import '../../../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../../../../features/wallet/presentation/providers/wallet_provider.dart';
 import '../../../../features/profile/presentation/screens/profile_screen.dart';
+import '../../../../features/history/presentation/screens/history_screen.dart';
 
-final _currentTabProvider = StateProvider<int>((ref) => 0);
+final currentTabProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTab = ref.watch(_currentTabProvider);
+    final currentTab = ref.watch(currentTabProvider);
 
     final pages = <Widget>[
       _DashboardTab(),
@@ -28,7 +29,7 @@ class HomeScreen extends ConsumerWidget {
         currentIndex: currentTab,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: ClayColors.primary,
-        onTap: (i) => ref.read(_currentTabProvider.notifier).state = i,
+        onTap: (i) => ref.read(currentTabProvider.notifier).state = i,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
@@ -223,7 +224,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: Colors.blue,
                   label: 'Balance +',
                   value: 'Rp${_formatCurrency(walletState.balance)}',
-                  onTap: () => ref.read(_currentTabProvider.notifier).state = 2,
+                  onTap: () => ref.read(currentTabProvider.notifier).state = 2,
                 ),
               ),
               const SizedBox(width: 8),
@@ -233,7 +234,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: ClayColors.primary,
                   label: 'Payment',
                   value: 'Here',
-                  onTap: () => ref.read(_currentTabProvider.notifier).state = 2,
+                  onTap: () => ref.read(currentTabProvider.notifier).state = 2,
                 ),
               ),
               const SizedBox(width: 8),
@@ -243,7 +244,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: ClayColors.primary,
                   label: 'Transaction',
                   value: 'History',
-                  onTap: () => ref.read(_currentTabProvider.notifier).state = 2,
+                  onTap: () => ref.read(currentTabProvider.notifier).state = 2,
                 ),
               ),
             ],
@@ -470,10 +471,7 @@ class _PromoCard extends StatelessWidget {
 class _OrdersTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Orders')),
-      body: const Center(child: Text('Order history')),
-    );
+    return const HistoryScreen();
   }
 }
 
