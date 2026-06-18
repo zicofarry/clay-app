@@ -20,7 +20,7 @@ func newTestService(t *testing.T) (*RideOrderService, *repomock.MockRideOrderRep
 	ctrl := gomock.NewController(t)
 	repo := repomock.NewMockRideOrderRepositoryInterface(ctrl)
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
-	return NewRideOrderService(repo, logger), repo, ctrl
+	return NewRideOrderService(repo, nil, logger), repo, ctrl
 }
 
 func validCreateReq() *CreateRideOrderRequest {

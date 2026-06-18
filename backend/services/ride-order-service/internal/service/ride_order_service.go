@@ -239,6 +239,21 @@ type InternalAssignDriverResponse struct {
 
 // ── Interface ───────────────────────────────────────────────────────────────
 
+// MatchingClientInterface abstracts the matching-service HTTP call.
+type MatchingClientInterface interface {
+	StartDispatch(ctx context.Context, req *DispatchMatchRequest) error
+}
+
+// DispatchMatchRequest is the DTO sent to the matching service.
+type DispatchMatchRequest struct {
+	OrderID     string  `json:"order_id"`
+	ServiceType string  `json:"service_type"`
+	PickupLat   float64 `json:"pickup_lat"`
+	PickupLng   float64 `json:"pickup_lng"`
+	DestLat     float64 `json:"dest_lat,omitempty"`
+	DestLng     float64 `json:"dest_lng,omitempty"`
+}
+
 // RideOrderServiceInterface defines the service contract.
 //
 //go:generate mockgen -source=ride_order_service.go -destination=../../mocks/mock_ride_order_service.go -package=mocks
@@ -269,13 +284,15 @@ type RideOrderServiceInterface interface {
 
 // RideOrderService implements RideOrderServiceInterface.
 type RideOrderService struct {
-	repo   repository.RideOrderRepositoryInterface
-	logger *slog.Logger
+	repo           repository.RideOrderRepositoryInterface
+	matchingClient MatchingClientInterface
+	logger         *slog.Logger
 }
 
 // NewRideOrderService creates a new RideOrderService.
-func NewRideOrderService(repo repository.RideOrderRepositoryInterface, logger *slog.Logger) *RideOrderService {
-	return &RideOrderService{repo: repo, logger: logger}
+// matchingClient can be nil if dispatch is not available.
+func NewRideOrderService(repo repository.RideOrderRepositoryInterface, matchingClient MatchingClientInterface, logger *slog.Logger) *RideOrderService {
+	return &RideOrderService{repo: repo, matchingClient: matchingClient, logger: logger}
 }
 
 // ── User-facing methods ─────────────────────────────────────────────────────
@@ -390,6 +407,32 @@ func (s *RideOrderService) CreateOrder(ctx context.Context, userID string, req *
 		slog.String("service_type", req.ServiceType),
 	)
 
+	// Trigger matching dispatch (fire-and-forget)
+	if s.matchingClient != nil {
+		matchServiceType := "ride"
+		go func() {
+			dispatchCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := s.matchingClient.StartDispatch(dispatchCtx, &DispatchMatchRequest{
+				OrderID:     created.ID,
+				ServiceType: matchServiceType,
+				PickupLat:   req.OriginLat,
+				PickupLng:   req.OriginLng,
+				DestLat:     req.DestLat,
+				DestLng:     req.DestLng,
+			}); err != nil {
+				s.logger.Warn("dispatch trigger failed",
+					slog.String("order_id", created.ID),
+					slog.Any("error", err),
+				)
+			} else {
+				s.logger.Info("dispatch triggered",
+					slog.String("order_id", created.ID),
+				)
+			}
+		}()
+	}
+
 	// TODO: publish Order_Created Kafka event
 	// TODO: SET user:active_order:{user_id} in Redis (TTL 2h)
 
@@ -464,9 +507,9 @@ func (s *RideOrderService) GetOrder(ctx context.Context, userID, role, orderID s
 		return nil, err
 	}
 
-	// Authorization: user owns it OR (role=driver AND driver_id matches)
+	// Authorization: user owns it OR (role=driver AND order is open or driver is assigned)
 	if role == "driver" {
-		if !o.DriverID.Valid || o.DriverID.String != userID {
+		if o.Status != "finding_driver" && (!o.DriverID.Valid || o.DriverID.String != userID) {
 			return nil, ErrForbidden
 		}
 	} else {
