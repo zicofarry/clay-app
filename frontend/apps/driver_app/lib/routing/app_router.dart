@@ -33,30 +33,195 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/login',
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const DriverLoginScreen()),
-      GoRoute(path: '/register', builder: (_, __) => const DriverRegisterScreen()),
-      GoRoute(path: '/home', builder: (_, __) => const DriverHomeScreen()),
-      GoRoute(path: '/order/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/earnings', builder: (_, __) => const EarningScreen()),
-      GoRoute(path: '/profile', builder: (_, __) => const DriverProfileScreen()),
-      GoRoute(path: '/active-trip', builder: (_, __) => const ActiveTripScreen()),
-      GoRoute(path: '/trip-complete', builder: (_, __) => const TripCompleteScreen()),
-      GoRoute(path: '/chat', builder: (_, __) => const ChatScreen()),
-      GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
-      GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
-      GoRoute(path: '/help', builder: (_, __) => const HelpScreen()),
-      GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
-      GoRoute(path: '/notification-preferences', builder: (_, __) => const NotificationPreferencesScreen()),
-      GoRoute(path: '/change-password', builder: (_, __) => const ChangePasswordScreen()),
-      GoRoute(path: '/edit-profile', builder: (_, __) => const EditProfileScreen()),
-      GoRoute(path: '/documents', builder: (_, __) => const DocumentsScreen()),
-      GoRoute(path: '/wallet', builder: (_, __) => const WalletScreen()),
-      GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
-      GoRoute(path: '/ratings', builder: (_, __) => const RatingsScreen()),
-      GoRoute(path: '/vouchers', builder: (_, __) => const VouchersScreen()),
-      GoRoute(path: '/food-order/:id', builder: (_, state) => FoodOrderScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/delivery-order/:id', builder: (_, state) => DeliveryOrderScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/dispatch-mode', builder: (_, __) => const DispatchModeScreen()),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const DriverLoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/login',
+          child: DriverRegisterScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const DriverHomeScreen(),
+      ),
+      GoRoute(
+        path: '/order/:id',
+        builder: (context, state) => RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: OrderDetailScreen(orderId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/earnings',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: EarningScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: DriverProfileScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/active-trip',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: ActiveTripScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/trip-complete',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: TripCompleteScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: ChatScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/history',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: HistoryScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: SettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/help',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: HelpScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: NotificationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/notification-preferences',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/settings',
+          child: NotificationPreferencesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/change-password',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/settings',
+          child: ChangePasswordScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: EditProfileScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/documents',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: DocumentsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/wallet',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: WalletScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/login',
+          child: ForgotPasswordScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/ratings',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: RatingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/vouchers',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/profile',
+          child: VouchersScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/food-order/:id',
+        builder: (context, state) => RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: FoodOrderScreen(orderId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/delivery-order/:id',
+        builder: (context, state) => RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: DeliveryOrderScreen(orderId: state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/dispatch-mode',
+        builder: (context, state) => const RoutePopScopeWrapper(
+          fallbackRoute: '/home',
+          child: DispatchModeScreen(),
+        ),
+      ),
     ],
   );
 });
+
+class RoutePopScopeWrapper extends StatelessWidget {
+  final Widget child;
+  final String fallbackRoute;
+
+  const RoutePopScopeWrapper({
+    super.key,
+    required this.child,
+    required this.fallbackRoute,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.canPop(context)) {
+          context.pop();
+        } else {
+          context.go(fallbackRoute);
+        }
+      },
+      child: child,
+    );
+  }
+}

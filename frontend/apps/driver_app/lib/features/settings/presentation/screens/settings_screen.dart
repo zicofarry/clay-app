@@ -178,7 +178,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _LinkItem(
                       icon: Icons.tune,
                       label: 'Preferensi Notifikasi',
-                      onTap: () => context.go('/notification-preferences'),
+                      onTap: () => context.push('/notification-preferences'),
                     ),
                   ]),
                   const SizedBox(height: 16),
@@ -197,7 +197,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _LinkItem(
                       icon: Icons.lock_outlined,
                       label: 'Ubah Password',
-                      onTap: () => context.go('/change-password'),
+                      onTap: () => context.push('/change-password'),
                     ),
                   ]),
                   const SizedBox(height: 16),
@@ -222,17 +222,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _LinkItem(
                       icon: Icons.person_outline,
                       label: 'Edit Profil',
-                      onTap: () => context.go('/edit-profile'),
+                      onTap: () => context.push('/edit-profile'),
                     ),
                     _LinkItem(
                       icon: Icons.description_outlined,
                       label: 'Dokumen',
-                      onTap: () => context.go('/documents'),
+                      onTap: () => context.push('/documents'),
                     ),
                     _LinkItem(
                       icon: Icons.account_balance_wallet_outlined,
                       label: 'Dompet',
-                      onTap: () => context.go('/wallet'),
+                      onTap: () => context.push('/wallet'),
                     ),
                   ]),
                   const SizedBox(height: 100),
