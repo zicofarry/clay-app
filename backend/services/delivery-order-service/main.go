@@ -35,7 +35,13 @@ func main() {
 	defer db.Close()
 
 	repo := repository.NewDeliveryOrderRepository(db, nil)
-	svc := service.NewDeliveryOrderService(repo, logger)
+
+	walletURL := os.Getenv("WALLET_SERVICE_URL")
+	if walletURL == "" {
+		walletURL = "http://clay-wallet-service:8080"
+	}
+
+	svc := service.NewDeliveryOrderService(repo, logger, walletURL)
 	h := handler.NewDeliveryOrderHandler(svc)
 
 	// ── Router ───────────────────────────────────────────────────────────

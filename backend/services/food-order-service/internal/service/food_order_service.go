@@ -92,6 +92,7 @@ type FoodOrderService struct {
 	logger             *slog.Logger
 	http               *http.Client
 	matchingServiceURL string
+	walletURL          string
 }
 
 // NewFoodOrderService creates a new FoodOrderService.
@@ -100,6 +101,7 @@ func NewFoodOrderService(
 	producer sharedKafka.Producer,
 	logger *slog.Logger,
 	matchingServiceURL string,
+	walletURL string,
 ) *FoodOrderService {
 	return &FoodOrderService{
 		repo:               repo,
@@ -107,6 +109,7 @@ func NewFoodOrderService(
 		logger:             logger,
 		http:               &http.Client{Timeout: 5 * time.Second},
 		matchingServiceURL: matchingServiceURL,
+		walletURL:          walletURL,
 	}
 }
 
@@ -186,6 +189,14 @@ func (s *FoodOrderService) CreateOrder(ctx context.Context, userID string, req m
 		DeliveryLat:     req.DeliveryLat,
 		DeliveryLng:     req.DeliveryLng,
 		DeliveryAddress: req.DeliveryAddress,
+	}
+
+	if req.PaymentMethod == model.PaymentGoPay || req.PaymentMethod == "claypay" {
+		refID := uuid.New().String()
+		if err := s.debitWallet(ctx, userID, order.TotalCents, refID, "Food order payment"); err != nil {
+			s.logger.Error("wallet debit failed for food order", slog.Any("error", err), slog.String("user_id", userID))
+			return nil, ErrPaymentFailed
+		}
 	}
 
 	if err := s.repo.Create(ctx, order); err != nil {
@@ -612,6 +623,7 @@ var (
 	ErrMenuItemNotFound       = fmt.Errorf("menu item not found")
 	ErrMerchantClosed         = fmt.Errorf("merchant is closed")
 	ErrPromoInvalid           = fmt.Errorf("promo code is invalid")
+	ErrPaymentFailed          = fmt.Errorf("wallet payment failed")
 )
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -653,4 +665,33 @@ func haversineKm(lat1, lng1, lat2, lng2 float64) float64 {
 		math.Cos(lat1*math.Pi/180)*math.Cos(lat2*math.Pi/180)*
 			math.Sin(dLng/2)*math.Sin(dLng/2)
 	return R * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+}
+
+func (s *FoodOrderService) debitWallet(ctx context.Context, userID string, amount int64, refID, desc string) error {
+	if s.walletURL == "" {
+		return nil
+	}
+	payload := map[string]interface{}{
+		"user_id":      userID,
+		"amount":       amount,
+		"reference_id": refID,
+		"description":  desc,
+	}
+	body, _ := json.Marshal(payload)
+	resp, err := s.http.Post(s.walletURL+"/internal/wallet/debit", "application/json", bytes.NewReader(body))
+	if err != nil {
+		s.logger.Error("wallet debit call failed", slog.Any("error", err), slog.String("user_id", userID))
+		return fmt.Errorf("wallet service unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errResp map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		msg := errResp["message"]
+		if msg == "" {
+			msg = "insufficient balance or payment failed"
+		}
+		return fmt.Errorf("wallet debit failed: %s", msg)
+	}
+	return nil
 }

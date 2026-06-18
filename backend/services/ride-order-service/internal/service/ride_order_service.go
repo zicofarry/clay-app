@@ -2,9 +2,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,6 +15,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/zicofarry/clay-app/backend/services/ride-order-service/internal/repository"
 )
 
@@ -43,6 +46,7 @@ var (
 	ErrRatingAlreadySubmitted = &ServiceError{http.StatusConflict, "RATING_ALREADY_SUBMITTED", "rating already submitted for this order"}
 	ErrFareNotFinalized       = &ServiceError{http.StatusNotFound, "FARE_NOT_FINALIZED", "fare not yet finalized for this order"}
 	ErrValidation             = &ServiceError{http.StatusBadRequest, "VALIDATION_ERROR", "request body validation failed"}
+	ErrPaymentFailed          = &ServiceError{http.StatusPaymentRequired, "PAYMENT_FAILED", "wallet payment failed"}
 )
 
 // ── Cancellable / state machine config ──────────────────────────────────────
@@ -288,12 +292,14 @@ type RideOrderService struct {
 	repo           repository.RideOrderRepositoryInterface
 	matchingClient MatchingClientInterface
 	logger         *slog.Logger
+	walletURL      string
+	httpClient     *http.Client
 }
 
 // NewRideOrderService creates a new RideOrderService.
 // matchingClient can be nil if dispatch is not available.
-func NewRideOrderService(repo repository.RideOrderRepositoryInterface, matchingClient MatchingClientInterface, logger *slog.Logger) *RideOrderService {
-	return &RideOrderService{repo: repo, matchingClient: matchingClient, logger: logger}
+func NewRideOrderService(repo repository.RideOrderRepositoryInterface, matchingClient MatchingClientInterface, logger *slog.Logger, walletURL string) *RideOrderService {
+	return &RideOrderService{repo: repo, matchingClient: matchingClient, logger: logger, walletURL: walletURL, httpClient: &http.Client{Timeout: 5 * time.Second}}
 }
 
 // ── User-facing methods ─────────────────────────────────────────────────────
@@ -387,6 +393,15 @@ func (s *RideOrderService) CreateOrder(ctx context.Context, userID string, req *
 		FareEstimate:  nullableFloat(req.FareEstimate),
 		PromoID:       nullableString(req.PromoID),
 		PaymentMethod: req.PaymentMethod,
+	}
+
+	if req.PaymentMethod == "gopay" {
+		amount := int64(math.Round(req.FareEstimate))
+		refID := uuid.New().String()
+		if err := s.debitWallet(ctx, userID, amount, refID, "Ride order payment"); err != nil {
+			s.logger.Error("wallet debit failed for ride order", slog.Any("error", err), slog.String("user_id", userID))
+			return nil, ErrPaymentFailed
+		}
 	}
 
 	created, err := s.repo.CreateOrder(ctx, o)
@@ -1111,4 +1126,32 @@ func toStateLogResponse(l *repository.OrderStateLog) *OrderStateLogResponse {
 		r.Reason = l.Reason.String
 	}
 	return r
+}
+
+func (s *RideOrderService) debitWallet(ctx context.Context, userID string, amount int64, refID, desc string) error {
+	if s.walletURL == "" {
+		return nil
+	}
+	payload := map[string]interface{}{
+		"user_id":      userID,
+		"amount":       amount,
+		"reference_id": refID,
+		"description":  desc,
+	}
+	body, _ := json.Marshal(payload)
+	resp, err := s.httpClient.Post(s.walletURL+"/internal/wallet/debit", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("wallet service unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errResp map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		msg := errResp["message"]
+		if msg == "" {
+			msg = "insufficient balance or payment failed"
+		}
+		return fmt.Errorf("wallet debit failed: %s", msg)
+	}
+	return nil
 }

@@ -43,7 +43,12 @@ func main() {
 	}
 	matchingClient := client.NewMatchingClient(matchingURL, logger)
 
-	svc := service.NewRideOrderService(repo, matchingClient, logger)
+	walletURL := os.Getenv("WALLET_SERVICE_URL")
+	if walletURL == "" {
+		walletURL = "http://clay-wallet-service:8080"
+	}
+
+	svc := service.NewRideOrderService(repo, matchingClient, logger, walletURL)
 	h := handler.NewRideOrderHandler(svc)
 
 	// ── Router ───────────────────────────────────────────────────────────
