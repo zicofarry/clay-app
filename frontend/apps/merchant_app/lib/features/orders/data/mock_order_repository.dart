@@ -1,5 +1,5 @@
 class MockOrderRepository {
-  List<Map<String, dynamic>> _orders = [
+  final List<Map<String, dynamic>> _orders = [
     {'id': 'ORD-100', 'customer': 'Budi', 'items': 'Bakso Besar x2, Es Teh x1', 'total': 55000, 'status': 'pending', 'date': '2026-06-16 10:30'},
     {'id': 'ORD-101', 'customer': 'Siti', 'items': 'Mie Ayam x1, Es Jeruk x1', 'total': 27000, 'status': 'processing', 'date': '2026-06-16 10:15'},
     {'id': 'ORD-102', 'customer': 'Ahmad', 'items': 'Bakso Kecil x3, Pangsit x1', 'total': 66000, 'status': 'ready', 'date': '2026-06-16 09:50'},

@@ -105,7 +105,7 @@ class _DashboardTab extends ConsumerWidget {
                 const Spacer(),
                 Switch(
                   value: isOpen,
-                  activeColor: Colors.green,
+                  activeThumbColor: Colors.green,
                   onChanged: (v) {
                     if (merchant != null && merchant['id'] != null) {
                       ref.read(merchantProfileProvider.notifier).updateStatus(merchant['id'], v ? 'active' : 'closed');
