@@ -20,7 +20,7 @@ func setupTestLogger() *slog.Logger {
 }
 
 func TestEstimateFare_Success(t *testing.T) {
-	svc := NewFoodOrderService(nil, sharedKafka.NewNoopProducer(), setupTestLogger())
+	svc := NewFoodOrderService(nil, sharedKafka.NewNoopProducer(), setupTestLogger(), "")
 
 	req := model.FareEstimateRequest{
 		UserLat: -6.2,
@@ -59,7 +59,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	// 5. Add to merchant queue
 	mockRepo.EXPECT().AddToMerchantQueue(gomock.Any(), "merchant-1", "order-123", gomock.Any()).Return(nil)
 
-	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger())
+	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger(), "")
 
 	req := model.CreateFoodOrderRequest{
 		MerchantID: "merchant-1",
@@ -92,7 +92,7 @@ func TestCreateOrder_ActiveOrderExists(t *testing.T) {
 	// Check active order returns existing
 	mockRepo.EXPECT().GetActiveOrderID(gomock.Any(), "user-123").Return("existing-order", nil)
 
-	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger())
+	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger(), "")
 
 	req := model.CreateFoodOrderRequest{
 		MerchantID: "merchant-1",
@@ -125,7 +125,7 @@ func TestCancelOrder_Pending_Success(t *testing.T) {
 	mockRepo.EXPECT().ClearActiveOrder(gomock.Any(), "user-123").Return(nil)
 	mockRepo.EXPECT().RemoveFromMerchantQueue(gomock.Any(), "merchant-1", "order-123").Return(nil)
 
-	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger())
+	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger(), "")
 
 	reason := "Changed mind"
 	req := model.CancelOrderRequest{Reason: &reason}
@@ -155,7 +155,7 @@ func TestCancelOrder_Confirmed_GraceExpired(t *testing.T) {
 
 	mockRepo.EXPECT().GetByID(gomock.Any(), "order-123").Return(order, nil)
 
-	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger())
+	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger(), "")
 
 	_, err := svc.CancelOrder(context.Background(), "order-123", "user-123", model.CancelOrderRequest{})
 	if err != ErrCancelGraceExpired {
@@ -180,7 +180,7 @@ func TestMerchantConfirmOrder_Success(t *testing.T) {
 	mockRepo.EXPECT().UpdateConfirmed(gomock.Any(), "order-123", 20).Return(nil)
 	mockRepo.EXPECT().RemoveFromMerchantQueue(gomock.Any(), "merchant-1", "order-123").Return(nil)
 
-	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger())
+	svc := NewFoodOrderService(mockRepo, sharedKafka.NewNoopProducer(), setupTestLogger(), "")
 
 	req := model.MerchantConfirmRequest{EstPrepTimeMin: 20}
 

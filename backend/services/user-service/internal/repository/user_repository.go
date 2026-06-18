@@ -113,8 +113,9 @@ func (r *UserRepository) GetProfileByUserID(ctx context.Context, userID uuid.UUI
 	var p models.UserProfile
 	var birthDate sql.NullString
 	var referredBy uuid.NullUUID
+	var phone sql.NullString
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
-		&p.ID, &p.UserID, &p.FullName, &p.Phone, &p.AvatarURL,
+		&p.ID, &p.UserID, &p.FullName, &phone, &p.AvatarURL,
 		&birthDate, &p.Gender, &p.ReferralCode, &referredBy,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
@@ -123,6 +124,9 @@ func (r *UserRepository) GetProfileByUserID(ctx context.Context, userID uuid.UUI
 			return nil, nil // Not found
 		}
 		return nil, err
+	}
+	if phone.Valid {
+		p.Phone = phone.String
 	}
 	if birthDate.Valid {
 		p.BirthDate = &birthDate.String
@@ -162,8 +166,9 @@ func (r *UserRepository) GetProfileByReferralCode(ctx context.Context, code stri
 	var p models.UserProfile
 	var birthDate sql.NullString
 	var referredBy uuid.NullUUID
+	var phone2 sql.NullString
 	err := r.db.QueryRowContext(ctx, query, code).Scan(
-		&p.ID, &p.UserID, &p.FullName, &p.Phone, &p.AvatarURL,
+		&p.ID, &p.UserID, &p.FullName, &phone2, &p.AvatarURL,
 		&birthDate, &p.Gender, &p.ReferralCode, &referredBy,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
@@ -172,6 +177,9 @@ func (r *UserRepository) GetProfileByReferralCode(ctx context.Context, code stri
 			return nil, nil
 		}
 		return nil, fmt.Errorf("get profile by referral code: %w", err)
+	}
+	if phone2.Valid {
+		p.Phone = phone2.String
 	}
 	if birthDate.Valid {
 		p.BirthDate = &birthDate.String

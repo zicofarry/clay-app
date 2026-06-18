@@ -65,6 +65,8 @@ func (h *FoodOrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusUnprocessableEntity, "MERCHANT_CLOSED", err.Error())
 		case service.ErrPromoInvalid:
 			response.Error(w, http.StatusUnprocessableEntity, "PROMO_INVALID", err.Error())
+		case service.ErrPaymentFailed:
+			response.Error(w, http.StatusPaymentRequired, "PAYMENT_FAILED", err.Error())
 		default:
 			h.logger.Error("create order failed", slog.Any("error", err))
 			response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())

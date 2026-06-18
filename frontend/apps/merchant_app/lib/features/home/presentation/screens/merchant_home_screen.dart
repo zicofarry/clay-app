@@ -94,7 +94,7 @@ class _DashboardTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [ClayColors.primary, ClayColors.primaryDark]),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,15 +103,38 @@ class _DashboardTab extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(merchant?['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Row(children: [
-                      const Icon(Icons.star, size: 16, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text('${merchant?['rating'] ?? 4.5}', style: const TextStyle(color: Colors.white)),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.receipt_long, size: 16, color: Colors.white70),
-                      const SizedBox(width: 4),
-                      Text('${merchant?['total_orders'] ?? 0} ulasan', style: const TextStyle(color: Colors.white70)),
-                    ]),
+                    InkWell(
+                      onTap: () => context.push('/profile/reviews'),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star, size: 14, color: Colors.amber),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${merchant?['rating'] ?? 4.5}',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            const SizedBox(width: 12),
+                            const Icon(Icons.receipt_long, size: 14, color: Colors.white70),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${merchant?['total_orders'] ?? 0} ulasan',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.white70),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -120,7 +143,7 @@ class _DashboardTab extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   color: ClayColors.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: ClayColors.divider),
                 ),
                 child: Row(children: [
@@ -170,6 +193,46 @@ class _DashboardTab extends ConsumerWidget {
                   ),
                 ),
               ]),
+              const SizedBox(height: 24),
+              // Wallet shortcut card
+              GestureDetector(
+                onTap: () => context.push('/wallet'),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [ClayColors.primary, ClayColors.primaryDark],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Dompet Clay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                            SizedBox(height: 2),
+                            Text('Lihat saldo, top up, transfer & riwayat transaksi', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
               const Text('Pesanan Terbaru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
@@ -242,7 +305,7 @@ class _MetricCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: ClayColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: ClayColors.divider),
       ),
       child: Column(

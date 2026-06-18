@@ -78,6 +78,7 @@ class OrderRepository {
       'payment_method': o['payment_method'] ?? '',
       'driver_id': o['driver_id'],
       ...o,
+      'raw_items': items,
     };
   }
 
@@ -94,7 +95,15 @@ class OrderRepository {
       );
 
       final data = response.data as Map<String, dynamic>;
-      final rawOrders = (data['data'] as Map<String, dynamic>?)?['orders'] as List? ?? [];
+      final inner = data['data'];
+      List rawOrders;
+      if (inner is List) {
+        rawOrders = inner;
+      } else if (inner is Map<String, dynamic>) {
+        rawOrders = inner['orders'] as List? ?? [];
+      } else {
+        rawOrders = [];
+      }
       
       return rawOrders.map((o) => _mapOrder(Map<String, dynamic>.from(o))).toList();
     } on DioException catch (e) {

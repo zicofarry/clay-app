@@ -504,6 +504,12 @@
 # Upstream: clay-merchant-service:8080
 # ══════════════════════════════════════════════════════════════════════════════
 - path: /merchants
+  methods: [GET]
+  upstream: clay-merchant-service:8080
+  auth: none
+  rate_limit: 120
+
+- path: /merchants
   methods: [POST]
   upstream: clay-merchant-service:8080
   auth: required

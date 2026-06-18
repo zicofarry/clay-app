@@ -93,6 +93,12 @@ func (s *walletServiceImpl) Transfer(ctx context.Context, senderID, receiverID u
 		return nil, nil, err
 	}
 
+	if _, err := s.repo.GetWalletByUserID(ctx, receiverID); err == repository.ErrWalletNotFound {
+		if _, createErr := s.repo.CreateWallet(ctx, receiverID); createErr != nil {
+			s.logger.Error("failed to auto-create receiver wallet", slog.Any("error", createErr))
+		}
+	}
+
 	receiverTx, err := s.repo.CreditWallet(ctx, receiverID, amount, "transfer", desc, refID)
 	if err != nil {
 		// Rollback: credit sender back

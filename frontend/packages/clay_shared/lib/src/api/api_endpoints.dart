@@ -6,6 +6,7 @@ class ApiEndpoints {
   // Auth
   static const String register = '$_prefix/auth/register';
   static const String login = '$_prefix/auth/login';
+  static const String loginOtp = '$_prefix/auth/login/otp';
   static const String requestOtp = '$_prefix/auth/request-otp';
   static const String verifyOtp = '$_prefix/auth/verify-otp';
   static const String refreshToken = '$_prefix/auth/refresh-token';

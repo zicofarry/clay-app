@@ -94,7 +94,7 @@ var ErrNotFound = errors.New("matching repository: not found")
 const (
 	StatusTTL      = 60 * time.Second  // heartbeat window
 	SessionTTL     = 10 * time.Minute  // matching session lifetime
-	OfferTTL       = 15 * time.Second  // single driver-offer window
+	OfferTTL       = 60 * time.Second  // single driver-offer window
 	RejectTTL      = 10 * time.Minute  // prevent re-broadcasting to same driver
 	ZoneStatsTTL   = 30 * time.Second  // zone aggregates
 	EarningsTTL    = 48 * time.Hour    // ~2 days, then auto-purge
@@ -151,6 +151,11 @@ type MatchingRepositoryInterface interface {
 	MarkRejected(ctx context.Context, orderID, driverID string) error
 	IsRejected(ctx context.Context, orderID, driverID string) (bool, error)
 
+	// Pending offer — lets driver polling discover incoming orders
+	SetPendingOffer(ctx context.Context, driverID, orderID string) error
+	GetPendingOffer(ctx context.Context, driverID string) (string, error)
+	ClearPendingOffer(ctx context.Context, driverID string) error
+
 	// Zone aggregates
 	UpsertZoneStats(ctx context.Context, vehicleType, zoneID string, online, pending int) error
 	GetZoneStats(ctx context.Context, vehicleType, zoneID string) (*ZoneStats, error)
@@ -180,6 +185,9 @@ func keyDriverActiveOrder(driverID string) string {
 	return "driver:active_order:" + driverID
 }
 func keyDriverRating(driverID string) string { return "driver:rating:" + driverID }
+func keyDriverPendingOffer(driverID string) string {
+	return "driver:pending_offer:" + driverID
+}
 
 func keyDriversGeo(vehicleType string) string  { return "drivers:geo:" + vehicleType }
 func keyMatchingSession(orderID string) string { return "matching:session:" + orderID }
@@ -573,6 +581,27 @@ func (r *MatchingRepository) IsRejected(ctx context.Context, orderID, driverID s
 		return false, err
 	}
 	return v > 0, nil
+}
+
+// ── Pending offer ─────────────────────────────────────────────────────────
+
+func (r *MatchingRepository) SetPendingOffer(ctx context.Context, driverID, orderID string) error {
+	return r.rdb.Set(ctx, keyDriverPendingOffer(driverID), orderID, OfferTTL).Err()
+}
+
+func (r *MatchingRepository) GetPendingOffer(ctx context.Context, driverID string) (string, error) {
+	v, err := r.rdb.Get(ctx, keyDriverPendingOffer(driverID)).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", ErrNotFound
+	}
+	if err != nil {
+		return "", err
+	}
+	return v, nil
+}
+
+func (r *MatchingRepository) ClearPendingOffer(ctx context.Context, driverID string) error {
+	return r.rdb.Del(ctx, keyDriverPendingOffer(driverID)).Err()
 }
 
 // ── Zone stats ────────────────────────────────────────────────────────────

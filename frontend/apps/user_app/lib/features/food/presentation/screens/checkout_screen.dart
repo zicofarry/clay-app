@@ -646,7 +646,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ...state.cart.entries.map((e) {
                     final item = state.menuItems.firstWhere(
                       (m) => m['id'] == e.key,
-                      orElse: () => {
+                      orElse: () => <String, dynamic>{
                         'name': 'Menu Item',
                         'price': 15000,
                       },

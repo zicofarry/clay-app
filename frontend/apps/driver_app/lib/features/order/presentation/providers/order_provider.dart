@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
 import '../../data/driver_order_repository.dart';
@@ -45,33 +46,67 @@ class OrderNotifier extends StateNotifier<OrderState> {
   OrderNotifier(this._repo) : super(const OrderState());
 
   Future<void> checkDispatch() async {
-    if (state.activeOrder != null) return;
     try {
       final status = await _repo.getDispatcherStatus();
+      final pendingOrderId = status['pending_offer_order_id'] as String?;
+      if (pendingOrderId != null && pendingOrderId.isNotEmpty && state.incomingOrder == null && state.activeOrder == null) {
+        final order = await _repo.getOrderDetail(pendingOrderId);
+        state = state.copyWith(incomingOrder: order);
+        return;
+      }
+      if (state.activeOrder != null) return;
       final activeOrderId = status['active_order_id'] as String?;
       if (activeOrderId != null && activeOrderId.isNotEmpty && state.incomingOrder == null) {
         final order = await _repo.getOrderDetail(activeOrderId);
         state = state.copyWith(incomingOrder: order);
       }
-    } catch (_) {}
+    } catch (e) {
+      dev.log('checkDispatch error: $e', name: 'OrderNotifier');
+    }
   }
 
   Future<void> acceptOrder() async {
     if (state.incomingOrder == null) return;
     final orderId = state.incomingOrder!['id']?.toString();
     if (orderId == null) return;
-    final result = await _repo.acceptOrder(orderId);
-    state = state.copyWith(
-      activeOrder: result,
-      otpCode: result['otp_code']?.toString(),
-      clearIncoming: true,
-    );
+    final isFood = state.incomingOrder!['service_type'] == 'food';
+
+    await _repo.respondToOffer(orderId, action: 'accept');
+
+    if (isFood) {
+      // For food orders, use food-specific accept
+      try {
+        final result = await _repo.foodAccept(orderId);
+        final merged = Map<String, dynamic>.from(state.incomingOrder!);
+        merged.addAll(result);
+        state = state.copyWith(
+          activeOrder: merged,
+          clearIncoming: true,
+        );
+      } catch (_) {
+        // If food accept fails, still set as active (driver responded)
+        state = state.copyWith(
+          activeOrder: state.incomingOrder,
+          clearIncoming: true,
+        );
+      }
+    } else {
+      final result = await _repo.acceptOrder(orderId);
+      final merged = Map<String, dynamic>.from(state.incomingOrder!);
+      merged.addAll(result);
+      state = state.copyWith(
+        activeOrder: merged,
+        otpCode: result['otp_code']?.toString(),
+        clearIncoming: true,
+      );
+    }
   }
 
   Future<void> rejectOrder({String? reason}) async {
     if (state.incomingOrder == null) return;
     final orderId = state.incomingOrder!['id']?.toString();
     if (orderId == null) return;
+    await _repo.respondToOffer(orderId, action: 'reject', rejectReason: reason);
     await _repo.rejectOrder(orderId, reason: reason);
     state = state.copyWith(clearIncoming: true);
   }
@@ -82,11 +117,25 @@ class OrderNotifier extends StateNotifier<OrderState> {
     if (orderId == null) return;
 
     String? otpCode;
+    double? distanceKm;
+    int? durationMin;
+
     if (action == 'start_trip') {
       otpCode = state.otpCode;
     }
+    if (action == 'complete_trip') {
+      final tripDetails = state.activeOrder!['trip_details'] as Map<String, dynamic>?;
+      distanceKm = (tripDetails?['est_distance_km'] as num?)?.toDouble() ?? 5.0;
+      durationMin = (tripDetails?['est_duration_min'] as num?)?.toInt() ?? 15;
+    }
 
-    final result = await _repo.updateTripStatus(orderId, action, otpCode: otpCode);
+    final result = await _repo.updateTripStatus(
+      orderId,
+      action,
+      otpCode: otpCode,
+      distanceKm: distanceKm,
+      durationMin: durationMin,
+    );
     state = state.copyWith(activeOrder: result);
   }
 
@@ -100,5 +149,9 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
   void clearLastCompleted() {
     state = state.copyWith(clearLastCompleted: true);
+  }
+
+  void resetState() {
+    state = const OrderState();
   }
 }
