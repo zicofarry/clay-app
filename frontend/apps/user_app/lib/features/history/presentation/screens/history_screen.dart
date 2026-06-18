@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../../../food/presentation/providers/food_provider.dart';
+import '../../../wallet/presentation/providers/wallet_provider.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
@@ -17,10 +18,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     Future.microtask(() {
       ref.read(foodStateProvider.notifier).loadActiveOrder();
       ref.read(foodStateProvider.notifier).loadHistory();
+      ref.read(walletStateProvider.notifier).loadTransactions();
     });
   }
 
@@ -59,6 +61,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
           tabs: const [
             Tab(text: 'Dalam Proses'),
             Tab(text: 'Riwayat'),
+            Tab(text: 'Transaksi'),
           ],
         ),
       ),
@@ -70,6 +73,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
 
           // History Tab
           _buildHistoryTab(state, notifier),
+
+          // Wallet Transactions Tab
+          _buildTransactionsTab(),
         ],
       ),
     );
@@ -381,6 +387,85 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
             ),
           ),
         );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTransactionsTab() {
+    final walletState = ref.watch(walletStateProvider);
+
+    if (walletState.transactions.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.account_balance_wallet_outlined, size: 64, color: Colors.grey),
+            SizedBox(height: 12),
+            Text(
+              'Belum ada transaksi',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => ref.read(walletStateProvider.notifier).loadTransactions(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: walletState.transactions.length,
+        itemBuilder: (context, i) {
+          final t = walletState.transactions[i];
+          final amount = (t['amount'] as num?)?.toInt() ?? 0;
+          final isCredit = amount > 0;
+          final desc = t['description']?.toString() ?? 'Transaksi';
+          final date = t['created_at']?.toString() ?? '';
+          final type = t['type']?.toString() ?? '';
+          String displayDate = date;
+          try {
+            final dt = DateTime.parse(date);
+            displayDate = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+          } catch (_) {}
+
+          IconData iconData;
+          Color iconColor;
+          if (type == 'top_up') {
+            iconData = Icons.add_circle_outline;
+            iconColor = Colors.green;
+          } else if (type == 'transfer') {
+            iconData = Icons.swap_horiz;
+            iconColor = Colors.blue;
+          } else {
+            iconData = isCredit ? Icons.arrow_downward : Icons.arrow_upward;
+            iconColor = isCredit ? Colors.green : Colors.red;
+          }
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: ClayColors.divider),
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: iconColor.withValues(alpha: 0.1),
+                child: Icon(iconData, color: iconColor, size: 20),
+              ),
+              title: Text(desc, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              subtitle: Text(displayDate, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              trailing: Text(
+                '${isCredit ? '+' : ''}Rp ${amount.abs().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isCredit ? Colors.green : Colors.red,
+                ),
+              ),
+            ),
+          );
         },
       ),
     );
