@@ -78,6 +78,7 @@ class OrderRepository {
       'payment_method': o['payment_method'] ?? '',
       'driver_id': o['driver_id'],
       ...o,
+      'raw_items': items,
     };
   }
 
