@@ -11,6 +11,7 @@ type UserProfile struct {
 	ID           uuid.UUID  `json:"id"`
 	UserID       uuid.UUID  `json:"user_id"`
 	FullName     string     `json:"full_name"`
+	Phone        string     `json:"phone"`
 	AvatarURL    string     `json:"avatar_url"`
 	BirthDate    *string    `json:"birth_date,omitempty"` // Simple string for YYYY-MM-DD
 	Gender       string     `json:"gender"`               // male, female, other

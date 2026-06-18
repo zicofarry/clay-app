@@ -73,6 +73,7 @@ func mapProfile(p *models.UserProfile) *models.ProfileResponse {
 		ID:           p.ID,
 		UserID:       p.UserID,
 		FullName:     p.FullName,
+		Phone:        p.Phone,
 		AvatarURL:    p.AvatarURL,
 		Gender:       p.Gender,
 		ReferralCode: p.ReferralCode,
@@ -158,6 +159,7 @@ func (s *UserService) CreateProfile(ctx context.Context, userID uuid.UUID, req m
 		ID:           uuid.New(),
 		UserID:       userID,
 		FullName:     req.FullName,
+		Phone:        req.Phone,
 		Gender:       req.Gender,
 		ReferralCode: generateReferralCode(),
 		CreatedAt:    time.Now(),
@@ -185,6 +187,9 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, req m
 
 	if req.FullName != "" {
 		p.FullName = req.FullName
+	}
+	if req.Phone != "" {
+		p.Phone = req.Phone
 	}
 	if req.BirthDate != "" {
 		p.BirthDate = &req.BirthDate

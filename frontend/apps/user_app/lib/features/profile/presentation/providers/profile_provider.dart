@@ -27,10 +27,11 @@ class ProfileNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>>> {
     }
   }
 
-  Future<bool> updateProfile({String? fullName, String? birthDate, String? gender}) async {
+  Future<bool> updateProfile({String? fullName, String? phone, String? birthDate, String? gender}) async {
     try {
       final body = <String, dynamic>{};
       if (fullName != null) body['full_name'] = fullName;
+      if (phone != null) body['phone'] = phone;
       if (birthDate != null) body['birth_date'] = birthDate;
       if (gender != null) body['gender'] = gender;
 

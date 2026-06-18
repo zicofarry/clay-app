@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/zicofarry/clay-app/backend/pkg/response"
@@ -22,7 +23,7 @@ func NewWalletHandler(svc service.WalletService, userServiceURL string) *WalletH
 	return &WalletHandler{
 		svc:            svc,
 		userServiceURL: userServiceURL,
-		httpClient:     &http.Client{},
+		httpClient:     &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
