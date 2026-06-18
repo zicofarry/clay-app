@@ -1,8 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/mock_menu_repository.dart';
+import 'package:clay_shared/clay_shared.dart';
+import '../../../auth/presentation/providers/merchant_auth_provider.dart';
+import '../../data/menu_repository.dart';
+
+final menuRepositoryProvider = Provider<MenuRepository>((ref) {
+  return MenuRepository(ClayApi.instance);
+});
 
 final menuProvider = StateNotifierProvider<MenuNotifier, MenuState>((ref) {
-  return MenuNotifier(MockMenuRepository());
+  final repo = ref.watch(menuRepositoryProvider);
+  return MenuNotifier(repo, ref);
 });
 
 class MenuState {
@@ -17,32 +24,102 @@ class MenuState {
 }
 
 class MenuNotifier extends StateNotifier<MenuState> {
-  final MockMenuRepository _repo;
-  MenuNotifier(this._repo) : super(const MenuState());
+  final MenuRepository _repo;
+  final Ref _ref;
+
+  MenuNotifier(this._repo, this._ref) : super(const MenuState());
 
   Future<void> loadMenu() async {
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
     state = state.copyWith(isLoading: true);
-    final items = await _repo.getMenu();
-    state = MenuState(items: items);
+    try {
+      final categories = await _repo.fetchCategories(merchantId);
+      final items = await _repo.fetchMenuItems(merchantId, categories);
+      state = MenuState(items: items, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   Future<void> addItem(MenuItem item) async {
-    await _repo.addItem(item);
-    await loadMenu();
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    state = state.copyWith(isLoading: true);
+    try {
+      final categoryId = await _resolveOrCreateCategoryId(merchantId, item.category);
+      await _repo.createMenuItem(merchantId, categoryId, item.name, item.price);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   Future<void> updateItem(MenuItem item) async {
-    await _repo.updateItem(item);
-    await loadMenu();
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    state = state.copyWith(isLoading: true);
+    try {
+      final categoryId = await _resolveOrCreateCategoryId(merchantId, item.category);
+      await _repo.updateMenuItem(merchantId, item.id, categoryId, item.name, item.price);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   Future<void> toggleAvailability(String id) async {
-    await _repo.toggleAvailability(id);
-    await loadMenu();
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    final item = state.items.firstWhere((i) => i.id == id);
+    state = state.copyWith(isLoading: true);
+    try {
+      await _repo.toggleAvailability(merchantId, id, !item.available);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   Future<void> deleteItem(String id) async {
-    await _repo.deleteItem(id);
-    await loadMenu();
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    state = state.copyWith(isLoading: true);
+    try {
+      await _repo.deleteMenuItem(merchantId, id);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<String> _resolveOrCreateCategoryId(String merchantId, String categoryName) async {
+    final categories = await _repo.fetchCategories(merchantId);
+    
+    final match = categories.firstWhere(
+      (cat) => cat.name.trim().toLowerCase() == categoryName.trim().toLowerCase(),
+      orElse: () => MenuCategory(id: '', merchantId: '', name: '', displayOrder: 0),
+    );
+
+    if (match.id.isNotEmpty) {
+      return match.id;
+    }
+
+    final newCat = await _repo.createCategory(
+      merchantId, 
+      categoryName.trim(), 
+      categories.length + 1,
+    );
+    return newCat.id;
   }
 }

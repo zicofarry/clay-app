@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_ui/clay_ui.dart';
-import '../../data/mock_menu_repository.dart';
+import '../../data/menu_repository.dart';
 import '../providers/menu_provider.dart';
 
 class MenuListScreen extends ConsumerStatefulWidget {
@@ -12,24 +12,16 @@ class MenuListScreen extends ConsumerStatefulWidget {
 }
 
 class _MenuListScreenState extends ConsumerState<MenuListScreen> {
-  final _searchC = TextEditingController();
   String _selectedCategory = 'Semua';
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(menuProvider.notifier).loadMenu());
-    _searchC.addListener(_onSearchChanged);
-  }
-
-  void _onSearchChanged() {
-    setState(() {});
   }
 
   @override
   void dispose() {
-    _searchC.removeListener(_onSearchChanged);
-    _searchC.dispose();
     super.dispose();
   }
 
@@ -92,12 +84,9 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
     // Dapatkan list unik kategori
     final categories = ['Semua', ...state.items.map((i) => i.category).toSet()];
 
-    // Filter menu berdasarkan search query & kategori terpilih
+    // Filter menu berdasarkan kategori terpilih
     final filtered = state.items.where((item) {
-      final matchesSearch = item.name.toLowerCase().contains(_searchC.text.toLowerCase()) ||
-          item.category.toLowerCase().contains(_searchC.text.toLowerCase());
-      final matchesCategory = _selectedCategory == 'Semua' || item.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
+      return _selectedCategory == 'Semua' || item.category == _selectedCategory;
     }).toList();
 
     return Scaffold(
@@ -109,15 +98,7 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: ClayTextField(
-                label: 'Cari Menu',
-                hint: 'Masukkan nama atau kategori menu...',
-                controller: _searchC,
-                prefixIcon: const Icon(Icons.search),
-              ),
-            ),
+
             if (state.items.isNotEmpty)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -168,9 +149,36 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
                                     color: item.available ? Colors.green : Colors.grey,
                                   ),
                                 ),
-                                title: Text(
-                                  item.name,
-                                  style: item.available ? null : const TextStyle(color: Colors.grey),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item.name,
+                                        style: item.available
+                                            ? null
+                                            : const TextStyle(
+                                                color: Colors.grey,
+                                                decoration: TextDecoration.lineThrough,
+                                              ),
+                                      ),
+                                    ),
+                                    if (!item.available)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'HABIS',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 subtitle: Text('${item.category} • Rp ${item.price}'),
                                 trailing: PopupMenuButton(
@@ -178,7 +186,7 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
                                     PopupMenuItem(value: 'edit', child: const Text('Edit')),
                                     PopupMenuItem(
                                       value: 'toggle',
-                                      child: Text(item.available ? 'Nonaktifkan' : 'Aktifkan'),
+                                      child: Text(item.available ? 'Tandai Stok Habis' : 'Tandai Stok Tersedia'),
                                     ),
                                     PopupMenuItem(
                                       value: 'delete',
