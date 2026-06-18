@@ -22,6 +22,7 @@ type MerchantServiceInterface interface {
 	// Merchant
 	RegisterMerchant(ctx context.Context, userID string, req model.RegisterMerchantRequest) (*model.Merchant, error)
 	GetMyMerchant(ctx context.Context, userID string) (*model.Merchant, error)
+	ListActiveMerchants(ctx context.Context) ([]*model.Merchant, error)
 	UpdateMyMerchant(ctx context.Context, userID string, req model.UpdateMerchantRequest) (*model.Merchant, error)
 	GetMerchantByID(ctx context.Context, merchantID string) (*model.Merchant, error)
 	UpdateMerchantStatus(ctx context.Context, merchantID, callerUserID string, req model.UpdateMerchantStatusRequest) (*model.Merchant, error)
@@ -116,6 +117,10 @@ func (s *MerchantService) GetMyMerchant(ctx context.Context, userID string) (*mo
 		return nil, ErrMerchantNotFound
 	}
 	return m, nil
+}
+
+func (s *MerchantService) ListActiveMerchants(ctx context.Context) ([]*model.Merchant, error) {
+	return s.merchantRepo.ListActive(ctx)
 }
 
 func (s *MerchantService) UpdateMyMerchant(ctx context.Context, userID string, req model.UpdateMerchantRequest) (*model.Merchant, error) {

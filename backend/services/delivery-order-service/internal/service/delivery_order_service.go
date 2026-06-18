@@ -2,8 +2,10 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -11,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/zicofarry/clay-app/backend/services/delivery-order-service/internal/repository"
 )
 
@@ -43,6 +46,7 @@ var (
 	ErrRatingAlreadySubmitted   = &ServiceError{http.StatusConflict, "RATING_ALREADY_SUBMITTED", "rating already submitted for this order"}
 	ErrFareNotFinalized         = &ServiceError{http.StatusNotFound, "FARE_NOT_FINALIZED", "fare not yet finalized for this order"}
 	ErrValidation               = &ServiceError{http.StatusBadRequest, "VALIDATION_ERROR", "request body validation failed"}
+	ErrPaymentFailed            = &ServiceError{http.StatusPaymentRequired, "PAYMENT_FAILED", "wallet payment failed"}
 )
 
 // ── State machine config ─────────────────────────────────────────────────────
@@ -298,13 +302,15 @@ type DeliveryOrderServiceInterface interface {
 
 // DeliveryOrderService implements DeliveryOrderServiceInterface.
 type DeliveryOrderService struct {
-	repo   repository.DeliveryOrderRepositoryInterface
-	logger *slog.Logger
+	repo       repository.DeliveryOrderRepositoryInterface
+	logger     *slog.Logger
+	walletURL  string
+	httpClient *http.Client
 }
 
 // NewDeliveryOrderService creates a new DeliveryOrderService.
-func NewDeliveryOrderService(repo repository.DeliveryOrderRepositoryInterface, logger *slog.Logger) *DeliveryOrderService {
-	return &DeliveryOrderService{repo: repo, logger: logger}
+func NewDeliveryOrderService(repo repository.DeliveryOrderRepositoryInterface, logger *slog.Logger, walletURL string) *DeliveryOrderService {
+	return &DeliveryOrderService{repo: repo, logger: logger, walletURL: walletURL, httpClient: &http.Client{Timeout: 5 * time.Second}}
 }
 
 // ── User-facing methods ─────────────────────────────────────────────────────
@@ -387,6 +393,15 @@ func (s *DeliveryOrderService) CreateOrder(ctx context.Context, userID string, r
 		FareEstimate:   nullableFloat(req.FareEstimate),
 		PromoID:        nullableString(req.PromoID),
 		PaymentMethod:  req.PaymentMethod,
+	}
+
+	if req.PaymentMethod == "gopay" {
+		amount := int64(math.Round(req.FareEstimate))
+		refID := uuid.New().String()
+		if err := s.debitWallet(ctx, userID, amount, refID, "Delivery order payment"); err != nil {
+			s.logger.Error("wallet debit failed for delivery order", slog.Any("error", err), slog.String("user_id", userID))
+			return nil, ErrPaymentFailed
+		}
 	}
 
 	pkg := &repository.DeliveryPackage{
@@ -1118,4 +1133,32 @@ func toStateLogResponse(l *repository.DeliveryStateLog) *OrderStateLogResponse {
 		r.Reason = l.Reason.String
 	}
 	return r
+}
+
+func (s *DeliveryOrderService) debitWallet(ctx context.Context, userID string, amount int64, refID, desc string) error {
+	if s.walletURL == "" {
+		return nil
+	}
+	payload := map[string]interface{}{
+		"user_id":      userID,
+		"amount":       amount,
+		"reference_id": refID,
+		"description":  desc,
+	}
+	body, _ := json.Marshal(payload)
+	resp, err := s.httpClient.Post(s.walletURL+"/internal/wallet/debit", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("wallet service unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errResp map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		msg := errResp["message"]
+		if msg == "" {
+			msg = "insufficient balance or payment failed"
+		}
+		return fmt.Errorf("wallet debit failed: %s", msg)
+	}
+	return nil
 }

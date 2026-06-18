@@ -419,7 +419,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
 
     final merchant = state.merchants.firstWhere(
       (m) => m['id'] == widget.merchantId,
-      orElse: () => {
+      orElse: () => <String, dynamic>{
+        'id': widget.merchantId,
         'name': merchantName,
         'rating': 4.5,
         'distance': '1.0 km',

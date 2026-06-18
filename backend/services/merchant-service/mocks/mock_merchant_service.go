@@ -66,6 +66,20 @@ func (mr *MockMerchantServiceInterfaceMockRecorder) GetMyMerchant(ctx, userID an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyMerchant", reflect.TypeOf((*MockMerchantServiceInterface)(nil).GetMyMerchant), ctx, userID)
 }
 
+// ListActiveMerchants mocks base method.
+func (m *MockMerchantServiceInterface) ListActiveMerchants(ctx context.Context) ([]*model.Merchant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListActiveMerchants", ctx)
+	ret0, _ := ret[0].([]*model.Merchant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (mr *MockMerchantServiceInterfaceMockRecorder) ListActiveMerchants(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveMerchants", reflect.TypeOf((*MockMerchantServiceInterface)(nil).ListActiveMerchants), ctx)
+}
+
 // UpdateMyMerchant mocks base method.
 func (m *MockMerchantServiceInterface) UpdateMyMerchant(ctx context.Context, userID string, req model.UpdateMerchantRequest) (*model.Merchant, error) {
 	m.ctrl.T.Helper()

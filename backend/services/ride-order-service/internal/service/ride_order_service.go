@@ -2,9 +2,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,6 +15,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/zicofarry/clay-app/backend/services/ride-order-service/internal/repository"
 )
 
@@ -43,6 +46,7 @@ var (
 	ErrRatingAlreadySubmitted = &ServiceError{http.StatusConflict, "RATING_ALREADY_SUBMITTED", "rating already submitted for this order"}
 	ErrFareNotFinalized       = &ServiceError{http.StatusNotFound, "FARE_NOT_FINALIZED", "fare not yet finalized for this order"}
 	ErrValidation             = &ServiceError{http.StatusBadRequest, "VALIDATION_ERROR", "request body validation failed"}
+	ErrPaymentFailed          = &ServiceError{http.StatusPaymentRequired, "PAYMENT_FAILED", "wallet payment failed"}
 )
 
 // ── Cancellable / state machine config ──────────────────────────────────────
@@ -239,6 +243,22 @@ type InternalAssignDriverResponse struct {
 
 // ── Interface ───────────────────────────────────────────────────────────────
 
+// MatchingClientInterface abstracts the matching-service HTTP call.
+type MatchingClientInterface interface {
+	StartDispatch(ctx context.Context, req *DispatchMatchRequest) error
+	FreeDriver(ctx context.Context, driverID string) error
+}
+
+// DispatchMatchRequest is the DTO sent to the matching service.
+type DispatchMatchRequest struct {
+	OrderID     string  `json:"order_id"`
+	ServiceType string  `json:"service_type"`
+	PickupLat   float64 `json:"pickup_lat"`
+	PickupLng   float64 `json:"pickup_lng"`
+	DestLat     float64 `json:"dest_lat,omitempty"`
+	DestLng     float64 `json:"dest_lng,omitempty"`
+}
+
 // RideOrderServiceInterface defines the service contract.
 //
 //go:generate mockgen -source=ride_order_service.go -destination=../../mocks/mock_ride_order_service.go -package=mocks
@@ -269,13 +289,17 @@ type RideOrderServiceInterface interface {
 
 // RideOrderService implements RideOrderServiceInterface.
 type RideOrderService struct {
-	repo   repository.RideOrderRepositoryInterface
-	logger *slog.Logger
+	repo           repository.RideOrderRepositoryInterface
+	matchingClient MatchingClientInterface
+	logger         *slog.Logger
+	walletURL      string
+	httpClient     *http.Client
 }
 
 // NewRideOrderService creates a new RideOrderService.
-func NewRideOrderService(repo repository.RideOrderRepositoryInterface, logger *slog.Logger) *RideOrderService {
-	return &RideOrderService{repo: repo, logger: logger}
+// matchingClient can be nil if dispatch is not available.
+func NewRideOrderService(repo repository.RideOrderRepositoryInterface, matchingClient MatchingClientInterface, logger *slog.Logger, walletURL string) *RideOrderService {
+	return &RideOrderService{repo: repo, matchingClient: matchingClient, logger: logger, walletURL: walletURL, httpClient: &http.Client{Timeout: 5 * time.Second}}
 }
 
 // ── User-facing methods ─────────────────────────────────────────────────────
@@ -371,6 +395,15 @@ func (s *RideOrderService) CreateOrder(ctx context.Context, userID string, req *
 		PaymentMethod: req.PaymentMethod,
 	}
 
+	if req.PaymentMethod == "gopay" {
+		amount := int64(math.Round(req.FareEstimate))
+		refID := uuid.New().String()
+		if err := s.debitWallet(ctx, userID, amount, refID, "Ride order payment"); err != nil {
+			s.logger.Error("wallet debit failed for ride order", slog.Any("error", err), slog.String("user_id", userID))
+			return nil, ErrPaymentFailed
+		}
+	}
+
 	created, err := s.repo.CreateOrder(ctx, o)
 	if err != nil {
 		return nil, err
@@ -389,6 +422,32 @@ func (s *RideOrderService) CreateOrder(ctx context.Context, userID string, req *
 		slog.String("user_id", userID),
 		slog.String("service_type", req.ServiceType),
 	)
+
+	// Trigger matching dispatch (fire-and-forget)
+	if s.matchingClient != nil {
+		matchServiceType := "ride"
+		go func() {
+			dispatchCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := s.matchingClient.StartDispatch(dispatchCtx, &DispatchMatchRequest{
+				OrderID:     created.ID,
+				ServiceType: matchServiceType,
+				PickupLat:   req.OriginLat,
+				PickupLng:   req.OriginLng,
+				DestLat:     req.DestLat,
+				DestLng:     req.DestLng,
+			}); err != nil {
+				s.logger.Warn("dispatch trigger failed",
+					slog.String("order_id", created.ID),
+					slog.Any("error", err),
+				)
+			} else {
+				s.logger.Info("dispatch triggered",
+					slog.String("order_id", created.ID),
+				)
+			}
+		}()
+	}
 
 	// TODO: publish Order_Created Kafka event
 	// TODO: SET user:active_order:{user_id} in Redis (TTL 2h)
@@ -464,9 +523,9 @@ func (s *RideOrderService) GetOrder(ctx context.Context, userID, role, orderID s
 		return nil, err
 	}
 
-	// Authorization: user owns it OR (role=driver AND driver_id matches)
+	// Authorization: user owns it OR (role=driver AND order is open or driver is assigned)
 	if role == "driver" {
-		if !o.DriverID.Valid || o.DriverID.String != userID {
+		if o.Status != "finding_driver" && (!o.DriverID.Valid || o.DriverID.String != userID) {
 			return nil, ErrForbidden
 		}
 	} else {
@@ -760,7 +819,21 @@ func (s *RideOrderService) DriverUpdateOrderStatus(ctx context.Context, driverID
 		fb.OrderID = orderID
 		_ = s.repo.UpsertFareBreakdown(ctx, fb)
 		_ = s.repo.SetFareFinal(ctx, orderID, fb.Total)
-		// TODO: publish Trip_Completed Kafka event.
+
+		// Free driver in matching service so they can accept new orders
+		if s.matchingClient != nil {
+			go func() {
+				freeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				if err := s.matchingClient.FreeDriver(freeCtx, driverID); err != nil {
+					s.logger.Warn("free driver failed",
+						slog.String("driver_id", driverID),
+						slog.String("order_id", orderID),
+						slog.Any("error", err),
+					)
+				}
+			}()
+		}
 	}
 
 	s.logger.Info("driver updated order status",
@@ -1053,4 +1126,32 @@ func toStateLogResponse(l *repository.OrderStateLog) *OrderStateLogResponse {
 		r.Reason = l.Reason.String
 	}
 	return r
+}
+
+func (s *RideOrderService) debitWallet(ctx context.Context, userID string, amount int64, refID, desc string) error {
+	if s.walletURL == "" {
+		return nil
+	}
+	payload := map[string]interface{}{
+		"user_id":      userID,
+		"amount":       amount,
+		"reference_id": refID,
+		"description":  desc,
+	}
+	body, _ := json.Marshal(payload)
+	resp, err := s.httpClient.Post(s.walletURL+"/internal/wallet/debit", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("wallet service unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errResp map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		msg := errResp["message"]
+		if msg == "" {
+			msg = "insufficient balance or payment failed"
+		}
+		return fmt.Errorf("wallet debit failed: %s", msg)
+	}
+	return nil
 }

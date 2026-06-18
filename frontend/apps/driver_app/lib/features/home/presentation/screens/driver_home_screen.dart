@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../../../../shared/widgets.dart';
@@ -19,44 +20,109 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<DriverHomeScreen> createState() => _DriverHomeScreenState();
 }
 
-class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
+class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> with WidgetsBindingObserver {
   Timer? _pollingTimer;
+  double _currentLat = -6.9147;
+  double _currentLng = 107.6098;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
         ref.read(driverAuthProvider.notifier).refreshProfile();
-        _setupPolling();
+        _updateGpsPosition();
+        _syncBackendStatus();
       } catch (e) {
         dev.log('initState error: $e', name: 'HomeScreen');
       }
     });
   }
 
-  @override
-  void didUpdateWidget(covariant DriverHomeScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _setupPolling();
+  Future<void> _syncBackendStatus() async {
+    try {
+      final status = await ref.read(orderRepositoryProvider).getDispatcherStatus();
+      final backendStatus = status['status'] as String? ?? 'offline';
+      final isBackendOnline = backendStatus == 'online';
+      final localOnline = ref.read(isOnlineProvider);
+      dev.log('sync: backend=$backendStatus, local=$localOnline', name: 'HomeScreen');
+      if (isBackendOnline && !localOnline) {
+        ref.read(isOnlineProvider.notifier).state = true;
+        _startPolling();
+      } else if (!isBackendOnline && localOnline) {
+        ref.read(isOnlineProvider.notifier).state = false;
+        _stopPolling();
+      }
+    } catch (e) {
+      dev.log('syncBackendStatus error: $e', name: 'HomeScreen');
+    }
   }
 
-  void _setupPolling() {
-    _pollingTimer?.cancel();
-    final isOnline = ref.read(isOnlineProvider);
-    if (isOnline) {
-      _doPoll();
-      _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-        _doPoll();
-      });
+  Future<void> _updateGpsPosition() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        dev.log('GPS service disabled', name: 'HomeScreen');
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      _currentLat = position.latitude;
+      _currentLng = position.longitude;
+      dev.log('GPS updated: $_currentLat, $_currentLng', name: 'HomeScreen');
+    } catch (e) {
+      dev.log('GPS error: $e', name: 'HomeScreen');
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    dev.log('lifecycle: $state', name: 'HomeScreen');
+    if (state == AppLifecycleState.resumed) {
+      _restartPollingIfNeeded();
+    } else if (state == AppLifecycleState.paused) {
+      _pollingTimer?.cancel();
+      _pollingTimer = null;
+    }
+  }
+
+  void _restartPollingIfNeeded() {
+    final isOnline = ref.read(isOnlineProvider);
+    if (isOnline && _pollingTimer == null) {
+      dev.log('restarting polling after resume', name: 'HomeScreen');
+      _startPolling();
+    }
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _doPoll();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _doPoll();
+    });
+    dev.log('polling started', name: 'HomeScreen');
+  }
+
+  void _stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+    dev.log('polling stopped', name: 'HomeScreen');
   }
 
   void _doPoll() {
     try {
       final repo = ref.read(orderRepositoryProvider);
       repo.heartbeat();
-      repo.updateLocation(-6.9147, 107.6098);
+      repo.updateLocation(_currentLat, _currentLng);
       ref.read(orderProvider.notifier).checkDispatch();
     } catch (e) {
       dev.log('polling error: $e', name: 'HomeScreen');
@@ -65,6 +131,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pollingTimer?.cancel();
     super.dispose();
   }
@@ -78,7 +145,16 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     final orderState = ref.watch(orderProvider);
     final incomingOrder = orderState.incomingOrder;
 
-    dev.log('build: driver=${driver != null}, isOnline=$isOnline', name: 'HomeScreen');
+    ref.listen<bool>(isOnlineProvider, (prev, next) {
+      dev.log('isOnline changed: $prev -> $next', name: 'HomeScreen');
+      if (next) {
+        _startPolling();
+      } else {
+        _stopPolling();
+      }
+    });
+
+    dev.log('build: driver=${driver != null}, isOnline=$isOnline, timerActive=${_pollingTimer != null}', name: 'HomeScreen');
 
     final todayEarning = todayEarningAsync.valueOrNull ?? {'total': 0, 'trips': 0, 'avg_fare': 0};
     final earningTotal = todayEarning['total'] ?? 0;
@@ -164,12 +240,20 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     final nextState = !isOnline;
                     try {
                       if (nextState) {
-                        await ref.read(orderRepositoryProvider).goOnline();
+                        await _updateGpsPosition();
+                        try {
+                          await ref.read(orderRepositoryProvider).goOnline(lat: _currentLat, lng: _currentLng);
+                        } catch (e) {
+                          dev.log('goOnline failed, trying reset: $e', name: 'HomeScreen');
+                          await ref.read(orderRepositoryProvider).goOffline();
+                          await Future.delayed(const Duration(milliseconds: 500));
+                          await ref.read(orderRepositoryProvider).goOnline(lat: _currentLat, lng: _currentLng);
+                        }
                       } else {
                         await ref.read(orderRepositoryProvider).goOffline();
                       }
                       notifier.state = nextState;
-                      _setupPolling();
+                      ref.read(orderProvider.notifier).resetState();
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

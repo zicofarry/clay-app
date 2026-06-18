@@ -4,20 +4,20 @@ import 'package:dio/dio.dart';
 class FoodRepository {
   Future<List<Map<String, dynamic>>> getMerchants() async {
     try {
-      final response = await ClayApi.instance.dio.get('/search/merchants?q=');
+      final response = await ClayApi.instance.dio.get('/merchants');
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = response.data;
         if (body is Map<String, dynamic> && (body['success'] == true || body['status'] == 'success' || body['data'] != null)) {
           final data = body['data'];
           if (data is Map<String, dynamic> && data['merchants'] is List) {
             final list = data['merchants'] as List;
-            return list.map((m) {
-              return {
-                'id': m['merchant_id']?.toString() ?? m['id']?.toString() ?? '',
-                'name': m['merchant_name']?.toString() ?? m['name']?.toString() ?? 'Merchant',
+            return list.map<Map<String, dynamic>>((m) {
+              return <String, dynamic>{
+                'id': m['id']?.toString() ?? m['merchant_id']?.toString() ?? '',
+                'name': m['name']?.toString() ?? m['merchant_name']?.toString() ?? 'Merchant',
                 'rating': double.tryParse(m['rating']?.toString() ?? '') ?? 4.5,
                 'distance': '${m['distance_km'] ?? '0.5'} km',
-                'image': m['logo_url']?.toString() ?? '',
+                'image': m['logo_url']?.toString() ?? m['banner_url']?.toString() ?? '',
                 'category': m['category']?.toString() ?? 'Makanan',
                 'eta': '${m['est_delivery_min'] ?? '15-25'} min',
               };
@@ -48,8 +48,8 @@ class FoodRepository {
         }
 
         if (list != null) {
-          return list.map((item) {
-            return {
+          return list.map<Map<String, dynamic>>((item) {
+            return <String, dynamic>{
               'id': item['id']?.toString() ?? '',
               'name': item['name']?.toString() ?? 'Menu Item',
               'price': item['price_cents'] ?? item['price'] ?? 15000,
@@ -170,10 +170,10 @@ class FoodRepository {
               '66666666-6666-6666-6666-666666666666': 'Es Teh Indonesia',
             };
 
-            return list.map((item) {
+            return list.map<Map<String, dynamic>>((item) {
               final merchantId = item['merchant_id']?.toString() ?? '';
               final merchantName = merchantsMap[merchantId] ?? 'ClayFood Resto';
-              return {
+              return <String, dynamic>{
                 'order_id': item['id']?.toString() ?? '',
                 'date': item['created_at']?.toString() ?? '',
                 'merchant': merchantName,

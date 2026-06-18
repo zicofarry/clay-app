@@ -84,6 +84,7 @@ func main() {
 	})
 
 	// Merchant profile
+	mux.HandleFunc("GET /merchants", h.ListMerchants)
 	mux.HandleFunc("POST /merchants", h.RegisterMerchant)
 	mux.HandleFunc("GET /merchants/me", h.GetMyMerchant)
 	mux.HandleFunc("PUT /merchants/me", h.UpdateMyMerchant)

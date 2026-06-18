@@ -267,6 +267,10 @@ spec:
               value: kafka:9092
             - name: KAFKA_GROUP
               value: clay-food-order-service
+            - name: MATCHING_SERVICE_URL
+              value: http://clay-matching-service:8080
+            - name: WALLET_SERVICE_URL
+              value: http://clay-wallet-service:8080
           readinessProbe:
             httpGet:
               path: /health
@@ -523,6 +527,8 @@ spec:
               value: redis-delivery-order:6379
             - name: KAFKA_BROKERS
               value: kafka:9092
+            - name: WALLET_SERVICE_URL
+              value: http://clay-wallet-service:8080
           readinessProbe:
             httpGet:
               path: /health
@@ -590,6 +596,8 @@ spec:
               value: redis-ride-order:6379
             - name: KAFKA_BROKERS
               value: kafka:9092
+            - name: WALLET_SERVICE_URL
+              value: http://clay-wallet-service:8080
           readinessProbe:
             httpGet:
               path: /health

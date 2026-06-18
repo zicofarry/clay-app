@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/zicofarry/clay-app/backend/services/ride-order-service/internal/client"
 	"github.com/zicofarry/clay-app/backend/services/ride-order-service/internal/handler"
 	"github.com/zicofarry/clay-app/backend/services/ride-order-service/internal/repository"
 	"github.com/zicofarry/clay-app/backend/services/ride-order-service/internal/service"
@@ -35,7 +36,19 @@ func main() {
 	defer db.Close()
 
 	repo := repository.NewRideOrderRepository(db, nil)
-	svc := service.NewRideOrderService(repo, logger)
+
+	matchingURL := os.Getenv("MATCHING_SERVICE_URL")
+	if matchingURL == "" {
+		matchingURL = "http://clay-matching-service:8080"
+	}
+	matchingClient := client.NewMatchingClient(matchingURL, logger)
+
+	walletURL := os.Getenv("WALLET_SERVICE_URL")
+	if walletURL == "" {
+		walletURL = "http://clay-wallet-service:8080"
+	}
+
+	svc := service.NewRideOrderService(repo, matchingClient, logger, walletURL)
 	h := handler.NewRideOrderHandler(svc)
 
 	// ── Router ───────────────────────────────────────────────────────────

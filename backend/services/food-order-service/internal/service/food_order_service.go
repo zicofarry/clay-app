@@ -1,7 +1,9 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
@@ -85,10 +87,12 @@ type FoodOrderServiceInterface interface {
 
 // FoodOrderService encapsulates business logic for food orders.
 type FoodOrderService struct {
-	repo     repository.FoodOrderRepositoryInterface
-	producer sharedKafka.Producer
-	logger   *slog.Logger
-	http     *http.Client
+	repo               repository.FoodOrderRepositoryInterface
+	producer           sharedKafka.Producer
+	logger             *slog.Logger
+	http               *http.Client
+	matchingServiceURL string
+	walletURL          string
 }
 
 // NewFoodOrderService creates a new FoodOrderService.
@@ -96,12 +100,16 @@ func NewFoodOrderService(
 	repo repository.FoodOrderRepositoryInterface,
 	producer sharedKafka.Producer,
 	logger *slog.Logger,
+	matchingServiceURL string,
+	walletURL string,
 ) *FoodOrderService {
 	return &FoodOrderService{
-		repo:     repo,
-		producer: producer,
-		logger:   logger,
-		http:     &http.Client{Timeout: 5 * time.Second},
+		repo:               repo,
+		producer:           producer,
+		logger:             logger,
+		http:               &http.Client{Timeout: 5 * time.Second},
+		matchingServiceURL: matchingServiceURL,
+		walletURL:          walletURL,
 	}
 }
 
@@ -181,6 +189,14 @@ func (s *FoodOrderService) CreateOrder(ctx context.Context, userID string, req m
 		DeliveryLat:     req.DeliveryLat,
 		DeliveryLng:     req.DeliveryLng,
 		DeliveryAddress: req.DeliveryAddress,
+	}
+
+	if req.PaymentMethod == model.PaymentGoPay || req.PaymentMethod == "claypay" {
+		refID := uuid.New().String()
+		if err := s.debitWallet(ctx, userID, order.TotalCents, refID, "Food order payment"); err != nil {
+			s.logger.Error("wallet debit failed for food order", slog.Any("error", err), slog.String("user_id", userID))
+			return nil, ErrPaymentFailed
+		}
 	}
 
 	if err := s.repo.Create(ctx, order); err != nil {
@@ -392,6 +408,12 @@ func (s *FoodOrderService) MerchantUpdateStatus(ctx context.Context, orderID str
 	}
 
 	order.Status = newStatus
+
+	// When food is ready, start looking for a driver
+	if newStatus == model.StatusReady && s.matchingServiceURL != "" {
+		go s.triggerDispatch(order)
+	}
+
 	return order, nil
 }
 
@@ -601,9 +623,39 @@ var (
 	ErrMenuItemNotFound       = fmt.Errorf("menu item not found")
 	ErrMerchantClosed         = fmt.Errorf("merchant is closed")
 	ErrPromoInvalid           = fmt.Errorf("promo code is invalid")
+	ErrPaymentFailed          = fmt.Errorf("wallet payment failed")
 )
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// triggerDispatch calls the matching-service to start finding a driver for a ready food order.
+func (s *FoodOrderService) triggerDispatch(order *model.FoodOrder) {
+	payload := map[string]interface{}{
+		"order_id":     order.ID,
+		"service_type": "food",
+		"pickup_lat":   -6.9175,
+		"pickup_lng":   107.6191,
+		"dest_lat":     order.DeliveryLat,
+		"dest_lng":     order.DeliveryLng,
+		"callback_url": fmt.Sprintf("http://clay-food-order-service:8080/internal/orders/%s/assign-driver", order.ID),
+	}
+	body, _ := json.Marshal(payload)
+	resp, err := s.http.Post(
+		s.matchingServiceURL+"/internal/dispatcher/dispatch",
+		"application/json",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		s.logger.Error("failed to trigger dispatch", slog.Any("error", err), slog.String("order_id", order.ID))
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		s.logger.Error("dispatch returned error", slog.Int("status", resp.StatusCode), slog.String("order_id", order.ID))
+	} else {
+		s.logger.Info("dispatch triggered successfully", slog.String("order_id", order.ID))
+	}
+}
 
 func haversineKm(lat1, lng1, lat2, lng2 float64) float64 {
 	const R = 6371.0
@@ -613,4 +665,33 @@ func haversineKm(lat1, lng1, lat2, lng2 float64) float64 {
 		math.Cos(lat1*math.Pi/180)*math.Cos(lat2*math.Pi/180)*
 			math.Sin(dLng/2)*math.Sin(dLng/2)
 	return R * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+}
+
+func (s *FoodOrderService) debitWallet(ctx context.Context, userID string, amount int64, refID, desc string) error {
+	if s.walletURL == "" {
+		return nil
+	}
+	payload := map[string]interface{}{
+		"user_id":      userID,
+		"amount":       amount,
+		"reference_id": refID,
+		"description":  desc,
+	}
+	body, _ := json.Marshal(payload)
+	resp, err := s.http.Post(s.walletURL+"/internal/wallet/debit", "application/json", bytes.NewReader(body))
+	if err != nil {
+		s.logger.Error("wallet debit call failed", slog.Any("error", err), slog.String("user_id", userID))
+		return fmt.Errorf("wallet service unavailable: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errResp map[string]string
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		msg := errResp["message"]
+		if msg == "" {
+			msg = "insufficient balance or payment failed"
+		}
+		return fmt.Errorf("wallet debit failed: %s", msg)
+	}
+	return nil
 }

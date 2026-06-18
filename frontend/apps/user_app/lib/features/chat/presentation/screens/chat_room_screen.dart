@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,9 +18,28 @@ class ChatRoomScreen extends ConsumerStatefulWidget {
 class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _inputC = TextEditingController();
   final _scrollC = ScrollController();
+  int _prevMessageCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(chatMessagesProvider(widget.roomId).notifier).startPolling();
+    });
+    ref.listenManual<ChatMessagesState>(
+      chatMessagesProvider(widget.roomId),
+      (prev, next) {
+        if (next.messages.length > _prevMessageCount && _prevMessageCount > 0) {
+          _scrollToBottom();
+        }
+        _prevMessageCount = next.messages.length;
+      },
+    );
+  }
 
   @override
   void dispose() {
+    ref.read(chatMessagesProvider(widget.roomId).notifier).stopPolling();
     _inputC.dispose();
     _scrollC.dispose();
     super.dispose();

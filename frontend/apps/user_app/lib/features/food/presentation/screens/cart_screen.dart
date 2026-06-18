@@ -238,7 +238,7 @@ class CartScreen extends ConsumerWidget {
                             final entry = state.cart.entries.elementAt(i);
                             final item = state.menuItems.firstWhere(
                               (m) => m['id'] == entry.key,
-                              orElse: () => {
+                              orElse: () => <String, dynamic>{
                                 'id': entry.key,
                                 'name': 'Menu Item',
                                 'price': 15000,

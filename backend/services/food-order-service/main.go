@@ -104,7 +104,9 @@ func main() {
 
 	// ── Wire Application Layers ──────────────────────────────────────────
 	repo := repository.NewFoodOrderRepository(db, mongoDB, rdb)
-	svc := service.NewFoodOrderService(repo, producer, logger)
+	matchingURL := getEnv("MATCHING_SERVICE_URL", "http://clay-matching-service:8080")
+	walletURL := getEnv("WALLET_SERVICE_URL", "http://clay-wallet-service:8080")
+	svc := service.NewFoodOrderService(repo, producer, logger, matchingURL, walletURL)
 	h := handler.NewFoodOrderHandler(svc, logger)
 
 	// ── Setup Router ─────────────────────────────────────────────────────
