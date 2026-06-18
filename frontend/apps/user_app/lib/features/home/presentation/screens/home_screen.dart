@@ -28,7 +28,15 @@ class HomeScreen extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (currentTab != 0) {
-          // If not on Home tab, go back to Home tab
+          // If we are on Orders tab (index 1), let HistoryScreen's own PopScope
+          // handle the back navigation if it is currently showing the Riwayat tab (index > 0).
+          if (currentTab == 1) {
+            final historyTab = ref.read(historyTabProvider);
+            if (historyTab > 0) {
+              return; // Let HistoryScreen animate back to tab 0
+            }
+          }
+          // Otherwise, go back to Home tab
           ref.read(currentTabProvider.notifier).state = 0;
         }
         // If already on Home tab (index 0), do nothing — stay in app
