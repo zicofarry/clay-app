@@ -139,7 +139,17 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(title: Text('Pesanan #${widget.orderId.substring(0, 8).toUpperCase()}')),
+      appBar: AppBar(
+        title: Text('Pesanan #${widget.orderId.substring(0, 8).toUpperCase()}'),
+        actions: [
+          if (status != 'pending' && status != 'cancelled')
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline),
+              tooltip: 'Chat Pelanggan & Kurir',
+              onPressed: () => context.push('/order/${widget.orderId}/chat'),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -330,6 +340,62 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ],
+            if (status != 'pending' && status != 'cancelled') ...[
+              const SizedBox(height: 16),
+              Card(
+                elevation: 0,
+                color: ClayColors.primary.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: ClayColors.primary.withValues(alpha: 0.2)),
+                ),
+                child: InkWell(
+                  onTap: () => context.push('/order/${widget.orderId}/chat'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: ClayColors.primary.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.chat_bubble_outline, color: ClayColors.primary),
+                        ),
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hubungi Pelanggan & Kurir',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: ClayColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Tanya detail pesanan atau konfirmasi lokasi pengiriman',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: ClayColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_ios, size: 16, color: ClayColors.primary),
+                      ],
+                    ),
                   ),
                 ),
               ),

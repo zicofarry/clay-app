@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 class ClayColors {
   ClayColors._();
 
-  // FE-Clay inspired palette
-  static const Color primary = Color(0xFF97C5F5);
-  static const Color primaryLight = Color(0xFFB8D9FA);
-  static const Color primaryDark = Color(0xFF6FA7E6);
+  // FE-Clay inspired palette (Vibrant Blue Theme)
+  static const Color primary = Color(0xFF93C5FD);
+  static const Color primaryLight = Color(0xFFE0F2FE);
+  static const Color primaryDark = Color(0xFF3B82F6);
   static const Color accent = Color(0xFFEF4444);
   static const Color green = Color(0xFF52D49F);
   static const Color greenDark = Color(0xFF3BBF88);
@@ -14,7 +14,7 @@ class ClayColors {
   static const Color warningDark = Color(0xFFFF9500);
   static const Color purple = Color(0xFF9B7DFF);
   static const Color purpleDark = Color(0xFF7B5FFF);
-  static const Color background = Color(0xFFF2F4F7);
+  static const Color background = Color(0xFFF0F9FF);
   static const Color surface = Colors.white;
   static const Color card = Colors.white;
   static const Color textPrimary = Color(0xFF1F2937);
