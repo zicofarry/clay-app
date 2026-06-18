@@ -23,19 +23,30 @@ class HomeScreen extends ConsumerWidget {
       _AccountTab(),
     ];
 
-    return Scaffold(
-      body: IndexedStack(index: currentTab, children: pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentTab,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: ClayColors.primary,
-        onTap: (i) => ref.read(currentTabProvider.notifier).state = i,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.wallet_outlined), activeIcon: Icon(Icons.wallet), label: 'Wallet'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Account'),
-        ],
+    return PopScope(
+      // Never allow the OS back gesture to pop/exit from HomeScreen
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (currentTab != 0) {
+          // If not on Home tab, go back to Home tab
+          ref.read(currentTabProvider.notifier).state = 0;
+        }
+        // If already on Home tab (index 0), do nothing — stay in app
+      },
+      child: Scaffold(
+        body: IndexedStack(index: currentTab, children: pages),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: currentTab,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: ClayColors.primary,
+          onTap: (i) => ref.read(currentTabProvider.notifier).state = i,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
+            BottomNavigationBarItem(icon: Icon(Icons.wallet_outlined), activeIcon: Icon(Icons.wallet), label: 'Wallet'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Account'),
+          ],
+        ),
       ),
     );
   }
