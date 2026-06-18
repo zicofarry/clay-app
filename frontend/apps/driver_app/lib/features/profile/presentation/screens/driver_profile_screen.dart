@@ -106,7 +106,7 @@ class DriverProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   if ((vehicleBrand.isEmpty || vehicleBrand == '-') && (plate.isEmpty || plate == '-'))
                     GestureDetector(
-                      onTap: () => context.go('/edit-profile'),
+                      onTap: () => context.push('/edit-profile'),
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: softShadow(),
@@ -149,14 +149,14 @@ class DriverProfileScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: ClayColors.card, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)]),
                     child: Column(
                       children: [
-                        _MenuItem(icon: Icons.person_outline, label: 'Edit Profil', onTap: () => context.go('/edit-profile')),
-                        _MenuItem(icon: Icons.description_outlined, label: 'Dokumen', onTap: () => context.go('/documents')),
-                        _MenuItem(icon: Icons.account_balance_wallet_outlined, label: 'Wallet', onTap: () => context.go('/wallet')),
-                        _MenuItem(icon: Icons.star_outline, label: 'Rating', onTap: () => context.go('/ratings')),
-                        _MenuItem(icon: Icons.local_offer_outlined, label: 'Voucher', onTap: () => context.go('/vouchers')),
-                        _MenuItem(icon: Icons.notifications_outlined, label: 'Notifikasi', onTap: () => context.go('/notification-preferences')),
-                        _MenuItem(icon: Icons.settings_outlined, label: 'Pengaturan', onTap: () => context.go('/settings')),
-                        _MenuItem(icon: Icons.help_outline, label: 'Bantuan', onTap: () => context.go('/help'), isLast: true),
+                        _MenuItem(icon: Icons.person_outline, label: 'Edit Profil', onTap: () => context.push('/edit-profile')),
+                        _MenuItem(icon: Icons.description_outlined, label: 'Dokumen', onTap: () => context.push('/documents')),
+                        _MenuItem(icon: Icons.account_balance_wallet_outlined, label: 'Wallet', onTap: () => context.push('/wallet')),
+                        _MenuItem(icon: Icons.star_outline, label: 'Rating', onTap: () => context.push('/ratings')),
+                        _MenuItem(icon: Icons.local_offer_outlined, label: 'Voucher', onTap: () => context.push('/vouchers')),
+                        _MenuItem(icon: Icons.notifications_outlined, label: 'Notifikasi', onTap: () => context.push('/notification-preferences')),
+                        _MenuItem(icon: Icons.settings_outlined, label: 'Pengaturan', onTap: () => context.push('/settings')),
+                        _MenuItem(icon: Icons.help_outline, label: 'Bantuan', onTap: () => context.push('/help'), isLast: true),
                       ],
                     ),
                   ),
