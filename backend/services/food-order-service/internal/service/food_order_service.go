@@ -126,18 +126,10 @@ func (s *FoodOrderService) EstimateFare(_ context.Context, req model.FareEstimat
 
 // CreateOrder creates a new food order.
 func (s *FoodOrderService) CreateOrder(ctx context.Context, userID string, req model.CreateFoodOrderRequest) (*model.FoodOrder, error) {
-	// Check for existing active order
-	existingID, err := s.repo.GetActiveOrderID(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("check active order: %w", err)
-	}
-	if existingID != "" {
-		return nil, ErrActiveOrderExists
-	}
-
 	// Build order items
 	var subtotal int64
 	items := make([]model.FoodOrderItem, 0, len(req.Items))
+
 	for _, ri := range req.Items {
 		unitPrice := int64(15000) // placeholder — real impl calls merchant service
 		for _, v := range ri.Variants {

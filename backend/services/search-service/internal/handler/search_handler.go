@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
-	"github.com/zicofarry/clay-app/backend/services/search-service/internal/service"
 	"github.com/zicofarry/clay-app/backend/pkg/response"
+	"github.com/zicofarry/clay-app/backend/services/search-service/internal/model"
+	"github.com/zicofarry/clay-app/backend/services/search-service/internal/service"
 )
 
 type SearchHandler struct {
@@ -18,11 +20,23 @@ func NewSearchHandler(svc service.SearchServiceInterface) *SearchHandler {
 }
 
 func (h *SearchHandler) SearchMerchants(w http.ResponseWriter, r *http.Request) {
-	response.Success(w, http.StatusOK, map[string]string{"message": "SearchMerchants endpoint"})
+	q := r.URL.Query().Get("q")
+	res, err := h.service.SearchMerchants(r.Context(), map[string]string{"q": q})
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	response.Success(w, http.StatusOK, res)
 }
 
 func (h *SearchHandler) SearchMenuItems(w http.ResponseWriter, r *http.Request) {
-	response.Success(w, http.StatusOK, map[string]string{"message": "SearchMenuItems endpoint"})
+	q := r.URL.Query().Get("q")
+	res, err := h.service.SearchMenuItems(r.Context(), map[string]string{"q": q})
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	response.Success(w, http.StatusOK, res)
 }
 
 func (h *SearchHandler) GetTrending(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +52,16 @@ func (h *SearchHandler) GetPopular(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SearchHandler) IndexMerchant(w http.ResponseWriter, r *http.Request) {
-	response.Success(w, http.StatusOK, map[string]string{"message": "IndexMerchant endpoint"})
+	var doc model.MerchantDocument
+	if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
+		response.Error(w, http.StatusBadRequest, "INVALID_INPUT", "invalid payload: "+err.Error())
+		return
+	}
+	if err := h.service.IndexMerchant(r.Context(), doc); err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	response.Success(w, http.StatusOK, map[string]string{"message": "Merchant indexed successfully"})
 }
 
 func (h *SearchHandler) DeleteMerchantIndex(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +69,16 @@ func (h *SearchHandler) DeleteMerchantIndex(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *SearchHandler) IndexMenuItem(w http.ResponseWriter, r *http.Request) {
-	response.Success(w, http.StatusOK, map[string]string{"message": "IndexMenuItem endpoint"})
+	var doc model.MenuItemDocument
+	if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
+		response.Error(w, http.StatusBadRequest, "INVALID_INPUT", "invalid payload: "+err.Error())
+		return
+	}
+	if err := h.service.IndexMenuItem(r.Context(), doc); err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	response.Success(w, http.StatusOK, map[string]string{"message": "Menu item indexed successfully"})
 }
 
 func (h *SearchHandler) DeleteMenuItemIndex(w http.ResponseWriter, r *http.Request) {

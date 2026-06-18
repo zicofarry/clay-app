@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../../../food/presentation/providers/food_provider.dart';
 
+final historyTabProvider = StateProvider<int>((ref) => 0);
+
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
@@ -25,7 +27,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        ref.read(historyTabProvider.notifier).state = _tabController.index;
+        setState(() {});
+      }
+    });
     Future.microtask(() {
+      ref.read(historyTabProvider.notifier).state = _tabController.index;
       ref.read(foodStateProvider.notifier).loadActiveOrder();
       ref.read(foodStateProvider.notifier).loadHistory();
     });
@@ -42,71 +51,87 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     final state = ref.watch(foodStateProvider);
     final notifier = ref.read(foodStateProvider.notifier);
 
-    return Scaffold(
-      backgroundColor: _scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: _surfaceColor,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          'Pesanan Saya',
-          style: TextStyle(
-            color: _textPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+    return PopScope(
+      canPop: _tabController.index == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _tabController.index > 0) {
+          _tabController.animateTo(0);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: _scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: _surfaceColor,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(
+            'Pesanan Saya',
+            style: TextStyle(
+              color: _textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          bottom: TabBar(
+            controller: _tabController,
+            labelColor: ClayColors.primary,
+            unselectedLabelColor: _textSecondary,
+            indicatorColor: ClayColors.primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            tabs: const [
+              Tab(text: 'Dalam Proses'),
+              Tab(text: 'Riwayat'),
+            ],
           ),
         ),
-        bottom: TabBar(
+        body: TabBarView(
           controller: _tabController,
-          labelColor: ClayColors.primary,
-          unselectedLabelColor: _textSecondary,
-          indicatorColor: ClayColors.primary,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          tabs: const [
-            Tab(text: 'Dalam Proses'),
-            Tab(text: 'Riwayat'),
+          children: [
+            // Active Orders Tab
+            _buildActiveOrdersTab(state, notifier),
+
+            // History Tab
+            _buildHistoryTab(state, notifier),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // Active Orders Tab
-          _buildActiveOrdersTab(state, notifier),
-
-          // History Tab
-          _buildHistoryTab(state, notifier),
-        ],
       ),
     );
   }
 
   Widget _buildActiveOrdersTab(FoodState state, FoodNotifier notifier) {
     if (state.activeOrder == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long_outlined, size: 80, color: _textSecondary.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            Text(
-              'Tidak ada pesanan aktif',
-              style: TextStyle(
-                color: _textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+      return RefreshIndicator(
+        onRefresh: () => notifier.loadActiveOrder(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            height: MediaQuery.of(context).size.height - 200,
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.receipt_long_outlined, size: 80, color: _textSecondary.withValues(alpha: 0.5)),
+                const SizedBox(height: 16),
+                Text(
+                  'Tidak ada pesanan aktif',
+                  style: TextStyle(
+                    color: _textSecondary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: 200,
+                  child: ClayButton(
+                    label: 'Pesan Sekarang',
+                    onPressed: () => context.push('/food'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 200,
-              child: ClayButton(
-                label: 'Pesan Sekarang',
-                onPressed: () => context.push('/food'),
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -190,16 +215,23 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
 
             // Order ID & Price
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('ID PESANAN', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 2),
-                    Text(orderId, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ID PESANAN', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(
+                        orderId.length > 18 ? '${orderId.substring(0, 18)}...' : orderId,
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _textPrimary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -286,34 +318,75 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
   }
 
   Widget _buildHistoryTab(FoodState state, FoodNotifier notifier) {
-    if (state.history.isEmpty) {
+    // Show loading spinner while fetching
+    if (state.isLoading && state.history.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 80,
-              color: _textSecondary.withValues(alpha: 0.4),
+        child: CircularProgressIndicator(color: ClayColors.primary),
+      );
+    }
+
+    if (state.history.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () => notifier.loadHistory(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Container(
+            height: MediaQuery.of(context).size.height - 200,
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: _textSecondary.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.receipt_long_outlined,
+                    size: 50,
+                    color: _textSecondary.withValues(alpha: 0.4),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Riwayat orderan kosong',
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Semua riwayat pesanan makananmu\nakan muncul di sini.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _textSecondary,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: 180,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push('/food'),
+                    icon: const Icon(Icons.fastfood_outlined, size: 18),
+                    label: const Text('Mulai Pesan'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ClayColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada riwayat pesanan',
-              style: TextStyle(
-                color: _textSecondary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Pesanan makanan lezatmu akan muncul di sini',
-              style: TextStyle(
-                color: _textSecondary.withValues(alpha: 0.7),
-                fontSize: 13,
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }

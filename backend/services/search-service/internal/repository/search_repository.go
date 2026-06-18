@@ -22,6 +22,8 @@ type SearchRepositoryInterface interface {
 	InitIndices(ctx context.Context) error
 	IndexMerchant(ctx context.Context, doc model.MerchantDocument) error
 	IndexMenuItem(ctx context.Context, doc model.MenuItemDocument) error
+	SearchMerchants(ctx context.Context, query string) ([]model.MerchantDocument, error)
+	SearchMenuItems(ctx context.Context, query string) ([]model.MenuItemDocument, error)
 }
 
 type searchRepository struct {
@@ -135,5 +137,133 @@ func (r *searchRepository) IndexMenuItem(ctx context.Context, doc model.MenuItem
 		return fmt.Errorf("error indexing menu item: %s", res.String())
 	}
 	return nil
+}
+
+func (r *searchRepository) SearchMerchants(ctx context.Context, query string) ([]model.MerchantDocument, error) {
+	var buf bytes.Buffer
+	var searchReq map[string]interface{}
+	if query == "" {
+		searchReq = map[string]interface{}{
+			"query": map[string]interface{}{
+				"match_all": map[string]interface{}{},
+			},
+		}
+	} else {
+		searchReq = map[string]interface{}{
+			"query": map[string]interface{}{
+				"multi_match": map[string]interface{}{
+					"query":  query,
+					"fields": []string{"name", "category", "tags", "cuisine_types"},
+				},
+			},
+		}
+	}
+	if err := json.NewEncoder(&buf).Encode(searchReq); err != nil {
+		return nil, err
+	}
+
+	res, err := r.es.Search(
+		r.es.Search.WithContext(ctx),
+		r.es.Search.WithIndex(MerchantIndex),
+		r.es.Search.WithBody(&buf),
+		r.es.Search.WithTrackTotalHits(true),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("search error: %s", res.Status())
+	}
+
+	var rMap map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&rMap); err != nil {
+		return nil, err
+	}
+
+	hitsMap, ok := rMap["hits"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response structure: hits missing")
+	}
+	hitsList, ok := hitsMap["hits"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response structure: inner hits missing")
+	}
+
+	var docs []model.MerchantDocument
+	for _, hit := range hitsList {
+		source := hit.(map[string]interface{})["_source"]
+		sourceBytes, _ := json.Marshal(source)
+		var doc model.MerchantDocument
+		json.Unmarshal(sourceBytes, &doc)
+		docs = append(docs, doc)
+	}
+
+	return docs, nil
+}
+
+func (r *searchRepository) SearchMenuItems(ctx context.Context, query string) ([]model.MenuItemDocument, error) {
+	var buf bytes.Buffer
+	var searchReq map[string]interface{}
+	if query == "" {
+		searchReq = map[string]interface{}{
+			"query": map[string]interface{}{
+				"match_all": map[string]interface{}{},
+			},
+		}
+	} else {
+		searchReq = map[string]interface{}{
+			"query": map[string]interface{}{
+				"multi_match": map[string]interface{}{
+					"query":  query,
+					"fields": []string{"name", "description", "tags"},
+				},
+			},
+		}
+	}
+	if err := json.NewEncoder(&buf).Encode(searchReq); err != nil {
+		return nil, err
+	}
+
+	res, err := r.es.Search(
+		r.es.Search.WithContext(ctx),
+		r.es.Search.WithIndex(MenuItemIndex),
+		r.es.Search.WithBody(&buf),
+		r.es.Search.WithTrackTotalHits(true),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("search error: %s", res.Status())
+	}
+
+	var rMap map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&rMap); err != nil {
+		return nil, err
+	}
+
+	hitsMap, ok := rMap["hits"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response structure: hits missing")
+	}
+	hitsList, ok := hitsMap["hits"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid response structure: inner hits missing")
+	}
+
+	var docs []model.MenuItemDocument
+	for _, hit := range hitsList {
+		source := hit.(map[string]interface{})["_source"]
+		sourceBytes, _ := json.Marshal(source)
+		var doc model.MenuItemDocument
+		json.Unmarshal(sourceBytes, &doc)
+		docs = append(docs, doc)
+	}
+
+	return docs, nil
 }
 

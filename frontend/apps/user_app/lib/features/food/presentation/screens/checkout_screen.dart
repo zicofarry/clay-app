@@ -45,8 +45,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     const serviceFee = 1000;
     final totalPayment = notifier.totalPrice + deliveryFee + serviceFee;
 
-    ref.listen(foodStateProvider, (_, state) {
-      if (state.activeOrder != null) {
+    ref.listen(foodStateProvider, (prev, state) {
+      if (state.activeOrder != null &&
+          prev?.activeOrder == null &&
+          mounted) {
         ref.read(currentTabProvider.notifier).state = 1;
         context.go('/home');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,7 +58,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
         );
       }
-      if (state.error != null) {
+      if (state.error != null && prev?.error != state.error && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(state.error!),
@@ -644,14 +646,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   const Divider(color: ClayColors.divider),
                   const SizedBox(height: 4),
                   ...state.cart.entries.map((e) {
-                    final item = state.menuItems.firstWhere(
-                      (m) => m['id'] == e.key,
-                      orElse: () => {
-                        'name': 'Menu Item',
-                        'price': 15000,
-                      },
-                    );
-                    final price = item['price'] as int;
+                    // Use cartItemDetails (persists across navigation) first, fall back to menuItems
+                    final saved = state.cartItemDetails[e.key];
+                    final fromMenu = state.menuItems.where((m) => m['id'] == e.key);
+                    final name = saved?['name']?.toString()
+                        ?? (fromMenu.isEmpty ? 'Menu Item' : fromMenu.first['name']?.toString() ?? 'Menu Item');
+                    final price = saved?['price'] as int?
+                        ?? (fromMenu.isEmpty ? 0 : (fromMenu.first['price'] as int? ?? 0));
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -660,7 +661,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              '${item['name']} x${e.value}',
+                              '$name x${e.value}',
                               style: const TextStyle(fontSize: 13, color: ClayColors.textPrimary, fontWeight: FontWeight.w500),
                             ),
                           ),

@@ -12,7 +12,7 @@ class FoodRepository {
           if (data is Map<String, dynamic> && data['merchants'] is List) {
             final list = data['merchants'] as List;
             return list.map((m) {
-              return {
+              return <String, dynamic>{
                 'id': m['merchant_id']?.toString() ?? m['id']?.toString() ?? '',
                 'name': m['merchant_name']?.toString() ?? m['name']?.toString() ?? 'Merchant',
                 'rating': double.tryParse(m['rating']?.toString() ?? '') ?? 4.5,
@@ -49,7 +49,7 @@ class FoodRepository {
 
         if (list != null) {
           return list.map((item) {
-            return {
+            return <String, dynamic>{
               'id': item['id']?.toString() ?? '',
               'name': item['name']?.toString() ?? 'Menu Item',
               'price': item['price_cents'] ?? item['price'] ?? 15000,
@@ -78,15 +78,17 @@ class FoodRepository {
     String paymentMethod = 'cash',
   }) async {
     try {
-      final reqBody = {
+      final itemsList = items.map((i) => <String, dynamic>{
+        'menu_item_id': i['item_id']?.toString() ?? '',
+        'quantity': (i['qty'] as int?) ?? 1,
+        'variants': <dynamic>[],
+        'add_ons': <dynamic>[],
+        'notes': '',
+      }).toList();
+
+      final reqBody = <String, dynamic>{
         'merchant_id': merchantId,
-        'items': items.map((i) => {
-          'menu_item_id': i['item_id'],
-          'quantity': i['qty'],
-          'variants': [],
-          'add_ons': [],
-          'notes': '',
-        }).toList(),
+        'items': itemsList,
         'delivery_lat': -6.2088,
         'delivery_lng': 106.8456,
         'delivery_address': address,
@@ -94,12 +96,16 @@ class FoodRepository {
         'notes': 'Pesanan dari ClayFood App',
       };
 
-      final response = await ClayApi.instance.dio.post('/food/orders', data: reqBody);
+      final response = await ClayApi.instance.dio.post(
+        '/food/orders',
+        data: reqBody,
+        options: Options(contentType: 'application/json'),
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         final body = response.data;
         if (body is Map<String, dynamic> && (body['success'] == true || body['status'] == 'success' || body['data'] != null)) {
           final data = body['data'] as Map<String, dynamic>;
-          return {
+          return <String, dynamic>{
             'order_id': data['id']?.toString() ?? data['order_id']?.toString() ?? '',
             'status': data['status']?.toString() ?? 'pending',
             'merchant_id': data['merchant_id']?.toString() ?? merchantId,
@@ -129,7 +135,7 @@ class FoodRepository {
         if (body is Map<String, dynamic> && (body['success'] == true || body['status'] == 'success' || body['data'] != null)) {
           final data = body['data'];
           if (data is Map<String, dynamic>) {
-            return {
+            return <String, dynamic>{
               'order_id': data['id']?.toString() ?? data['order_id']?.toString() ?? '',
               'status': data['status']?.toString() ?? 'pending',
               'merchant_id': data['merchant_id']?.toString() ?? '',
@@ -168,12 +174,14 @@ class FoodRepository {
               '44444444-4444-4444-4444-444444444444': 'Ayam Geprek Joe',
               '55555555-5555-5555-5555-555555555555': 'Padang Sederhana',
               '66666666-6666-6666-6666-666666666666': 'Es Teh Indonesia',
+              '55e5d14e-64d1-4e27-9c55-31e673541d95': 'Kopi Kenangan',
+              '1c0a0bb0-4aa6-426d-bdec-3828db63b68a': 'Bebek Carok Madura',
             };
 
             return list.map((item) {
               final merchantId = item['merchant_id']?.toString() ?? '';
               final merchantName = merchantsMap[merchantId] ?? 'ClayFood Resto';
-              return {
+              return <String, dynamic>{
                 'order_id': item['id']?.toString() ?? '',
                 'date': item['created_at']?.toString() ?? '',
                 'merchant': merchantName,

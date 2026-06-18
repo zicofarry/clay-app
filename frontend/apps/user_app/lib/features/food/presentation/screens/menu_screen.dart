@@ -711,7 +711,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                       children: [
                                                         GestureDetector(
-                                                          onTap: () => notifier.addToCart(item['id'], -1),
+                                                          onTap: () => notifier.addToCart(
+                                                            item['id'], -1,
+                                                            name: item['name']?.toString(),
+                                                            price: item['price'] as int?,
+                                                          ),
                                                           child: const Padding(
                                                             padding: EdgeInsets.symmetric(horizontal: 6),
                                                             child: Icon(Icons.remove, size: 14, color: ClayColors.primary),
@@ -726,7 +730,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                                           ),
                                                         ),
                                                         GestureDetector(
-                                                          onTap: () => notifier.addToCart(item['id'], 1),
+                                                          onTap: () => notifier.addToCart(
+                                                            item['id'], 1,
+                                                            name: item['name']?.toString(),
+                                                            price: item['price'] as int?,
+                                                          ),
                                                           child: const Padding(
                                                             padding: EdgeInsets.symmetric(horizontal: 6),
                                                             child: Icon(Icons.add, size: 14, color: ClayColors.primary),
@@ -747,7 +755,11 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                                         side: const BorderSide(color: ClayColors.primary, width: 1.5),
                                                       ),
                                                     ),
-                                                    onPressed: () => notifier.addToCart(item['id'], 1),
+                                                    onPressed: () => notifier.addToCart(
+                                                      item['id'], 1,
+                                                      name: item['name']?.toString(),
+                                                      price: item['price'] as int?,
+                                                    ),
                                                     child: const Text(
                                                       '+ TAMBAH',
                                                       style: TextStyle(
