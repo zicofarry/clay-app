@@ -100,11 +100,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       child: Scaffold(
         backgroundColor: ClayColors.background,
         bottomNavigationBar: _buildBottomNav(),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
               // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -306,8 +307,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBottomNav() {
     return Container(
