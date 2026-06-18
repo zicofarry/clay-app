@@ -47,11 +47,13 @@ class DriverOrderRepository {
     }
   }
 
-  Future<Map<String, dynamic>> updateTripStatus(String orderId, String action, {String? otpCode}) async {
+  Future<Map<String, dynamic>> updateTripStatus(String orderId, String action, {String? otpCode, double? distanceKm, int? durationMin}) async {
     try {
       final response = await _api.dio.put('/ride/driver/orders/$orderId/status', data: {
         'action': action,
         if (otpCode != null) 'otp_code': otpCode,
+        if (distanceKm != null) 'actual_distance_km': distanceKm,
+        if (durationMin != null) 'actual_duration_min': durationMin,
       });
       final data = response.data as Map<String, dynamic>;
       return data['data'] as Map<String, dynamic>? ?? data;

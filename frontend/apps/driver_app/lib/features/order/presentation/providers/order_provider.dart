@@ -71,8 +71,10 @@ class OrderNotifier extends StateNotifier<OrderState> {
     if (orderId == null) return;
     await _repo.respondToOffer(orderId, action: 'accept');
     final result = await _repo.acceptOrder(orderId);
+    final merged = Map<String, dynamic>.from(state.incomingOrder!);
+    merged.addAll(result);
     state = state.copyWith(
-      activeOrder: result,
+      activeOrder: merged,
       otpCode: result['otp_code']?.toString(),
       clearIncoming: true,
     );
@@ -93,11 +95,25 @@ class OrderNotifier extends StateNotifier<OrderState> {
     if (orderId == null) return;
 
     String? otpCode;
+    double? distanceKm;
+    int? durationMin;
+
     if (action == 'start_trip') {
       otpCode = state.otpCode;
     }
+    if (action == 'complete_trip') {
+      final tripDetails = state.activeOrder!['trip_details'] as Map<String, dynamic>?;
+      distanceKm = (tripDetails?['est_distance_km'] as num?)?.toDouble() ?? 5.0;
+      durationMin = (tripDetails?['est_duration_min'] as num?)?.toInt() ?? 15;
+    }
 
-    final result = await _repo.updateTripStatus(orderId, action, otpCode: otpCode);
+    final result = await _repo.updateTripStatus(
+      orderId,
+      action,
+      otpCode: otpCode,
+      distanceKm: distanceKm,
+      durationMin: durationMin,
+    );
     state = state.copyWith(activeOrder: result);
   }
 
@@ -111,5 +127,9 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
   void clearLastCompleted() {
     state = state.copyWith(clearLastCompleted: true);
+  }
+
+  void resetState() {
+    state = const OrderState();
   }
 }

@@ -1,17 +1,83 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:developer' as dev;
 import '../../../../shared/widgets.dart';
 import '../../../order/presentation/providers/order_provider.dart';
 
 final tripStatusProvider = StateProvider<String>((ref) => 'on_pickup');
 
-class ActiveTripScreen extends ConsumerWidget {
+class ActiveTripScreen extends ConsumerStatefulWidget {
   const ActiveTripScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActiveTripScreen> createState() => _ActiveTripScreenState();
+}
+
+class _ActiveTripScreenState extends ConsumerState<ActiveTripScreen> {
+  final MapController _mapController = MapController();
+  StreamSubscription<Position>? _positionStream;
+  LatLng? _currentPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _startGpsStream();
+  }
+
+  @override
+  void dispose() {
+    _positionStream?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startGpsStream() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      final initial = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      if (mounted) {
+        setState(() {
+          _currentPosition = LatLng(initial.latitude, initial.longitude);
+        });
+        _mapController.move(_currentPosition!, 15);
+      }
+
+      _positionStream = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10,
+        ),
+      ).listen((position) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = LatLng(position.latitude, position.longitude);
+          });
+          _mapController.move(_currentPosition!, _mapController.camera.zoom);
+        }
+      });
+    } catch (e) {
+      dev.log('GPS stream error: $e', name: 'ActiveTrip');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tripStatus = ref.watch(tripStatusProvider);
     final orderState = ref.watch(orderProvider);
     final activeOrder = orderState.activeOrder ?? {};
@@ -20,6 +86,10 @@ class ActiveTripScreen extends ConsumerWidget {
     final paymentMethod = activeOrder['payment_method']?.toString() ?? 'cash';
     final originAddress = activeOrder['origin_address']?.toString() ?? '-';
     final destAddress = activeOrder['dest_address']?.toString() ?? '-';
+    final originLat = (activeOrder['origin_lat'] as num?)?.toDouble();
+    final originLng = (activeOrder['origin_lng'] as num?)?.toDouble();
+    final destLat = (activeOrder['dest_lat'] as num?)?.toDouble();
+    final destLng = (activeOrder['dest_lng'] as num?)?.toDouble();
     final tripDetails = activeOrder['trip_details'] as Map<String, dynamic>?;
     final estDuration = tripDetails?['est_duration_min']?.toString() ?? '-';
     final paymentLabel = paymentMethod == 'gopay' ? 'GoPay' : 'Tunai';
@@ -32,73 +102,203 @@ class ActiveTripScreen extends ConsumerWidget {
         gradient: const [ClayColors.primary, ClayColors.primaryLight],
         action: 'Sudah di Lokasi',
         backendAction: 'arrived_at_pickup',
+        nextStatus: 'start_trip',
+      ),
+      'start_trip' => _StatusConfig(
+        title: 'Penumpang Sudah Naik',
+        subtitle: 'Konfirmasi OTP untuk mulai trip',
+        eta: '$estDuration min',
+        gradient: const [ClayColors.green, ClayColors.greenDark],
+        action: 'Mulai Perjalanan',
+        backendAction: 'start_trip',
         nextStatus: 'on_trip',
       ),
       'on_trip' => _StatusConfig(
         title: 'Dalam Perjalanan',
         subtitle: 'Menuju $destAddress',
         eta: '$estDuration min',
-        gradient: const [ClayColors.green, ClayColors.greenDark],
+        gradient: const [ClayColors.primary, ClayColors.primaryDark],
         action: 'Sampai di Tujuan',
-        backendAction: 'start_trip',
+        backendAction: 'complete_trip',
         nextStatus: 'completed',
       ),
       'completed' => _StatusConfig(
-        title: 'Sampai di Tujuan',
+        title: 'Trip Selesai',
         subtitle: destAddress,
         eta: '-',
         gradient: const [ClayColors.warning, ClayColors.warningDark],
-        action: 'Selesaikan Trip',
-        backendAction: 'complete_trip',
+        action: 'Selesai',
+        backendAction: '',
         nextStatus: '',
       ),
       _ => _StatusConfig(title: '', subtitle: '', eta: '', gradient: [], action: '', backendAction: '', nextStatus: ''),
     };
 
+    final defaultCenter = LatLng(originLat ?? -6.9175, originLng ?? 107.6191);
+
     return Scaffold(
       body: Column(
         children: [
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: ClayColors.primary.withValues(alpha: 0.08),
-                gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [ClayColors.primaryLight, ClayColors.background]),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(left: MediaQuery.of(context).size.width * 0.3, top: MediaQuery.of(context).size.height * 0.15, child: Container(width: 44, height: 44, decoration: const BoxDecoration(color: ClayColors.primary, shape: BoxShape.circle), child: const Icon(Icons.navigation, size: 22, color: Colors.white))),
-                  Positioned(right: MediaQuery.of(context).size.width * 0.2, top: MediaQuery.of(context).size.height * 0.1, child: Container(width: 36, height: 36, decoration: const BoxDecoration(color: ClayColors.accent, shape: BoxShape.circle), child: const Icon(Icons.location_on, size: 18, color: Colors.white))),
-                  Positioned(top: 16, left: 20, right: 20, child: Container(
-                    padding: const EdgeInsets.all(16),
+            child: Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _currentPosition ?? defaultCenter,
+                    initialZoom: 15,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.clay.driver_app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        if (originLat != null && originLng != null)
+                          Marker(
+                            point: LatLng(originLat, originLng),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
+                                  ),
+                                  child: const Text('Jemput', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600)),
+                                ),
+                                const Icon(Icons.radio_button_checked, color: Colors.green, size: 22),
+                              ],
+                            ),
+                          ),
+                        if (destLat != null && destLng != null)
+                          Marker(
+                            point: LatLng(destLat, destLng),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(6),
+                                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
+                                  ),
+                                  child: const Text('Tujuan', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600)),
+                                ),
+                                const Icon(Icons.location_on, color: Colors.red, size: 28),
+                              ],
+                            ),
+                          ),
+                        if (_currentPosition != null)
+                          Marker(
+                            point: _currentPosition!,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: ClayColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                                boxShadow: [
+                                  BoxShadow(color: ClayColors.primary.withValues(alpha: 0.4), blurRadius: 12),
+                                ],
+                              ),
+                              child: const Icon(Icons.navigation, color: Colors.white, size: 20),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (originLat != null && originLng != null && destLat != null && destLng != null)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: [
+                              if (_currentPosition != null && tripStatus != 'on_trip') _currentPosition!,
+                              LatLng(originLat, originLng),
+                              LatLng(destLat, destLng),
+                            ],
+                            color: ClayColors.primary.withValues(alpha: 0.6),
+                            strokeWidth: 4,
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 8,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
                       gradient: LinearGradient(colors: statusConfig.gradient),
-                      boxShadow: [BoxShadow(color: statusConfig.gradient.isNotEmpty ? statusConfig.gradient.first.withValues(alpha: 0.3) : Colors.transparent, blurRadius: 20, offset: const Offset(0, 8))],
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: statusConfig.gradient.first.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(statusConfig.title, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8))),
-                          Text(statusConfig.subtitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ])),
-                        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                          Text('Estimasi', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.8))),
-                          Text(statusConfig.eta, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ]),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(statusConfig.title, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8))),
+                              Text(statusConfig.subtitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('Estimasi', style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.8))),
+                            Text(statusConfig.eta, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                        ),
                       ],
                     ),
-                  )),
-                  Positioned(left: 20, bottom: 20, child: GestureDetector(
+                  ),
+                ),
+
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: GestureDetector(
                     onTap: () => _showSafetyDialog(context),
-                    child: Container(width: 44, height: 44, decoration: const BoxDecoration(color: ClayColors.accent, shape: BoxShape.circle, boxShadow: [BoxShadow(color: ClayColors.accent, blurRadius: 16)]), child: const Icon(Icons.shield, size: 20, color: Colors.white)),
-                  )),
-                ],
-              ),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: ClayColors.accent,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: ClayColors.accent.withValues(alpha: 0.3), blurRadius: 12)],
+                      ),
+                      child: const Icon(Icons.shield, size: 20, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           Container(
-            decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32))),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, -4))],
+            ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: Column(
@@ -151,6 +351,12 @@ class ActiveTripScreen extends ConsumerWidget {
                   GestureDetector(
                     onTap: () async {
                       final notifier = ref.read(orderProvider.notifier);
+                      if (statusConfig.backendAction.isEmpty) {
+                        notifier.completeOrder();
+                        ref.read(tripStatusProvider.notifier).state = 'on_pickup';
+                        if (context.mounted) context.go('/trip-complete');
+                        return;
+                      }
                       try {
                         await notifier.updateTripStatus(statusConfig.backendAction);
                         if (statusConfig.nextStatus.isEmpty) {
@@ -169,7 +375,8 @@ class ActiveTripScreen extends ConsumerWidget {
                       }
                     },
                     child: Container(
-                      width: double.infinity, height: 52,
+                      width: double.infinity,
+                      height: 52,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         gradient: LinearGradient(colors: statusConfig.gradient),
