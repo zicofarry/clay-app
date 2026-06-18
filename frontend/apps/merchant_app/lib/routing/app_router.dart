@@ -10,6 +10,7 @@ import '../features/wallet/presentation/screens/topup_screen.dart';
 import '../features/wallet/presentation/screens/transfer_screen.dart';
 import '../features/wallet/presentation/screens/payment_methods_screen.dart';
 import '../features/chat/presentation/screens/chat_room_screen.dart';
+import '../features/rating/presentation/screens/rating_reviews_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -27,6 +28,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/wallet/topup', builder: (_, _) => const TopUpScreen()),
       GoRoute(path: '/wallet/transfer', builder: (_, _) => const TransferScreen()),
       GoRoute(path: '/wallet/payment-methods', builder: (_, _) => const PaymentMethodsScreen()),
+      GoRoute(path: '/profile/reviews', builder: (_, _) => const RatingReviewsScreen()),
     ],
   );
 });

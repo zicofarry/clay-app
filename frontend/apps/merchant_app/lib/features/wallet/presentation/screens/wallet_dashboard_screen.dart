@@ -65,7 +65,7 @@ class _WalletDashboardScreenState extends ConsumerState<WalletDashboardScreen>
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 240,
               pinned: true,
               backgroundColor: ClayColors.primaryDark,
               elevation: 0,
@@ -149,6 +149,7 @@ class _WalletHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top + 50;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -157,90 +158,94 @@ class _WalletHeaderCard extends StatelessWidget {
           colors: [Color(0xFF3B82F6), Color(0xFF6FA7E6), Color(0xFF97C5F5)],
         ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 64, 24, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isActive ? Icons.check_circle : Icons.cancel,
-                          size: 12,
-                          color: isActive ? Colors.greenAccent : Colors.redAccent,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isActive ? 'Aktif' : 'Non-aktif',
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.account_balance_wallet, color: Colors.white70, size: 20),
-                  const SizedBox(width: 6),
-                  const Text('Clay Wallet', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Saldo Anda',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-              const SizedBox(height: 4),
-              isLoading
-                  ? const SizedBox(
-                      height: 38,
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, topPadding, 20, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Saldo Anda',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
-                    )
-                  : Text(
-                      formatCurrency(balance),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+                      const SizedBox(height: 4),
+                      isLoading
+                          ? const SizedBox(
+                              height: 38,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                ),
+                              ),
+                            )
+                          : Text(
+                              formatCurrency(balance),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isActive ? Icons.check_circle : Icons.cancel,
+                        size: 12,
+                        color: isActive ? Colors.greenAccent : Colors.redAccent,
                       ),
-                    ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.add_circle_outline,
-                      label: 'Top Up',
-                      onTap: onTopUp,
-                    ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isActive ? 'Aktif' : 'Non-aktif',
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ActionButton(
-                      icon: Icons.send_outlined,
-                      label: 'Transfer',
-                      onTap: onTransfer,
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.add_circle_outline,
+                    label: 'Top Up',
+                    onTap: onTopUp,
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.send_outlined,
+                    label: 'Transfer',
+                    onTap: onTransfer,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
