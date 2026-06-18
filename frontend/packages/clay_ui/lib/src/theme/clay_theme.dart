@@ -39,7 +39,7 @@ class ClayTheme {
       cardTheme: const CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
+          borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -48,7 +48,7 @@ class ClayTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
           textStyle: const TextStyle(
             fontSize: 16,
@@ -67,15 +67,15 @@ class ClayTheme {
         prefixIconColor: isDark ? const Color(0xFF6B7280) : ClayColors.textSecondary,
         suffixIconColor: isDark ? const Color(0xFF6B7280) : ClayColors.textSecondary,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: isDark ? const Color(0xFF333333) : ClayColors.divider),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: isDark ? const Color(0xFF333333) : ClayColors.divider),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: ClayColors.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(

@@ -436,7 +436,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: ClayColors.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: ClayColors.divider),
                   ),
                   child: Row(
@@ -455,10 +455,30 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                             if (m?['slug'] != null && m!['slug'].toString().isNotEmpty)
                               Text('@${m['slug']}', style: const TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
                             const SizedBox(height: 4),
-                            Row(children: [
-                              const Icon(Icons.star, size: 14, color: Colors.amber),
-                              Text(' ${(m?['rating'] as num?)?.toStringAsFixed(1) ?? '0.0'} • ${m?['total_orders'] ?? 0} ulasan'),
-                            ]),
+                            InkWell(
+                              onTap: () => context.push('/profile/reviews'),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.star, size: 14, color: Colors.amber),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${(m?['rating'] as num?)?.toStringAsFixed(1) ?? '0.0'} • ${m?['total_orders'] ?? 0} ulasan',
+                                      style: const TextStyle(
+                                        color: ClayColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_forward_ios, size: 10, color: ClayColors.primary),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -518,6 +538,66 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                           ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: ClayColors.border),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.star_outline, color: Colors.amber, size: 22),
+                    ),
+                    title: const Text(
+                      'Ulasan & Rating Toko',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    subtitle: const Text(
+                      'Lihat statistik rating, masukan, dan ulasan pelanggan',
+                      style: TextStyle(color: ClayColors.textSecondary, fontSize: 12),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: ClayColors.textSecondary),
+                    onTap: () => context.push('/profile/reviews'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: ClayColors.border),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: ClayColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.devices_other_outlined, color: ClayColors.primaryDark, size: 22),
+                    ),
+                    title: const Text(
+                      'Sesi Login Aktif',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    subtitle: const Text(
+                      'Kelola perangkat dan sesi masuk yang terhubung',
+                      style: TextStyle(color: ClayColors.textSecondary, fontSize: 12),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: ClayColors.textSecondary),
+                    onTap: () => context.push('/profile/sessions'),
                   ),
                 ),
                 const SizedBox(height: 16),
