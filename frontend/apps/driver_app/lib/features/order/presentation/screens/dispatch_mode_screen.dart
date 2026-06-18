@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../../../../shared/widgets.dart';
 import '../../../home/presentation/screens/driver_home_screen.dart';
+import '../../../auth/presentation/providers/driver_auth_provider.dart';
 import '../providers/order_provider.dart';
 
 final selectedDispatchModeProvider = StateProvider<String?>((ref) => null);
@@ -29,8 +30,10 @@ class _DispatchModeScreenState extends ConsumerState<DispatchModeScreen> {
     setState(() => _isGoingOnline = true);
     try {
       final repo = ref.read(orderRepositoryProvider);
+      final driver = ref.read(driverAuthProvider).driver;
+      final vehicleType = driver?['vehicle_type']?.toString() ?? '';
       await repo.setDispatchMode(mode);
-      await repo.goOnline(serviceType: mode);
+      await repo.goOnline(serviceType: mode, vehicleType: vehicleType);
       ref.read(isOnlineProvider.notifier).state = true;
       if (mounted) context.go('/home');
     } catch (e) {

@@ -154,7 +154,7 @@ class FoodNotifier extends StateNotifier<FoodState> {
     for (final entry in state.cart.entries) {
       final item = state.menuItems.firstWhere(
         (i) => i['id'] == entry.key,
-        orElse: () => {'price': 0},
+        orElse: () => <String, dynamic>{'price': 0},
       );
       total += (item['price'] as int) * entry.value;
     }

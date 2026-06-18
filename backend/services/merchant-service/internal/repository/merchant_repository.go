@@ -15,6 +15,7 @@ type MerchantRepositoryInterface interface {
 	Create(ctx context.Context, m *model.Merchant) error
 	GetByID(ctx context.Context, id string) (*model.Merchant, error)
 	GetByUserID(ctx context.Context, userID string) (*model.Merchant, error)
+	ListActive(ctx context.Context) ([]*model.Merchant, error)
 	Update(ctx context.Context, id string, req model.UpdateMerchantRequest) (*model.Merchant, error)
 	UpdateStatus(ctx context.Context, id string, status model.MerchantStatus) (*model.Merchant, error)
 	ExistsByUserID(ctx context.Context, userID string) (bool, error)
@@ -66,16 +67,107 @@ func (r *MerchantRepository) GetByID(ctx context.Context, id string) (*model.Mer
 		       rating, total_reviews, created_at, updated_at
 		FROM merchants WHERE id = $1`
 	var m model.Merchant
+	var desc, email, phone, addr, city, logo, banner sql.NullString
+	var lat, lng sql.NullFloat64
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&m.ID, &m.UserID, &m.Name, &m.Description, &m.Category, &m.Status,
-		&m.PhoneNumber, &m.Email, &m.Address, &m.City, &m.Lat, &m.Lng,
-		&m.LogoURL, &m.BannerURL, &m.MinOrderCents, &m.EstDeliveryMin,
+		&m.ID, &m.UserID, &m.Name, &desc, &m.Category, &m.Status,
+		&phone, &email, &addr, &city, &lat, &lng,
+		&logo, &banner, &m.MinOrderCents, &m.EstDeliveryMin,
 		&m.Rating, &m.TotalReviews, &m.CreatedAt, &m.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
-	return &m, err
+	if err != nil {
+		return nil, err
+	}
+	if desc.Valid {
+		m.Description = &desc.String
+	}
+	if email.Valid {
+		m.Email = &email.String
+	}
+	if phone.Valid {
+		m.PhoneNumber = phone.String
+	}
+	if addr.Valid {
+		m.Address = addr.String
+	}
+	if city.Valid {
+		m.City = city.String
+	}
+	if lat.Valid {
+		m.Lat = lat.Float64
+	}
+	if lng.Valid {
+		m.Lng = lng.Float64
+	}
+	if logo.Valid {
+		m.LogoURL = &logo.String
+	}
+	if banner.Valid {
+		m.BannerURL = &banner.String
+	}
+	return &m, nil
+}
+
+func (r *MerchantRepository) ListActive(ctx context.Context) ([]*model.Merchant, error) {
+	query := `
+		SELECT id, user_id, name, description, category, status,
+		       phone_number, email, address, city, lat, lng,
+		       logo_url, banner_url, min_order_cents, est_delivery_min,
+		       rating, total_reviews, created_at, updated_at
+		FROM merchants WHERE status = 'active'
+		ORDER BY rating DESC, total_reviews DESC`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var merchants []*model.Merchant
+	for rows.Next() {
+		var m model.Merchant
+		var desc, email, phone, addr, city, logo, banner sql.NullString
+		var lat, lng sql.NullFloat64
+		if err := rows.Scan(
+			&m.ID, &m.UserID, &m.Name, &desc, &m.Category, &m.Status,
+			&phone, &email, &addr, &city, &lat, &lng,
+			&logo, &banner, &m.MinOrderCents, &m.EstDeliveryMin,
+			&m.Rating, &m.TotalReviews, &m.CreatedAt, &m.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		if desc.Valid {
+			m.Description = &desc.String
+		}
+		if email.Valid {
+			m.Email = &email.String
+		}
+		if phone.Valid {
+			m.PhoneNumber = phone.String
+		}
+		if addr.Valid {
+			m.Address = addr.String
+		}
+		if city.Valid {
+			m.City = city.String
+		}
+		if lat.Valid {
+			m.Lat = lat.Float64
+		}
+		if lng.Valid {
+			m.Lng = lng.Float64
+		}
+		if logo.Valid {
+			m.LogoURL = &logo.String
+		}
+		if banner.Valid {
+			m.BannerURL = &banner.String
+		}
+		merchants = append(merchants, &m)
+	}
+	return merchants, rows.Err()
 }
 
 func (r *MerchantRepository) GetByUserID(ctx context.Context, userID string) (*model.Merchant, error) {
@@ -86,16 +178,48 @@ func (r *MerchantRepository) GetByUserID(ctx context.Context, userID string) (*m
 		       rating, total_reviews, created_at, updated_at
 		FROM merchants WHERE user_id = $1`
 	var m model.Merchant
+	var desc, email, phone, addr, city, logo, banner sql.NullString
+	var lat, lng sql.NullFloat64
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
-		&m.ID, &m.UserID, &m.Name, &m.Description, &m.Category, &m.Status,
-		&m.PhoneNumber, &m.Email, &m.Address, &m.City, &m.Lat, &m.Lng,
-		&m.LogoURL, &m.BannerURL, &m.MinOrderCents, &m.EstDeliveryMin,
+		&m.ID, &m.UserID, &m.Name, &desc, &m.Category, &m.Status,
+		&phone, &email, &addr, &city, &lat, &lng,
+		&logo, &banner, &m.MinOrderCents, &m.EstDeliveryMin,
 		&m.Rating, &m.TotalReviews, &m.CreatedAt, &m.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
-	return &m, err
+	if err != nil {
+		return nil, err
+	}
+	if desc.Valid {
+		m.Description = &desc.String
+	}
+	if email.Valid {
+		m.Email = &email.String
+	}
+	if phone.Valid {
+		m.PhoneNumber = phone.String
+	}
+	if addr.Valid {
+		m.Address = addr.String
+	}
+	if city.Valid {
+		m.City = city.String
+	}
+	if lat.Valid {
+		m.Lat = lat.Float64
+	}
+	if lng.Valid {
+		m.Lng = lng.Float64
+	}
+	if logo.Valid {
+		m.LogoURL = &logo.String
+	}
+	if banner.Valid {
+		m.BannerURL = &banner.String
+	}
+	return &m, nil
 }
 
 func (r *MerchantRepository) Update(ctx context.Context, id string, req model.UpdateMerchantRequest) (*model.Merchant, error) {

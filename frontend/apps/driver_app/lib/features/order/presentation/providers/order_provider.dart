@@ -69,15 +69,37 @@ class OrderNotifier extends StateNotifier<OrderState> {
     if (state.incomingOrder == null) return;
     final orderId = state.incomingOrder!['id']?.toString();
     if (orderId == null) return;
+    final isFood = state.incomingOrder!['service_type'] == 'food';
+
     await _repo.respondToOffer(orderId, action: 'accept');
-    final result = await _repo.acceptOrder(orderId);
-    final merged = Map<String, dynamic>.from(state.incomingOrder!);
-    merged.addAll(result);
-    state = state.copyWith(
-      activeOrder: merged,
-      otpCode: result['otp_code']?.toString(),
-      clearIncoming: true,
-    );
+
+    if (isFood) {
+      // For food orders, use food-specific accept
+      try {
+        final result = await _repo.foodAccept(orderId);
+        final merged = Map<String, dynamic>.from(state.incomingOrder!);
+        merged.addAll(result);
+        state = state.copyWith(
+          activeOrder: merged,
+          clearIncoming: true,
+        );
+      } catch (_) {
+        // If food accept fails, still set as active (driver responded)
+        state = state.copyWith(
+          activeOrder: state.incomingOrder,
+          clearIncoming: true,
+        );
+      }
+    } else {
+      final result = await _repo.acceptOrder(orderId);
+      final merged = Map<String, dynamic>.from(state.incomingOrder!);
+      merged.addAll(result);
+      state = state.copyWith(
+        activeOrder: merged,
+        otpCode: result['otp_code']?.toString(),
+        clearIncoming: true,
+      );
+    }
   }
 
   Future<void> rejectOrder({String? reason}) async {

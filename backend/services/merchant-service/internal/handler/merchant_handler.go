@@ -63,6 +63,21 @@ func (h *MerchantHandler) GetMyMerchant(w http.ResponseWriter, r *http.Request) 
 	response.Success(w, http.StatusOK, m)
 }
 
+// ListMerchants handles GET /merchants.
+func (h *MerchantHandler) ListMerchants(w http.ResponseWriter, r *http.Request) {
+	merchants, err := h.svc.ListActiveMerchants(r.Context())
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+	if merchants == nil {
+		merchants = []*model.Merchant{}
+	}
+	response.Success(w, http.StatusOK, map[string]interface{}{
+		"merchants": merchants,
+	})
+}
+
 // UpdateMyMerchant handles PUT /merchants/me.
 func (h *MerchantHandler) UpdateMyMerchant(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())

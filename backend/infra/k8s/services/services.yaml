@@ -267,6 +267,8 @@ spec:
               value: kafka:9092
             - name: KAFKA_GROUP
               value: clay-food-order-service
+            - name: MATCHING_SERVICE_URL
+              value: http://clay-matching-service:8080
           readinessProbe:
             httpGet:
               path: /health

@@ -21,6 +21,16 @@ class DriverOrderRepository {
       final data = response.data as Map<String, dynamic>;
       return data['data'] as Map<String, dynamic>? ?? data;
     } on DioException catch (e) {
+      // If ride order not found, try food order endpoint
+      if (e.response?.statusCode == 404) {
+        try {
+          final response = await _api.dio.get('/food/orders/$orderId');
+          final data = response.data as Map<String, dynamic>;
+          final order = data['data'] as Map<String, dynamic>? ?? data;
+          order['service_type'] = 'food';
+          return order;
+        } catch (_) {}
+      }
       throw _handleError(e);
     }
   }
@@ -62,11 +72,16 @@ class DriverOrderRepository {
     }
   }
 
-  Future<void> goOnline({String serviceType = 'ride', double lat = -6.9147, double lng = 107.6098}) async {
+  Future<void> goOnline({String serviceType = 'ride', String? vehicleType, double lat = -6.9147, double lng = 107.6098}) async {
     try {
       await _api.dio.post(
         ApiEndpoints.driverOnline,
-        data: {'service_type': serviceType, 'lat': lat, 'lng': lng},
+        data: {
+          'service_type': serviceType,
+          if (vehicleType != null && vehicleType.isNotEmpty) 'vehicle_type': vehicleType,
+          'lat': lat,
+          'lng': lng,
+        },
       );
     } on DioException catch (e) {
       throw _handleError(e);
@@ -118,6 +133,16 @@ class DriverOrderRepository {
   Future<Map<String, dynamic>> foodPickup(String orderId) async {
     try {
       final response = await _api.dio.post('/food/driver/orders/$orderId/pickup');
+      final data = response.data as Map<String, dynamic>;
+      return data['data'] as Map<String, dynamic>? ?? data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> foodAccept(String orderId) async {
+    try {
+      final response = await _api.dio.post('/food/driver/orders/$orderId/accept');
       final data = response.data as Map<String, dynamic>;
       return data['data'] as Map<String, dynamic>? ?? data;
     } on DioException catch (e) {

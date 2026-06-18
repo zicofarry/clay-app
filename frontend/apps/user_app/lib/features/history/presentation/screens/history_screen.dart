@@ -118,10 +118,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
     }
 
     final order = state.activeOrder!;
-    final orderId = order['order_id'] ?? '';
-    final status = order['status'] ?? 'pending';
+    final orderId = order['order_id']?.toString() ?? '';
+    final status = order['status']?.toString() ?? 'pending';
     final total = order['total'] ?? 0;
-    final address = order['address'] ?? '';
+    final address = order['address']?.toString() ?? '';
+    final merchantId = order['merchant_id']?.toString() ?? '';
+    final shortId = orderId.length > 8 ? '#${orderId.substring(0, 8)}' : orderId;
 
     // Map status to visual styles
     Color statusColor = ClayColors.warningDark;
@@ -194,22 +196,37 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> with SingleTicker
             Divider(color: _borderColor),
             const SizedBox(height: 12),
 
-            // Order ID & Price
+            // Restaurant & Price
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('ID PESANAN', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 2),
-                    Text(orderId, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('RESTORAN', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(
+                        merchantId.isNotEmpty
+                            ? (ref.read(foodStateProvider).merchants.firstWhere(
+                                (m) => m['id'] == merchantId,
+                                orElse: () => <String, dynamic>{'name': 'ClayFood Resto'},
+                              )['name'] as String? ?? 'ClayFood Resto')
+                            : 'ClayFood Order',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: _textPrimary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(shortId, style: TextStyle(color: _textSecondary, fontSize: 11)),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('TOTAL HARGA', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Text('TOTAL', style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
                     Text('Rp $total', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: ClayColors.primary)),
                   ],

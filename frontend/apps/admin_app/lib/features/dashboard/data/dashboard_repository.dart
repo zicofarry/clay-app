@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../../../core/api_client.dart';
+import '../../../core/api_endpoints.dart';
 
 class DashboardStats {
   final int totalUsers;
@@ -15,32 +17,22 @@ class DashboardStats {
 }
 
 class DashboardRepository {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://10.0.2.2:8080/api/v1',
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 5),
-  ));
+  final AdminApiClient _client = AdminApiClient.instance;
 
-  Future<DashboardStats> getStats(String token) async {
-    final options = Options(headers: {'Authorization': 'Bearer $token'});
-
+  Future<DashboardStats> getStats() async {
     int totalUsers = 0;
     int totalDrivers = 0;
     int totalMerchants = 0;
     int totalTransactions = 0;
 
     await Future.wait([
-      _dio.get('/users', options: options).then((res) {
-        totalUsers = _extractTotal(res.data);
-      }).catchError((_) {}),
-      _dio.get('/drivers', options: options).then((res) {
-        totalDrivers = _extractTotal(res.data);
-      }).catchError((_) {}),
-      _dio.get('/merchants', options: options).then((res) {
+      _client.dio.get(ApiEndpoint.merchants).then((res) {
         totalMerchants = _extractTotal(res.data);
       }).catchError((_) {}),
-      _dio.get('/history/transactions', options: options).then((res) {
+      _client.dio.get(ApiEndpoint.historyTransactions).then((res) {
         totalTransactions = _extractTotal(res.data);
+      }).catchError((_) {}),
+      _client.dio.get(ApiEndpoint.historyOrderStats).then((res) {
       }).catchError((_) {}),
     ]);
 
@@ -57,13 +49,11 @@ class DashboardRepository {
     if (data['meta'] != null && data['meta']['total'] != null) {
       return data['meta']['total'] as int;
     }
-    if (data['data'] != null) {
-      if (data['data'] is List) {
-        return (data['data'] as List).length;
-      }
-      if (data['data']['total'] != null) {
-         return data['data']['total'] as int;
-      }
+    if (data['data'] is List) {
+      return (data['data'] as List).length;
+    }
+    if (data['data'] is Map && data['data']['total'] != null) {
+      return data['data']['total'] as int;
     }
     return 0;
   }

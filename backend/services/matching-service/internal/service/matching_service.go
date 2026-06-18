@@ -3,7 +3,9 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"math"
@@ -58,6 +60,17 @@ func vehicleTypeForService(serviceType string) string {
 		return "motor"
 	default:
 		return "motor"
+	}
+}
+
+// vehicleTypesForService returns all vehicle type buckets to search for a given service.
+// Food and delivery can be served by both motor and car drivers.
+func vehicleTypesForService(serviceType string) []string {
+	switch serviceType {
+	case "food", "delivery":
+		return []string{"motor", "car"}
+	default:
+		return []string{vehicleTypeForService(serviceType)}
 	}
 }
 
@@ -162,6 +175,7 @@ func computeScore(in ScoreInputs, w ScoringWeights) float64 {
 
 type GoOnlineRequest struct {
 	ServiceType string  `json:"service_type"`
+	VehicleType string  `json:"vehicle_type,omitempty"`
 	Lat         float64 `json:"lat"`
 	Lng         float64 `json:"lng"`
 }
@@ -365,7 +379,10 @@ func (s *MatchingService) GoOnline(ctx context.Context, driverID string, req *Go
 		return nil, ErrDriverHasActive
 	}
 
-	vehicleType := vehicleTypeForService(req.ServiceType)
+	vehicleType := req.VehicleType
+	if vehicleType == "" {
+		vehicleType = vehicleTypeForService(req.ServiceType)
+	}
 	now := s.now()
 	st := &repository.DriverStatus{
 		DriverID:    driverID,
@@ -543,7 +560,25 @@ func (s *MatchingService) Respond(ctx context.Context, driverID string, req *Off
 			slog.String("order_id", req.OrderID),
 			slog.String("driver_id", driverID),
 		)
-		// TODO: emit Kafka `matching.driver_found`
+		// Call the callback URL to assign driver to the order
+		if sess.CallbackURL != "" {
+			go func() {
+				payload := map[string]string{"driver_id": driverID}
+				body, _ := json.Marshal(payload)
+				client := &http.Client{Timeout: 5 * time.Second}
+				resp, err := client.Post(sess.CallbackURL, "application/json", bytes.NewReader(body))
+				if err != nil {
+					s.logger.Error("callback failed", slog.Any("error", err), slog.String("url", sess.CallbackURL))
+					return
+				}
+				defer resp.Body.Close()
+				if resp.StatusCode >= 300 {
+					s.logger.Error("callback returned error", slog.Int("status", resp.StatusCode))
+				} else {
+					s.logger.Info("driver assigned via callback", slog.String("order_id", req.OrderID), slog.String("driver_id", driverID))
+				}
+			}()
+		}
 		return nil
 
 	case "reject":
@@ -1073,16 +1108,25 @@ func (s *MatchingService) scoreCandidates(
 	limit int,
 	excludeOrderID string,
 ) ([]scoredCandidate, error) {
-	vehicleType := vehicleTypeForService(serviceType)
-	geoDrivers, err := s.repo.NearbyDrivers(ctx, vehicleType, lat, lng, radiusKm, limit*2)
-	if err != nil {
-		return nil, err
+	vehicleTypes := vehicleTypesForService(serviceType)
+	var allGeoDrivers []repository.GeoDriver
+	for _, vt := range vehicleTypes {
+		drivers, err := s.repo.NearbyDrivers(ctx, vt, lat, lng, radiusKm, limit*2)
+		if err != nil {
+			return nil, err
+		}
+		allGeoDrivers = append(allGeoDrivers, drivers...)
 	}
 
-	out := make([]scoredCandidate, 0, len(geoDrivers))
+	// Sort all candidates by distance before processing
+	sort.SliceStable(allGeoDrivers, func(i, j int) bool {
+		return allGeoDrivers[i].DistanceKm < allGeoDrivers[j].DistanceKm
+	})
+
+	out := make([]scoredCandidate, 0, len(allGeoDrivers))
 	today := dateOnly(s.now())
 
-	for _, d := range geoDrivers {
+	for _, d := range allGeoDrivers {
 		// Filter: must be online, not busy, not have an active order
 		st, err := s.repo.GetDriverStatus(ctx, d.DriverID)
 		if err != nil || st == nil || st.Status != "online" {
