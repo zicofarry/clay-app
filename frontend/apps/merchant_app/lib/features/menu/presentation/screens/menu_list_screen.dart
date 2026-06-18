@@ -149,9 +149,36 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
                                     color: item.available ? Colors.green : Colors.grey,
                                   ),
                                 ),
-                                title: Text(
-                                  item.name,
-                                  style: item.available ? null : const TextStyle(color: Colors.grey),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        item.name,
+                                        style: item.available
+                                            ? null
+                                            : const TextStyle(
+                                                color: Colors.grey,
+                                                decoration: TextDecoration.lineThrough,
+                                              ),
+                                      ),
+                                    ),
+                                    if (!item.available)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'HABIS',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 subtitle: Text('${item.category} • Rp ${item.price}'),
                                 trailing: PopupMenuButton(
@@ -159,7 +186,7 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
                                     PopupMenuItem(value: 'edit', child: const Text('Edit')),
                                     PopupMenuItem(
                                       value: 'toggle',
-                                      child: Text(item.available ? 'Nonaktifkan' : 'Aktifkan'),
+                                      child: Text(item.available ? 'Tandai Stok Habis' : 'Tandai Stok Tersedia'),
                                     ),
                                     PopupMenuItem(
                                       value: 'delete',

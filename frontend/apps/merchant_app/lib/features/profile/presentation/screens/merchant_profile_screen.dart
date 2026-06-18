@@ -79,71 +79,6 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
     );
   }
 
-  void _editHours(int index, List<Map<String, dynamic>> hours, String merchantId) {
-    final h = hours[index];
-    final openC = TextEditingController(text: h['open']);
-    final closeC = TextEditingController(text: h['close']);
-    bool isClosed = h['closed'];
-    final formKey = GlobalKey<FormState>();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (modalCtx, setModalState) => SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(modalCtx).viewInsets.bottom + 16),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Jam Operasional - ${h['day']}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      const Text('Tutup Toko Hari Ini', style: TextStyle(fontSize: 16)),
-                      const Spacer(),
-                      Switch(
-                        value: isClosed,
-                        onChanged: (val) {
-                          setModalState(() => isClosed = val);
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (!isClosed) ...[
-                    Row(
-                      children: [
-                        Expanded(child: ClayTextField(label: 'Jam Buka', hint: '09:00', controller: openC)),
-                        const SizedBox(width: 16),
-                        Expanded(child: ClayTextField(label: 'Jam Tutup', hint: '21:00', controller: closeC)),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  ClayButton(label: 'Simpan', onPressed: () {
-                    final updatedHours = List<Map<String, dynamic>>.from(hours);
-                    updatedHours[index] = {
-                      'day': h['day'],
-                      'open': openC.text.trim(),
-                      'close': closeC.text.trim(),
-                      'closed': isClosed,
-                    };
-                    ref.read(merchantProfileProvider.notifier).updateOperatingHours(merchantId, updatedHours);
-                    Navigator.pop(context);
-                  }),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _addBankAccount(String merchantId) {
     final bankC = TextEditingController();
     final numberC = TextEditingController();
@@ -211,7 +146,6 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
   Widget build(BuildContext context) {
     final m = ref.watch(merchantAuthProvider).merchant;
     final profileState = ref.watch(merchantProfileProvider);
-    final hours = profileState.hours;
     final banks = profileState.banks;
 
     return Scaffold(
@@ -268,50 +202,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                     ListTile(leading: const Icon(Icons.location_on), title: Text(m?['address'] ?? ''), subtitle: const Text('Alamat')),
                   ]),
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: const [
-                    Text('Jam Operasional', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Spacer(),
-                    Icon(Icons.access_time, color: Colors.grey, size: 20),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                hours.isEmpty
-                    ? const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Center(child: Text('Tidak ada data jam operasional')),
-                        ),
-                      )
-                    : Card(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            children: List.generate(hours.length, (i) {
-                              final h = hours[i];
-                              return ListTile(
-                                title: Text(h['day'], style: const TextStyle(fontWeight: FontWeight.w500)),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      h['closed'] ? 'Tutup' : '${h['open']} - ${h['close']}',
-                                      style: TextStyle(
-                                        color: h['closed'] ? Colors.red : Colors.black87,
-                                        fontWeight: h['closed'] ? FontWeight.bold : FontWeight.normal,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-                                  ],
-                                ),
-                                onTap: () => _editHours(i, hours, m!['id']),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
+
                 const SizedBox(height: 24),
                 Row(
                   children: [
