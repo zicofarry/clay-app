@@ -9,12 +9,14 @@ import (
 // Profile DTOs
 type CreateProfileRequest struct {
 	FullName  string `json:"full_name"`
+	Phone     string `json:"phone,omitempty"`
 	BirthDate string `json:"birth_date,omitempty"` // YYYY-MM-DD
 	Gender    string `json:"gender,omitempty"`
 }
 
 type UpdateProfileRequest struct {
 	FullName  string `json:"full_name,omitempty"`
+	Phone     string `json:"phone,omitempty"`
 	BirthDate string `json:"birth_date,omitempty"`
 	Gender    string `json:"gender,omitempty"`
 }
@@ -23,6 +25,7 @@ type ProfileResponse struct {
 	ID           uuid.UUID `json:"id"`
 	UserID       uuid.UUID `json:"user_id"`
 	FullName     string    `json:"full_name"`
+	Phone        string    `json:"phone"`
 	AvatarURL    string    `json:"avatar_url"`
 	BirthDate    string    `json:"birth_date"`
 	Gender       string    `json:"gender"`

@@ -6,20 +6,27 @@ class MerchantAuthRepository {
 
   MerchantAuthRepository(this._api);
 
-  Future<Map<String, dynamic>> login(String phone, String password) async {
-    // Normalize phone number to match the backend expectation
-    var normalizedPhone = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    if (normalizedPhone.startsWith('0')) {
-      normalizedPhone = '+62${normalizedPhone.substring(1)}';
-    } else if (!normalizedPhone.startsWith('+')) {
-      normalizedPhone = '+62$normalizedPhone';
+  Future<Map<String, dynamic>> login(String identifier, String password) async {
+    var finalIdentifier = identifier.trim();
+
+    // Check if the identifier is a phone number (only contains digits, +, spaces, hyphens, parentheses)
+    final isPhone = RegExp(r'^\+?[0-9\s\-\(\)]+$').hasMatch(finalIdentifier);
+    if (isPhone) {
+      // Normalize phone number to match the backend expectation
+      var normalizedPhone = finalIdentifier.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+      if (normalizedPhone.startsWith('0')) {
+        normalizedPhone = '+62${normalizedPhone.substring(1)}';
+      } else if (!normalizedPhone.startsWith('+')) {
+        normalizedPhone = '+62$normalizedPhone';
+      }
+      finalIdentifier = normalizedPhone;
     }
 
     try {
       final response = await _api.dio.post(
         ApiEndpoints.login,
         data: {
-          'identifier': normalizedPhone,
+          'identifier': finalIdentifier,
           'password': password,
         },
       );
@@ -45,7 +52,7 @@ class MerchantAuthRepository {
         'user_id': merchantData['user_id'],
         'name': merchantData['name'],
         'owner': authResponse.user.fullName.isNotEmpty ? authResponse.user.fullName : 'Pemilik Toko',
-        'phone': merchantData['phone_number'] ?? normalizedPhone,
+        'phone': merchantData['phone_number'] ?? finalIdentifier,
         'category': merchantData['category'] ?? '',
         'address': merchantData['address'] ?? '',
         'rating': (merchantData['rating'] as num?)?.toDouble() ?? 4.5,

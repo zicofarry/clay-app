@@ -51,8 +51,13 @@ func main() {
 	if uploadsDir == "" {
 		uploadsDir = "./data/uploads"
 	}
+	authServiceURL := os.Getenv("AUTH_SERVICE_URL")
+	if authServiceURL == "" {
+		authServiceURL = "http://clay-auth-service:8080"
+	}
 	userHandler := handler.NewUserHandler(userSvc,
 		handler.WithUploadsDir(uploadsDir),
+		handler.WithAuthServiceURL(authServiceURL),
 	)
 
 	// ── Router ───────────────────────────────────────────────────────────

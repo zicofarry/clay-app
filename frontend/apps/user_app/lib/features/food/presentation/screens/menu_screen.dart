@@ -406,6 +406,17 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
     final notifier = ref.read(foodStateProvider.notifier);
     final merchantName = GoRouterState.of(context).extra as String? ?? 'Menu';
 
+    ref.listen(foodStateProvider, (_, state) {
+      if (state.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: ClayColors.error,
+          ),
+        );
+      }
+    });
+
     final merchant = state.merchants.firstWhere(
       (m) => m['id'] == widget.merchantId,
       orElse: () => {
@@ -437,7 +448,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: ClayColors.textPrimary),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: ClayColors.textPrimary, size: 20),
+          onPressed: () => context.pop(),
+        ),
         title: Text(
           merchant['name'],
           style: const TextStyle(
@@ -776,6 +790,58 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               ),
             )
           : null,
+    );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, WidgetRef ref, String error, String merchantId) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: ClayColors.error.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.wifi_off_rounded,
+                size: 64,
+                color: ClayColors.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Gagal Memuat Menu',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ClayColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pastikan server backend Anda sudah berjalan atau periksa koneksi internet Anda.\n\nDetail: $error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: ClayColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 180,
+              child: ClayButton(
+                label: 'Coba Lagi',
+                onPressed: () => ref.read(foodStateProvider.notifier).loadMenuItems(merchantId),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

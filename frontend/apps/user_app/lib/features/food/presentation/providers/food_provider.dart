@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
-import '../../data/mock_food_repository.dart';
+import '../../data/food_repository.dart';
 
-final mockFoodRepoProvider = Provider<MockFoodRepository>((ref) => MockFoodRepository());
+final foodRepositoryProvider = Provider<FoodRepository>((ref) => FoodRepository());
 
 final foodStateProvider = StateNotifierProvider<FoodNotifier, FoodState>((ref) {
-  return FoodNotifier(ref.watch(mockFoodRepoProvider));
+  return FoodNotifier(ref.watch(foodRepositoryProvider));
 });
 
 class FoodState {
@@ -65,7 +65,7 @@ class FoodState {
 }
 
 class FoodNotifier extends StateNotifier<FoodState> {
-  final MockFoodRepository _repo;
+  final FoodRepository _repo;
 
   FoodNotifier(this._repo) : super(const FoodState());
 
@@ -92,15 +92,27 @@ class FoodNotifier extends StateNotifier<FoodState> {
   }
 
   Future<void> loadMerchants() async {
-    state = state.copyWith(isLoading: true);
-    final list = await _repo.getMerchants();
-    state = state.copyWith(isLoading: false, merchants: list);
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final list = await _repo.getMerchants();
+      state = state.copyWith(isLoading: false, merchants: list);
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
   Future<void> loadMenuItems(String merchantId) async {
-    state = state.copyWith(isLoading: true);
-    final items = await _repo.getMenuItems(merchantId);
-    state = state.copyWith(isLoading: false, menuItems: items);
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final items = await _repo.getMenuItems(merchantId);
+      state = state.copyWith(isLoading: false, menuItems: items);
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
   }
 
   void addToCart(String itemId, int quantity) {
@@ -193,5 +205,55 @@ class FoodNotifier extends StateNotifier<FoodState> {
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
+  }
+
+  Future<bool> reorder(String orderId, String merchantId, String merchantName) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final details = await _repo.getOrderDetails(orderId);
+      if (details != null) {
+        selectMerchant(merchantId, merchantName);
+        clearCart();
+        
+        final items = details['items'] as List?;
+        if (items != null) {
+          for (final item in items) {
+            final itemId = item['menu_item_id']?.toString() ?? item['id']?.toString() ?? '';
+            final qty = item['quantity'] as int? ?? 1;
+            if (itemId.isNotEmpty) {
+              addToCart(itemId, qty);
+            }
+          }
+        }
+        state = state.copyWith(isLoading: false);
+        return true;
+      }
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+    state = state.copyWith(isLoading: false);
+    return false;
+  }
+
+  Future<bool> submitRating({
+    required String orderId,
+    required int driverRating,
+    required int merchantRating,
+    required String comment,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repo.submitRating(orderId, driverRating, merchantRating, comment);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+    state = state.copyWith(isLoading: false);
+    return false;
   }
 }

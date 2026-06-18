@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -10,11 +12,12 @@ import (
 )
 
 type ChatHandler struct {
-	svc service.ChatServiceInterface
+	svc              service.ChatServiceInterface
+	userServiceURL   string
 }
 
-func NewChatHandler(svc service.ChatServiceInterface) *ChatHandler {
-	return &ChatHandler{svc: svc}
+func NewChatHandler(svc service.ChatServiceInterface, userServiceURL string) *ChatHandler {
+	return &ChatHandler{svc: svc, userServiceURL: userServiceURL}
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -197,6 +200,70 @@ func (h *ChatHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {
 			"room_id":      roomID,
 			"unread_count": count,
 		},
+	})
+}
+
+// ── Direct Chat ──────────────────────────────────────────────────────────
+
+func (h *ChatHandler) CreateDirectRoom(w http.ResponseWriter, r *http.Request) {
+	userID := getUserID(r)
+
+	var req struct {
+		RecipientPhone string `json:"recipient_phone"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RecipientPhone == "" {
+		response.Error(w, http.StatusBadRequest, "INVALID_PAYLOAD", "recipient_phone is required")
+		return
+	}
+
+	lookupBody, _ := json.Marshal(map[string]string{"phone": req.RecipientPhone})
+	lookupResp, err := http.Post(
+		fmt.Sprintf("%s/internal/users/lookup-by-phone", h.userServiceURL),
+		"application/json",
+		bytes.NewReader(lookupBody),
+	)
+	if err != nil {
+		response.Error(w, http.StatusServiceUnavailable, "USER_SERVICE_UNAVAILABLE", "failed to reach user service")
+		return
+	}
+	defer lookupResp.Body.Close()
+
+	var lookup struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Found    bool   `json:"found"`
+			UserID   string `json:"user_id"`
+			FullName string `json:"full_name"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(lookupResp.Body).Decode(&lookup); err != nil {
+		response.Error(w, http.StatusInternalServerError, "USER_SERVICE_ERROR", "failed to parse user service response")
+		return
+	}
+
+	if !lookup.Data.Found {
+		response.Error(w, http.StatusNotFound, "USER_NOT_FOUND", "no user found with that phone number")
+		return
+	}
+
+	if lookup.Data.UserID == userID {
+		response.Error(w, http.StatusBadRequest, "INVALID_REQUEST", "cannot create a direct chat with yourself")
+		return
+	}
+
+	room, err := h.svc.CreateDirectRoom(r.Context(), userID, lookup.Data.UserID)
+	if err != nil {
+		if svcErr, ok := err.(*service.ServiceError); ok {
+			response.Error(w, svcErr.StatusCode, svcErr.Code, svcErr.Message)
+		} else {
+			response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		}
+		return
+	}
+
+	response.Success(w, http.StatusCreated, map[string]interface{}{
+		"data":           room,
+		"recipient_name": lookup.Data.FullName,
 	})
 }
 

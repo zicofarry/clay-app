@@ -46,7 +46,7 @@ class MockAuthRepository {
     await Future.delayed(const Duration(seconds: 1));
   }
 
-  Future<void> createProfile(String fullName) async {
+  Future<void> createProfile(String fullName, {String? phone}) async {
     await Future.delayed(const Duration(seconds: 1));
   }
 }

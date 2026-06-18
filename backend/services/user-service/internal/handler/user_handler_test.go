@@ -510,16 +510,29 @@ func TestUserHandler_GetDriverVerificationStatus(t *testing.T) {
 }
 
 func TestUserHandler_LookupUserByPhone(t *testing.T) {
-	handler, mockSvc, ctrl := newTestHandler(t)
+	ctrl := gomock.NewController(t)
+	mockSvc := mocks.NewMockUserServiceInterface(ctrl)
 	defer ctrl.Finish()
 
-	t.Run("success", func(t *testing.T) {
-		reqBody := models.LookupUserByPhoneRequest{
-			Phone: "+628123456789",
-		}
-		
-		mockSvc.EXPECT().LookupUserByPhone(gomock.Any(), reqBody.Phone).Return(&models.LookupUserByPhoneResponse{Found: true}, nil)
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"data": map[string]interface{}{
+				"found":   true,
+				"user_id": "550e8400-e29b-41d4-a716-446655440000",
+			},
+		})
+	}))
+	defer authServer.Close()
 
+	handler := NewUserHandler(mockSvc, WithAuthServiceURL(authServer.URL))
+
+	t.Run("success", func(t *testing.T) {
+		uid, _ := uuid.Parse("550e8400-e29b-41d4-a716-446655440000")
+		mockSvc.EXPECT().GetProfile(gomock.Any(), uid).Return(&models.ProfileResponse{FullName: "John Doe"}, nil)
+
+		reqBody := models.LookupUserByPhoneRequest{Phone: "+628123456789"}
 		body, _ := json.Marshal(reqBody)
 		req, _ := http.NewRequest("POST", "/internal/users/lookup-by-phone", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()

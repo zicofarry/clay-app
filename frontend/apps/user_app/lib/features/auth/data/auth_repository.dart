@@ -127,13 +127,17 @@ class AuthRepository {
     }
   }
 
-  Future<void> createProfile(String fullName) async {
+  Future<void> createProfile(String fullName, {String? phone}) async {
     try {
+      final data = <String, dynamic>{
+        'full_name': fullName,
+      };
+      if (phone != null && phone.isNotEmpty) {
+        data['phone'] = phone;
+      }
       await _api.dio.post(
         ApiEndpoints.getProfile,
-        data: {
-          'full_name': fullName,
-        },
+        data: data,
       );
     } on DioException catch (e) {
       throw _handleError(e);

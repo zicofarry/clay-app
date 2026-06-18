@@ -1,7 +1,7 @@
 import 'package:clay_shared/clay_shared.dart';
 import 'package:dio/dio.dart';
 
-class MockFoodRepository {
+class FoodRepository {
   Future<List<Map<String, dynamic>>> getMerchants() async {
     try {
       final response = await ClayApi.instance.dio.get('/search/merchants?q=');
@@ -25,20 +25,14 @@ class MockFoodRepository {
           }
         }
       }
+      throw AppException('Gagal mengambil data merchant dari server');
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['message']?.toString();
+      final message = errorMsg ?? (e.message ?? 'Unknown error');
+      throw AppException(message, statusCode: e.response?.statusCode);
     } catch (e) {
-      // Fail silent, fallback to mock
+      throw AppException(e.toString());
     }
-
-    // Fallback to mock data
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      {'id': '11111111-1111-1111-1111-111111111111', 'name': 'Bakso Merdeka', 'rating': 4.5, 'distance': '0.8 km', 'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500', 'category': 'Makanan', 'eta': '15-25 min'},
-      {'id': '22222222-2222-2222-2222-222222222222', 'name': 'Sate Pak Edi', 'rating': 4.8, 'distance': '1.2 km', 'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500', 'category': 'Sate', 'eta': '20-30 min'},
-      {'id': '33333333-3333-3333-3333-333333333333', 'name': 'Nasi Goreng Mawar', 'rating': 4.3, 'distance': '0.5 km', 'image': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500', 'category': 'Nasi', 'eta': '10-20 min'},
-      {'id': '44444444-4444-4444-4444-444444444444', 'name': 'Ayam Geprek Joe', 'rating': 4.6, 'distance': '1.5 km', 'image': 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500', 'category': 'Ayam', 'eta': '25-35 min'},
-      {'id': '55555555-5555-5555-5555-555555555555', 'name': 'Padang Sederhana', 'rating': 4.4, 'distance': '2.0 km', 'image': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500', 'category': 'Padang', 'eta': '20-30 min'},
-      {'id': '66666666-6666-6666-6666-666666666666', 'name': 'Es Teh Indonesia', 'rating': 4.7, 'distance': '0.3 km', 'image': 'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?w=500', 'category': 'Minuman', 'eta': '5-10 min'},
-    ];
   }
 
   Future<List<Map<String, dynamic>>> getMenuItems(String merchantId) async {
@@ -66,19 +60,14 @@ class MockFoodRepository {
           }).toList();
         }
       }
+      throw AppException('Gagal mengambil menu dari server');
+    } on DioException catch (e) {
+      final errorMsg = e.response?.data?['message']?.toString();
+      final message = errorMsg ?? (e.message ?? 'Unknown error');
+      throw AppException(message, statusCode: e.response?.statusCode);
     } catch (e) {
-      // Fail silent, fallback to mock
+      throw AppException(e.toString());
     }
-
-    // Fallback to mock data
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      {'id': 'I001', 'name': 'Bakso Besar', 'price': 18000, 'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500', 'desc': 'Bakso sapi ukuran besar dengan mie kuning dan kuah gurih', 'category': 'Makanan'},
-      {'id': 'I002', 'name': 'Bakso Kecil', 'price': 12000, 'image': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500', 'desc': 'Bakso sapi ukuran sedang gurih nikmat isi 5 pcs', 'category': 'Makanan'},
-      {'id': 'I003', 'name': 'Mie Ayam Pangsit', 'price': 15000, 'image': 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=500', 'desc': 'Mie ayam khas dengan taburan daging ayam bumbu manis gurih dan pangsit basah', 'category': 'Makanan'},
-      {'id': 'I004', 'name': 'Es Teh Manis', 'price': 5000, 'image': 'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?w=500', 'desc': 'Es teh manis segar pelepas dahaga', 'category': 'Minuman'},
-      {'id': 'I005', 'name': 'Es Jeruk', 'price': 7000, 'image': 'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?w=500', 'desc': 'Es jeruk peras asli manis segar kaya vitamin C', 'category': 'Minuman'},
-    ];
   }
 
   Future<Map<String, dynamic>> createOrder({

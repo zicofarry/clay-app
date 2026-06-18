@@ -62,6 +62,7 @@ func main() {
 	msgSender := sender.NewSender(logger)
 	authSvc := service.NewAuthService(authRepo, otpStore, msgSender, logger)
 	authHandler := handler.NewAuthHandler(authSvc)
+	internalHandler := handler.NewInternalHandler(authRepo)
 
 	// ── Router ───────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
@@ -97,6 +98,9 @@ func main() {
 	mux.HandleFunc("POST /auth/password/forgot", authHandler.ForgotPassword)
 	mux.HandleFunc("POST /auth/password/reset", authHandler.ResetPassword)
 	mux.HandleFunc("PUT /auth/password/change", authHandler.ChangePassword)
+
+	// Internal
+	mux.HandleFunc("POST /internal/auth/lookup-by-phone", internalHandler.LookupByPhone)
 
 	// ── Middleware Stack ──────────────────────────────────────────────────
 	var h http.Handler = mux

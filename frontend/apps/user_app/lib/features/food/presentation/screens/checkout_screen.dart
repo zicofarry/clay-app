@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../providers/food_provider.dart';
 import 'package:user_app/features/wallet/presentation/providers/wallet_provider.dart';
+import 'package:user_app/features/home/presentation/screens/home_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -46,6 +47,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     ref.listen(foodStateProvider, (_, state) {
       if (state.activeOrder != null) {
+        ref.read(currentTabProvider.notifier).state = 1;
         context.go('/home');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -70,7 +72,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: ClayColors.textPrimary),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: ClayColors.textPrimary, size: 20),
+          onPressed: () => context.pop(),
+        ),
         title: const Text(
           'Konfirmasi Pesanan',
           style: TextStyle(

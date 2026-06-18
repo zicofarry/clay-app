@@ -85,6 +85,15 @@ class ApiEndpoints {
   static const String searchTrending = '$_prefix/search/trending';
   static const String searchPopular = '$_prefix/search/popular';
 
+  // Chat
+  static const String chatRooms = '$_prefix/rooms';
+  static const String chatCreateDirect = '$_prefix/rooms/direct';
+  static String chatRoomByOrder(String orderId) => '$_prefix/rooms/by-order/$orderId';
+  static String chatRoom(String roomId) => '$_prefix/rooms/$roomId';
+  static String chatMessages(String roomId) => '$_prefix/rooms/$roomId/messages';
+  static String chatMarkRead(String roomId) => '$_prefix/rooms/$roomId/read';
+  static String chatUnreadCount(String roomId) => '$_prefix/rooms/$roomId/unread-count';
+
   // Geo
   static const String mapsAutocomplete = '$_prefix/maps/places/autocomplete';
   static const String mapsPlaceDetails = '$_prefix/maps/places/details';
