@@ -29,7 +29,13 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildContent(BuildContext context, WidgetRef ref, Map<String, dynamic> profile, String userPhone) {
     final fullName = profile['full_name']?.toString() ?? 'User Clay';
     final avatarUrl = profile['avatar_url']?.toString() ?? '';
-    final birthDate = profile['birth_date']?.toString() ?? '';
+    final rawBirth = profile['birth_date']?.toString() ?? '';
+    final birthDate = rawBirth.contains('T')
+        ? (() {
+            final d = DateTime.parse(rawBirth);
+            return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+          })()
+        : rawBirth;
     final gender = profile['gender']?.toString() ?? '';
     final referral = profile['referral_code']?.toString() ?? '-';
     final themeState = ref.watch(themeProvider);
@@ -336,7 +342,15 @@ class ProfileScreen extends ConsumerWidget {
 
   void _showEditDialog(BuildContext context, WidgetRef ref, Map<String, dynamic> profile) {
     final nameCtrl = TextEditingController(text: profile['full_name']?.toString() ?? '');
-    final birthCtrl = TextEditingController(text: profile['birth_date']?.toString() ?? '');
+    final rawBirthEdit = profile['birth_date']?.toString() ?? '';
+    final birthCtrl = TextEditingController(
+      text: rawBirthEdit.contains('T')
+          ? (() {
+              final d = DateTime.parse(rawBirthEdit);
+              return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+            })()
+          : rawBirthEdit,
+    );
     const validGenders = ['male', 'female', 'other'];
     final rawGender = profile['gender']?.toString() ?? '';
     String selectedGender = validGenders.contains(rawGender) ? rawGender : 'male';

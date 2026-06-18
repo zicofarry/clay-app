@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
 import '../../data/chat_repository.dart';
@@ -63,8 +65,54 @@ class ChatRoomsNotifier extends StateNotifier<ChatRoomsState> {
 
   /// Cache of userId -> full_name for display in chat list.
   final Map<String, String> _nameCache = {};
+  Timer? _roomsPollTimer;
 
   ChatRoomsNotifier(this._repo, this._currentUserId) : super(const ChatRoomsState());
+
+  void startPolling({Duration interval = const Duration(seconds: 10)}) {
+    stopPolling();
+    _roomsPollTimer = Timer.periodic(interval, (_) => _pollRooms());
+  }
+
+  void stopPolling() {
+    _roomsPollTimer?.cancel();
+    _roomsPollTimer = null;
+  }
+
+  Future<void> _pollRooms() async {
+    if (state.isLoading) return;
+    try {
+      final result = await _repo.getRooms(page: 1);
+      final inner = result['data'] as Map<String, dynamic>? ?? result;
+      final data = inner['data'] as List? ?? [];
+      final meta = inner['meta'] as Map<String, dynamic>? ?? {};
+      final rooms = data.cast<Map<String, dynamic>>();
+
+      for (final room in rooms) {
+        if (room['order_type'] == 'direct') {
+          final otherUserId = _getOtherParticipantId(room);
+          if (otherUserId != null && otherUserId.isNotEmpty) {
+            final name = await _resolveUserName(otherUserId);
+            if (name.isNotEmpty) {
+              room['_display_name'] = name;
+            }
+          }
+        }
+      }
+
+      state = state.copyWith(
+        hasLoaded: true,
+        rooms: rooms,
+        totalPages: (meta['total_pages'] as num?)?.toInt() ?? 0,
+      );
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    stopPolling();
+    super.dispose();
+  }
 
   Future<void> loadRooms({String? status, int page = 1}) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -180,6 +228,9 @@ class ChatMessagesState {
 }
 
 class ChatMessagesNotifier extends StateNotifier<ChatMessagesState> {
+  static Timer? _sharedPollTimer;
+  static String? _activePollingRoomId;
+
   final ChatRepository _repo;
   final String _roomId;
   final String _currentUserId;
@@ -187,6 +238,63 @@ class ChatMessagesNotifier extends StateNotifier<ChatMessagesState> {
 
   ChatMessagesNotifier(this._repo, this._roomId, this._currentUserId, this._ref) : super(const ChatMessagesState()) {
     loadMessages();
+  }
+
+  void startPolling({Duration interval = const Duration(seconds: 10)}) {
+    _sharedPollTimer?.cancel();
+    _activePollingRoomId = _roomId;
+    _pollMessages();
+    _sharedPollTimer = Timer.periodic(interval, (_) => _pollMessages());
+  }
+
+  void stopPolling() {
+    if (_activePollingRoomId == _roomId) {
+      _sharedPollTimer?.cancel();
+      _sharedPollTimer = null;
+      _activePollingRoomId = null;
+    }
+  }
+
+  Future<void> _pollMessages() async {
+    if (state.isLoading) return;
+    try {
+      final result = await _repo.getMessages(_roomId);
+      final inner = result['data'] as Map<String, dynamic>? ?? result;
+      final data = inner['data'] as List? ?? [];
+      final meta = inner['meta'] as Map<String, dynamic>? ?? {};
+      final apiMessages = (data.cast<Map<String, dynamic>>()).reversed.toList();
+
+      final existingIds = state.messages.map((m) => m['id']?.toString()).toSet();
+      final newMessages = apiMessages.where((m) {
+        final id = m['id']?.toString();
+        return id != null && !existingIds.contains(id);
+      }).toList();
+
+      if (newMessages.isNotEmpty) {
+        state = state.copyWith(
+          messages: [...state.messages, ...newMessages],
+          hasMore: meta['has_more'] == true,
+        );
+
+        final otherUserNew = newMessages.where((m) {
+          final senderId = m['sender_id']?.toString() ?? '';
+          return senderId.isNotEmpty && senderId != _currentUserId;
+        }).toList();
+
+        if (otherUserNew.isNotEmpty) {
+          final latestMsgId = otherUserNew.last['id']?.toString() ?? '';
+          if (latestMsgId.isNotEmpty) {
+            await markAsRead(latestMsgId);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    stopPolling();
+    super.dispose();
   }
 
   Future<void> loadMessages({String? before}) async {
