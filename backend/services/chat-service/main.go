@@ -45,13 +45,21 @@ func main() {
 
 	dbName := os.Getenv("MONGO_DB_NAME")
 	if dbName == "" {
+		dbName = os.Getenv("MONGO_DB")
+	}
+	if dbName == "" {
 		dbName = "chat_db"
 	}
 	db := mongoClient.Database(dbName)
 
 	chatRepo := repository.NewChatRepository(db)
 	chatSvc := service.NewChatService(chatRepo, logger)
-	chatHandler := handler.NewChatHandler(chatSvc)
+
+	userServiceURL := os.Getenv("USER_SERVICE_URL")
+	if userServiceURL == "" {
+		userServiceURL = "http://clay-user-service:8080"
+	}
+	chatHandler := handler.NewChatHandler(chatSvc, userServiceURL)
 
 	// ── Router ───────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
@@ -62,6 +70,7 @@ func main() {
 
 	// Rooms
 	mux.HandleFunc("GET /rooms", chatHandler.ListMyRooms)
+	mux.HandleFunc("POST /rooms/direct", chatHandler.CreateDirectRoom)
 
 	// Custom dispatcher to resolve Go 1.22 ServeMux pattern conflict:
 	// "GET /rooms/{roomId}/messages" vs "GET /rooms/by-order/{orderId}"

@@ -34,6 +34,8 @@ import '../features/food/presentation/screens/menu_screen.dart';
 import '../features/food/presentation/screens/cart_screen.dart';
 import '../features/food/presentation/screens/checkout_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
+import '../features/chat/presentation/screens/chat_list_screen.dart';
+import '../features/chat/presentation/screens/chat_room_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/history/presentation/screens/history_screen.dart';
 import '../features/common/presentation/screens/placeholder_screen.dart';
@@ -163,6 +165,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/wallet',
         builder: (_, __) => const WalletScreen(),
+      ),
+      GoRoute(
+        path: '/chat',
+        builder: (_, __) => const ChatListScreen(),
+      ),
+      GoRoute(
+        path: '/chat/:roomId',
+        builder: (_, state) => ChatRoomScreen(
+          roomId: state.pathParameters['roomId']!,
+          recipientName: state.extra as String?,
+        ),
       ),
       GoRoute(
         path: '/profile',
