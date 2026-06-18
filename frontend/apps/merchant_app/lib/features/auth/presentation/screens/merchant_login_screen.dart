@@ -45,7 +45,7 @@ class _MerchantLoginScreenState extends ConsumerState<MerchantLoginScreen> {
                 const SizedBox(height: 16),
                 Text('Clay Merchant', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: ClayColors.primary)),
                 const SizedBox(height: 48),
-                ClayTextField(label: 'Nomor Telepon', hint: '+6281234567890', controller: _phoneC, keyboardType: TextInputType.phone, prefixIcon: const Icon(Icons.phone_outlined)),
+                ClayTextField(label: 'Username / Nomor Telepon', hint: 'Masukkan username atau nomor telepon', controller: _phoneC, keyboardType: TextInputType.text, prefixIcon: const Icon(Icons.person_outline)),
                 const SizedBox(height: 20),
                 ClayTextField(label: 'Kata Sandi', hint: 'Masukkan kata sandi', controller: _passC, obscureText: true, prefixIcon: const Icon(Icons.lock_outlined)),
                 const SizedBox(height: 32),

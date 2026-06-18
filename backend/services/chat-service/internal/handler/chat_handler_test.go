@@ -35,7 +35,7 @@ func TestGetRoomByID_Success(t *testing.T) {
 			},
 		}, nil)
 
-	h := NewChatHandler(mockSvc)
+	h := NewChatHandler(mockSvc, "http://localhost:8081")
 
 	req := httptest.NewRequest("GET", "/chat/room/"+roomID, nil)
 	req.Header.Set("X-User-ID", userID)
@@ -74,7 +74,7 @@ func TestSendMessage_Success(t *testing.T) {
 			Type:     "text",
 		}, nil)
 
-	h := NewChatHandler(mockSvc)
+	h := NewChatHandler(mockSvc, "http://localhost:8081")
 
 	req := httptest.NewRequest("POST", "/chat/room/"+roomID+"/message", bytes.NewBuffer(body))
 	req.Header.Set("X-User-ID", userID)
@@ -101,7 +101,7 @@ func TestSendMessage_InvalidPayload(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockSvc := mocks.NewMockChatServiceInterface(ctrl)
-	h := NewChatHandler(mockSvc)
+	h := NewChatHandler(mockSvc, "http://localhost:8081")
 
 	req := httptest.NewRequest("POST", "/chat/room/123/message", bytes.NewBufferString(`{invalid`))
 	w := httptest.NewRecorder()

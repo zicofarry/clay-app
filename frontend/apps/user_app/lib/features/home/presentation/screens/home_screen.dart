@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:clay_ui/clay_ui.dart';
-import '../../../../features/wallet/presentation/screens/wallet_screen.dart';
+import '../../../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../../../features/wallet/presentation/providers/wallet_provider.dart';
 import '../../../../features/profile/presentation/screens/profile_screen.dart';
 import '../../../../features/history/presentation/screens/history_screen.dart';
@@ -19,23 +19,34 @@ class HomeScreen extends ConsumerWidget {
     final pages = <Widget>[
       _DashboardTab(),
       _OrdersTab(),
-      _WalletTab(),
+      _ChatTab(),
       _AccountTab(),
     ];
 
-    return Scaffold(
-      body: IndexedStack(index: currentTab, children: pages),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentTab,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: ClayColors.primary,
-        onTap: (i) => ref.read(currentTabProvider.notifier).state = i,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.wallet_outlined), activeIcon: Icon(Icons.wallet), label: 'Wallet'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Account'),
-        ],
+    return PopScope(
+      // Never allow the OS back gesture to pop/exit from HomeScreen
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (currentTab != 0) {
+          // If not on Home tab, go back to Home tab
+          ref.read(currentTabProvider.notifier).state = 0;
+        }
+        // If already on Home tab (index 0), do nothing — stay in app
+      },
+      child: Scaffold(
+        body: IndexedStack(index: currentTab, children: pages),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: currentTab,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: ClayColors.primary,
+          onTap: (i) => ref.read(currentTabProvider.notifier).state = i,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
+            BottomNavigationBarItem(icon: Icon(Icons.wallet_outlined), activeIcon: Icon(Icons.wallet), label: 'Chat'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Account'),
+          ],
+        ),
       ),
     );
   }
@@ -224,7 +235,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: Colors.blue,
                   label: 'Balance +',
                   value: 'Rp${_formatCurrency(walletState.balance)}',
-                  onTap: () => ref.read(currentTabProvider.notifier).state = 2,
+                  onTap: () => context.push('/wallet'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -234,7 +245,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: ClayColors.primary,
                   label: 'Payment',
                   value: 'Here',
-                  onTap: () => ref.read(currentTabProvider.notifier).state = 2,
+                  onTap: () => context.push('/wallet'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -244,7 +255,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
                   iconColor: ClayColors.primary,
                   label: 'Transaction',
                   value: 'History',
-                  onTap: () => ref.read(currentTabProvider.notifier).state = 2,
+                  onTap: () => context.push('/wallet'),
                 ),
               ),
             ],
@@ -475,10 +486,10 @@ class _OrdersTab extends ConsumerWidget {
   }
 }
 
-class _WalletTab extends ConsumerWidget {
+class _ChatTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const WalletScreen();
+    return const ChatListScreen();
   }
 }
 
