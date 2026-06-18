@@ -33,10 +33,30 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> with Widget
       try {
         ref.read(driverAuthProvider.notifier).refreshProfile();
         _updateGpsPosition();
+        _syncBackendStatus();
       } catch (e) {
         dev.log('initState error: $e', name: 'HomeScreen');
       }
     });
+  }
+
+  Future<void> _syncBackendStatus() async {
+    try {
+      final status = await ref.read(orderRepositoryProvider).getDispatcherStatus();
+      final backendStatus = status['status'] as String? ?? 'offline';
+      final isBackendOnline = backendStatus == 'online';
+      final localOnline = ref.read(isOnlineProvider);
+      dev.log('sync: backend=$backendStatus, local=$localOnline', name: 'HomeScreen');
+      if (isBackendOnline && !localOnline) {
+        ref.read(isOnlineProvider.notifier).state = true;
+        _startPolling();
+      } else if (!isBackendOnline && localOnline) {
+        ref.read(isOnlineProvider.notifier).state = false;
+        _stopPolling();
+      }
+    } catch (e) {
+      dev.log('syncBackendStatus error: $e', name: 'HomeScreen');
+    }
   }
 
   Future<void> _updateGpsPosition() async {
@@ -221,11 +241,19 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> with Widget
                     try {
                       if (nextState) {
                         await _updateGpsPosition();
-                        await ref.read(orderRepositoryProvider).goOnline(lat: _currentLat, lng: _currentLng);
+                        try {
+                          await ref.read(orderRepositoryProvider).goOnline(lat: _currentLat, lng: _currentLng);
+                        } catch (e) {
+                          dev.log('goOnline failed, trying reset: $e', name: 'HomeScreen');
+                          await ref.read(orderRepositoryProvider).goOffline();
+                          await Future.delayed(const Duration(milliseconds: 500));
+                          await ref.read(orderRepositoryProvider).goOnline(lat: _currentLat, lng: _currentLng);
+                        }
                       } else {
                         await ref.read(orderRepositoryProvider).goOffline();
                       }
                       notifier.state = nextState;
+                      ref.read(orderProvider.notifier).resetState();
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

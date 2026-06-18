@@ -416,7 +416,8 @@ func (s *MatchingService) GoOffline(ctx context.Context, driverID string) (*Driv
 		_ = s.repo.RemoveDriverFromGeo(ctx, vehicleType, driverID)
 	}
 	_ = s.repo.DeleteDriverStatus(ctx, driverID)
-	_ = s.repo.DeleteDriverMode(ctx, driverID) // priority mode auto-disables
+	_ = s.repo.DeleteDriverMode(ctx, driverID)
+	_ = s.repo.ClearActiveOrder(ctx, driverID)
 	_ = s.geo.UnregisterDriver(ctx, driverID)
 
 	s.logger.Info("driver offline", slog.String("driver_id", driverID))

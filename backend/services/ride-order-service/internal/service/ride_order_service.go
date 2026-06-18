@@ -242,6 +242,7 @@ type InternalAssignDriverResponse struct {
 // MatchingClientInterface abstracts the matching-service HTTP call.
 type MatchingClientInterface interface {
 	StartDispatch(ctx context.Context, req *DispatchMatchRequest) error
+	FreeDriver(ctx context.Context, driverID string) error
 }
 
 // DispatchMatchRequest is the DTO sent to the matching service.
@@ -803,7 +804,21 @@ func (s *RideOrderService) DriverUpdateOrderStatus(ctx context.Context, driverID
 		fb.OrderID = orderID
 		_ = s.repo.UpsertFareBreakdown(ctx, fb)
 		_ = s.repo.SetFareFinal(ctx, orderID, fb.Total)
-		// TODO: publish Trip_Completed Kafka event.
+
+		// Free driver in matching service so they can accept new orders
+		if s.matchingClient != nil {
+			go func() {
+				freeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				if err := s.matchingClient.FreeDriver(freeCtx, driverID); err != nil {
+					s.logger.Warn("free driver failed",
+						slog.String("driver_id", driverID),
+						slog.String("order_id", orderID),
+						slog.Any("error", err),
+					)
+				}
+			}()
+		}
 	}
 
 	s.logger.Info("driver updated order status",

@@ -53,3 +53,23 @@ func (c *MatchingClient) StartDispatch(ctx context.Context, req *service.Dispatc
 
 	return nil
 }
+
+func (c *MatchingClient) FreeDriver(ctx context.Context, driverID string) error {
+	url := fmt.Sprintf("%s/internal/drivers/%s/free", c.baseURL, driverID)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader([]byte(`{}`)))
+	if err != nil {
+		return fmt.Errorf("create free-driver request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("free-driver call failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("free-driver returned status %d", resp.StatusCode)
+	}
+	return nil
+}
