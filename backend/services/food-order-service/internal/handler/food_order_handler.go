@@ -77,6 +77,10 @@ func (h *FoodOrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 // GetActiveOrder handles GET /orders/active.
 func (h *FoodOrderHandler) GetActiveOrder(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		response.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
 	order, err := h.svc.GetActiveOrder(r.Context(), userID)
 	if err != nil {
 		if err == service.ErrNoActiveOrder {
@@ -92,6 +96,10 @@ func (h *FoodOrderHandler) GetActiveOrder(w http.ResponseWriter, r *http.Request
 // GetOrderHistory handles GET /orders/history.
 func (h *FoodOrderHandler) GetOrderHistory(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		response.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
 	pg := validator.ParsePagination(r, 50)
 	status := validator.QueryString(r, "status", "")
 
@@ -106,6 +114,10 @@ func (h *FoodOrderHandler) GetOrderHistory(w http.ResponseWriter, r *http.Reques
 // GetOrder handles GET /orders/{orderId}.
 func (h *FoodOrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		response.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
 	orderID := r.PathValue("orderId")
 
 	order, items, err := h.svc.GetOrder(r.Context(), orderID, userID)
@@ -127,6 +139,10 @@ func (h *FoodOrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 // CancelOrder handles POST /orders/{orderId}/cancel.
 func (h *FoodOrderHandler) CancelOrder(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		response.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
 	orderID := r.PathValue("orderId")
 
 	var req model.CancelOrderRequest
@@ -154,6 +170,10 @@ func (h *FoodOrderHandler) CancelOrder(w http.ResponseWriter, r *http.Request) {
 // SubmitRating handles POST /orders/{orderId}/rate.
 func (h *FoodOrderHandler) SubmitRating(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		response.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
 	orderID := r.PathValue("orderId")
 
 	var req model.SubmitFoodRatingRequest
@@ -183,6 +203,10 @@ func (h *FoodOrderHandler) SubmitRating(w http.ResponseWriter, r *http.Request) 
 // GetFareBreakdown handles GET /orders/{orderId}/fare-breakdown.
 func (h *FoodOrderHandler) GetFareBreakdown(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		response.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+		return
+	}
 	orderID := r.PathValue("orderId")
 
 	fb, err := h.svc.GetFareBreakdown(r.Context(), orderID, userID)
