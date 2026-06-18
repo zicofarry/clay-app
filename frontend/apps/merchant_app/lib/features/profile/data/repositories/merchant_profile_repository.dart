@@ -42,7 +42,9 @@ class MerchantProfileRepository {
           'name': data['name'],
           'phone_number': data['phone'],
           'address': data['address'],
-          'category': data['category'],
+          'description': data['description'],
+          'lat': data['lat'] != null ? (data['lat'] as num).toDouble() : null,
+          'lng': data['lng'] != null ? (data['lng'] as num).toDouble() : null,
         },
       );
       final responseData = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
@@ -80,6 +82,29 @@ class MerchantProfileRepository {
     'Sabtu',  // 6
   ];
 
+  /// Normalize time strings from the backend.
+  /// Go's `database/sql` + pq driver scans PostgreSQL TIME into a string as
+  /// a full timestamp: "0000-01-01T09:00:00Z". We strip the date prefix and
+  /// Z suffix, then take only HH:MM. Also handles plain "HH:MM" or "HH:MM:SS".
+  static String _normalizeTime(dynamic raw, String fallback) {
+    if (raw == null || raw.toString().isEmpty) return fallback;
+    String s = raw.toString().trim();
+
+    // Strip Go pq datetime prefix: "0000-01-01T09:00:00Z" -> "09:00:00"
+    if (s.contains('T')) {
+      s = s.split('T').last.replaceAll('Z', '').trim();
+    }
+
+    final parts = s.split(':');
+    if (parts.length < 2) return fallback;
+
+    final hh = int.tryParse(parts[0]);
+    final mm = int.tryParse(parts[1]);
+    if (hh == null || mm == null) return fallback;
+
+    return '${hh.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}';
+  }
+
   Future<List<Map<String, dynamic>>> fetchOperatingHours(String merchantId) async {
     try {
       final response = await _api.dio.get('${ApiEndpoints.merchants}/$merchantId/operating-hours');
@@ -89,11 +114,12 @@ class MerchantProfileRepository {
       final List<Map<String, dynamic>> list = List<Map<String, dynamic>>.from(
         rawList.map((item) {
           final dayOfWeek = item['day_of_week'] as int? ?? 0;
+          final isClosed = item['is_closed'] as bool? ?? false;
           return {
             'day': _dayNames[dayOfWeek],
-            'open': item['open_time'] ?? '09:00',
-            'close': item['close_time'] ?? '21:00',
-            'closed': item['is_closed'] ?? false,
+            'open': isClosed ? '09:00' : _normalizeTime(item['open_time'], '09:00'),
+            'close': isClosed ? '21:00' : _normalizeTime(item['close_time'], '21:00'),
+            'closed': isClosed,
             'day_of_week': dayOfWeek,
           };
         }),
@@ -118,11 +144,14 @@ class MerchantProfileRepository {
       final List<Map<String, dynamic>> requestList = uiHours.map((h) {
         final dayName = h['day'] as String;
         final dayOfWeek = _dayNames.indexOf(dayName);
+        final isClosed = h['closed'] == true;
+        // Always send valid time strings (not null) — backend column is nullable
+        // but Go's scan into string fails on NULL. For closed days, use "00:00".
         return {
           'day_of_week': dayOfWeek != -1 ? dayOfWeek : 1,
-          'open_time': h['open'] ?? '09:00',
-          'close_time': h['close'] ?? '21:00',
-          'is_closed': h['closed'] ?? false,
+          'open_time': isClosed ? '00:00' : (h['open'] ?? '09:00'),
+          'close_time': isClosed ? '00:00' : (h['close'] ?? '21:00'),
+          'is_closed': isClosed,
         };
       }).toList();
 
@@ -138,11 +167,12 @@ class MerchantProfileRepository {
       final List<Map<String, dynamic>> list = List<Map<String, dynamic>>.from(
         rawList.map((item) {
           final dayOfWeek = item['day_of_week'] as int? ?? 0;
+          final isClosed = item['is_closed'] as bool? ?? false;
           return {
             'day': _dayNames[dayOfWeek],
-            'open': item['open_time'] ?? '09:00',
-            'close': item['close_time'] ?? '21:00',
-            'closed': item['is_closed'] ?? false,
+            'open': isClosed ? '09:00' : _normalizeTime(item['open_time'], '09:00'),
+            'close': isClosed ? '21:00' : _normalizeTime(item['close_time'], '21:00'),
+            'closed': isClosed,
             'day_of_week': dayOfWeek,
           };
         }),
@@ -176,6 +206,7 @@ class MerchantProfileRepository {
             'number': item['account_number'] ?? '',
             'name': item['account_name'] ?? '',
             'primary': item['is_primary'] ?? false,
+            'is_verified': item['is_verified'] ?? false,
           };
         }),
       );
@@ -203,6 +234,7 @@ class MerchantProfileRepository {
         'number': item['account_number'] ?? '',
         'name': item['account_name'] ?? '',
         'primary': item['is_primary'] ?? false,
+        'is_verified': item['is_verified'] ?? false,
       };
     } on DioException catch (e) {
       final errorMsg = e.response?.data?['message']?.toString();
@@ -229,6 +261,7 @@ class MerchantProfileRepository {
         'number': item['account_number'] ?? '',
         'name': item['account_name'] ?? '',
         'primary': item['is_primary'] ?? false,
+        'is_verified': item['is_verified'] ?? false,
       };
     } on DioException catch (e) {
       final errorMsg = e.response?.data?['message']?.toString();

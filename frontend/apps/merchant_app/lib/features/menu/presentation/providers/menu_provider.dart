@@ -15,11 +15,16 @@ final menuProvider = StateNotifierProvider<MenuNotifier, MenuState>((ref) {
 class MenuState {
   final List<MenuItem> items;
   final bool isLoading;
+  final String? error;
 
-  const MenuState({this.items = const [], this.isLoading = false});
+  const MenuState({this.items = const [], this.isLoading = false, this.error});
 
-  MenuState copyWith({List<MenuItem>? items, bool? isLoading}) {
-    return MenuState(items: items ?? this.items, isLoading: isLoading ?? this.isLoading);
+  MenuState copyWith({List<MenuItem>? items, bool? isLoading, String? error}) {
+    return MenuState(
+      items: items ?? this.items,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+    );
   }
 }
 
@@ -34,13 +39,13 @@ class MenuNotifier extends StateNotifier<MenuState> {
     if (merchant == null || merchant['id'] == null) return;
     final merchantId = merchant['id'] as String;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final categories = await _repo.fetchCategories(merchantId);
       final items = await _repo.fetchMenuItems(merchantId, categories);
-      state = MenuState(items: items, isLoading: false);
+      state = MenuState(items: items, isLoading: false, error: null);
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -49,13 +54,13 @@ class MenuNotifier extends StateNotifier<MenuState> {
     if (merchant == null || merchant['id'] == null) return;
     final merchantId = merchant['id'] as String;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final categoryId = await _resolveOrCreateCategoryId(merchantId, item.category);
       await _repo.createMenuItem(merchantId, categoryId, item.name, item.price);
       await loadMenu();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -64,13 +69,13 @@ class MenuNotifier extends StateNotifier<MenuState> {
     if (merchant == null || merchant['id'] == null) return;
     final merchantId = merchant['id'] as String;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       final categoryId = await _resolveOrCreateCategoryId(merchantId, item.category);
       await _repo.updateMenuItem(merchantId, item.id, categoryId, item.name, item.price);
       await loadMenu();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -80,12 +85,12 @@ class MenuNotifier extends StateNotifier<MenuState> {
     final merchantId = merchant['id'] as String;
 
     final item = state.items.firstWhere((i) => i.id == id);
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       await _repo.toggleAvailability(merchantId, id, !item.available);
       await loadMenu();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -94,12 +99,12 @@ class MenuNotifier extends StateNotifier<MenuState> {
     if (merchant == null || merchant['id'] == null) return;
     final merchantId = merchant['id'] as String;
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     try {
       await _repo.deleteMenuItem(merchantId, id);
       await loadMenu();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 

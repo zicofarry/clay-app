@@ -35,41 +35,65 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => SafeArea(
+      builder: (sheetCtx) => SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(sheetCtx).viewInsets.bottom + 16),
           child: Form(
             key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(isEdit ? 'Edit Menu' : 'Tambah Menu', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                ClayTextField(label: 'Nama Menu', controller: nameC),
-                const SizedBox(height: 16),
-                ClayTextField(label: 'Kategori', controller: categoryC),
-                const SizedBox(height: 16),
-                ClayTextField(label: 'Harga', controller: priceC, keyboardType: TextInputType.number),
-                const SizedBox(height: 24),
-                ClayButton(label: isEdit ? 'Simpan' : 'Tambah', onPressed: () {
-                  if (formKey.currentState?.validate() ?? false) {
-                    final newItem = MenuItem(
-                      id: item?.id ?? 'M-${DateTime.now().millisecondsSinceEpoch}',
-                      name: nameC.text.trim(),
-                      category: categoryC.text.trim(),
-                      price: int.tryParse(priceC.text) ?? 0,
-                      available: item?.available ?? true,
-                    );
-                    if (isEdit) {
-                      ref.read(menuProvider.notifier).updateItem(newItem);
-                    } else {
-                      ref.read(menuProvider.notifier).addItem(newItem);
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(isEdit ? 'Edit Menu' : 'Tambah Menu', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  ClayTextField(
+                    label: 'Nama Menu',
+                    controller: nameC,
+                    validator: (val) => val == null || val.trim().isEmpty ? 'Nama menu tidak boleh kosong' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  ClayTextField(
+                    label: 'Kategori',
+                    controller: categoryC,
+                    validator: (val) => val == null || val.trim().isEmpty ? 'Kategori tidak boleh kosong' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  ClayTextField(
+                    label: 'Harga',
+                    controller: priceC,
+                    keyboardType: TextInputType.number,
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return 'Harga tidak boleh kosong';
+                      }
+                      final price = int.tryParse(val.trim());
+                      if (price == null || price <= 0) {
+                        return 'Harga harus berupa angka positif';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ClayButton(label: isEdit ? 'Simpan' : 'Tambah', onPressed: () {
+                    if (formKey.currentState?.validate() ?? false) {
+                      final newItem = MenuItem(
+                        id: item?.id ?? 'M-${DateTime.now().millisecondsSinceEpoch}',
+                        name: nameC.text.trim(),
+                        category: categoryC.text.trim(),
+                        price: int.tryParse(priceC.text) ?? 0,
+                        available: item?.available ?? true,
+                      );
+                      if (isEdit) {
+                        ref.read(menuProvider.notifier).updateItem(newItem);
+                      } else {
+                        ref.read(menuProvider.notifier).addItem(newItem);
+                      }
+                      Navigator.pop(context);
                     }
-                    Navigator.pop(context);
-                  }
-                }),
-              ],
+                  }),
+                ],
+              ),
             ),
           ),
         ),
@@ -79,6 +103,20 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<MenuState>(
+      menuProvider,
+      (previous, next) {
+        if (next.error != null && next.error != previous?.error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(next.error!),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+    );
+
     final state = ref.watch(menuProvider);
 
     // Dapatkan list unik kategori
