@@ -12,24 +12,16 @@ class MenuListScreen extends ConsumerStatefulWidget {
 }
 
 class _MenuListScreenState extends ConsumerState<MenuListScreen> {
-  final _searchC = TextEditingController();
   String _selectedCategory = 'Semua';
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(menuProvider.notifier).loadMenu());
-    _searchC.addListener(_onSearchChanged);
-  }
-
-  void _onSearchChanged() {
-    setState(() {});
   }
 
   @override
   void dispose() {
-    _searchC.removeListener(_onSearchChanged);
-    _searchC.dispose();
     super.dispose();
   }
 
@@ -92,12 +84,9 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
     // Dapatkan list unik kategori
     final categories = ['Semua', ...state.items.map((i) => i.category).toSet()];
 
-    // Filter menu berdasarkan search query & kategori terpilih
+    // Filter menu berdasarkan kategori terpilih
     final filtered = state.items.where((item) {
-      final matchesSearch = item.name.toLowerCase().contains(_searchC.text.toLowerCase()) ||
-          item.category.toLowerCase().contains(_searchC.text.toLowerCase());
-      final matchesCategory = _selectedCategory == 'Semua' || item.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
+      return _selectedCategory == 'Semua' || item.category == _selectedCategory;
     }).toList();
 
     return Scaffold(
@@ -109,15 +98,7 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: ClayTextField(
-                label: 'Cari Menu',
-                hint: 'Masukkan nama atau kategori menu...',
-                controller: _searchC,
-                prefixIcon: const Icon(Icons.search),
-              ),
-            ),
+
             if (state.items.isNotEmpty)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
