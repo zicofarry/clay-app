@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/zicofarry/clay-app/backend/services/chat-service/internal/repository"
@@ -84,6 +85,7 @@ type ChatServiceInterface interface {
 	InternalCreateRoom(ctx context.Context, orderID, orderType, userID string, driverID *string) (*ChatRoomDTO, error)
 	InternalCloseRoom(ctx context.Context, roomID string) (*ChatRoomDTO, error)
 	InternalAssignDriver(ctx context.Context, orderID, driverID string) (*ChatRoomDTO, error)
+	CreateDirectRoom(ctx context.Context, userID, recipientID string) (*ChatRoomDTO, error)
 
 	// Messages
 	ListMessages(ctx context.Context, roomID, participantID string, beforeID string, limit int) ([]MessageDTO, *MessageListMeta, error)
@@ -222,6 +224,43 @@ func (s *chatService) InternalAssignDriver(ctx context.Context, orderID, driverI
 		}
 		return nil, err
 	}
+	return s.roomToDTO(room), nil
+}
+
+func (s *chatService) CreateDirectRoom(ctx context.Context, userID, recipientID string) (*ChatRoomDTO, error) {
+	if userID == recipientID {
+		return nil, &ServiceError{"INVALID_REQUEST", "cannot create a direct chat with yourself", 400}
+	}
+
+	ids := []string{userID, recipientID}
+	sort.Strings(ids)
+	directOrderID := "direct:" + ids[0] + ":" + ids[1]
+
+	existing, err := s.repo.GetRoomByOrderID(ctx, directOrderID)
+	if err == nil && existing != nil {
+		if existing.Status == "closed" {
+			now := time.Now().UTC()
+			_ = s.repo.UpdateRoomStatus(ctx, existing.ID, "active", nil)
+			existing.Status = "active"
+			existing.ClosedAt = &now
+		}
+		return s.roomToDTO(existing), nil
+	}
+
+	room := &repository.ChatRoom{
+		OrderID:   directOrderID,
+		OrderType: "direct",
+		UserID:    userID,
+		DriverID:  &recipientID,
+		Status:    "active",
+		CreatedAt: time.Now().UTC(),
+	}
+
+	if err := s.repo.CreateRoom(ctx, room); err != nil {
+		s.logger.Error("failed to create direct room", slog.Any("error", err))
+		return nil, err
+	}
+
 	return s.roomToDTO(room), nil
 }
 

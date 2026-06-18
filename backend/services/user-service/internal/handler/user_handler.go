@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -19,6 +21,7 @@ type UserHandler struct {
 	svc             service.UserServiceInterface
 	uploadsDir      string
 	publicURLPrefix string
+	authServiceURL  string
 }
 
 type HandlerOption func(*UserHandler)
@@ -29,6 +32,10 @@ func WithUploadsDir(dir string) HandlerOption {
 
 func WithPublicURLPrefix(prefix string) HandlerOption {
 	return func(h *UserHandler) { h.publicURLPrefix = prefix }
+}
+
+func WithAuthServiceURL(url string) HandlerOption {
+	return func(h *UserHandler) { h.authServiceURL = url }
 }
 
 func NewUserHandler(svc service.UserServiceInterface, opts ...HandlerOption) *UserHandler {
@@ -524,10 +531,59 @@ func (h *UserHandler) LookupUserByPhone(w http.ResponseWriter, r *http.Request) 
 		response.Error(w, http.StatusBadRequest, "BAD_REQUEST", err.Error())
 		return
 	}
-	res, err := h.svc.LookupUserByPhone(r.Context(), req.Phone)
-	if err != nil {
-		response.Error(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+
+	if h.authServiceURL == "" {
+		response.Error(w, http.StatusInternalServerError, "CONFIG_ERROR", "auth service URL not configured")
 		return
 	}
-	response.Success(w, http.StatusOK, res)
+
+	authBody, _ := json.Marshal(map[string]string{"phone": req.Phone})
+	authResp, err := http.Post(
+		fmt.Sprintf("%s/internal/auth/lookup-by-phone", h.authServiceURL),
+		"application/json",
+		bytes.NewReader(authBody),
+	)
+	if err != nil {
+		response.Success(w, http.StatusOK, &models.LookupUserByPhoneResponse{Found: false})
+		return
+	}
+	defer authResp.Body.Close()
+
+	var authResult struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Found  bool   `json:"found"`
+			UserID string `json:"user_id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(authResp.Body).Decode(&authResult); err != nil {
+		response.Success(w, http.StatusOK, &models.LookupUserByPhoneResponse{Found: false})
+		return
+	}
+
+	if !authResult.Data.Found {
+		response.Success(w, http.StatusOK, &models.LookupUserByPhoneResponse{Found: false})
+		return
+	}
+
+	userID, err := uuid.Parse(authResult.Data.UserID)
+	if err != nil {
+		response.Success(w, http.StatusOK, &models.LookupUserByPhoneResponse{Found: false})
+		return
+	}
+
+	profile, err := h.svc.GetProfile(r.Context(), userID)
+	if err != nil || profile == nil {
+		response.Success(w, http.StatusOK, &models.LookupUserByPhoneResponse{
+			Found:  true,
+			UserID: &userID,
+		})
+		return
+	}
+
+	response.Success(w, http.StatusOK, &models.LookupUserByPhoneResponse{
+		Found:    true,
+		UserID:   &userID,
+		FullName: profile.FullName,
+	})
 }

@@ -114,7 +114,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } else {
         final contact = phone ?? '';
         final response = await _repository.login(contact, password);
-        await _repository.createProfile(fullName);
+        await _repository.createProfile(fullName, phone: phone);
         state = state.copyWith(
           isLoading: false,
           authResponse: response,
@@ -148,7 +148,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _repository.login(loginIdentifier, password);
 
       try {
-        await _repository.createProfile(fullName ?? '');
+        final phone = (!contact.contains('@')) ? contact : null;
+        await _repository.createProfile(fullName ?? '', phone: phone);
       } catch (_) {
         // best-effort: profile can be filled later from the profile screen
       }
@@ -188,7 +189,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _repository.login(loginIdentifier, password);
 
       try {
-        await _repository.createProfile(fullName ?? '');
+        final phone = (!contact.contains('@')) ? contact : null;
+        await _repository.createProfile(fullName ?? '', phone: phone);
       } catch (_) {}
 
       state = state.copyWith(

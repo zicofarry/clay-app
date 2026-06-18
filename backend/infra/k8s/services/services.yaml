@@ -121,6 +121,8 @@ spec:
                   key: db-password
             - name: REDIS_HOST
               value: redis-user
+            - name: AUTH_SERVICE_URL
+              value: http://clay-auth-service:8080
           readinessProbe:
             httpGet:
               path: /health
@@ -641,6 +643,8 @@ spec:
               value: mongodb://mongo-chat:27017
             - name: MONGO_DB
               value: clay_chat
+            - name: USER_SERVICE_URL
+              value: http://clay-user-service:8080
             - name: KAFKA_BROKERS
               value: kafka:9092
           readinessProbe:

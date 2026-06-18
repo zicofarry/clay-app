@@ -101,6 +101,21 @@ func (mr *MockChatServiceInterfaceMockRecorder) InternalAssignDriver(ctx, orderI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InternalAssignDriver", reflect.TypeOf((*MockChatServiceInterface)(nil).InternalAssignDriver), ctx, orderID, driverID)
 }
 
+// CreateDirectRoom mocks base method.
+func (m *MockChatServiceInterface) CreateDirectRoom(ctx context.Context, userID, recipientID string) (*service.ChatRoomDTO, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDirectRoom", ctx, userID, recipientID)
+	ret0, _ := ret[0].(*service.ChatRoomDTO)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDirectRoom indicates an expected call of CreateDirectRoom.
+func (mr *MockChatServiceInterfaceMockRecorder) CreateDirectRoom(ctx, userID, recipientID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDirectRoom", reflect.TypeOf((*MockChatServiceInterface)(nil).CreateDirectRoom), ctx, userID, recipientID)
+}
+
 // InternalCloseRoom mocks base method.
 func (m *MockChatServiceInterface) InternalCloseRoom(ctx context.Context, roomID string) (*service.ChatRoomDTO, error) {
 	m.ctrl.T.Helper()

@@ -45,6 +45,9 @@ func main() {
 
 	dbName := os.Getenv("MONGO_DB_NAME")
 	if dbName == "" {
+		dbName = os.Getenv("MONGO_DB")
+	}
+	if dbName == "" {
 		dbName = "audit_db"
 	}
 	db := mongoClient.Database(dbName)

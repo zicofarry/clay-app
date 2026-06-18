@@ -769,6 +769,12 @@
 # CHAT SERVICE
 # Upstream: clay-chat-service:8080
 # ══════════════════════════════════════════════════════════════════════════════
+- path: /rooms/direct
+  methods: [POST]
+  upstream: clay-chat-service:8080
+  auth: required
+  rate_limit: 30
+
 - path: /rooms
   methods: [GET]
   upstream: clay-chat-service:8080
