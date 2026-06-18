@@ -411,6 +411,49 @@ func (mr *MockMatchingRepositoryInterfaceMockRecorder) IsRejected(ctx, orderID, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsRejected", reflect.TypeOf((*MockMatchingRepositoryInterface)(nil).IsRejected), ctx, orderID, driverID)
 }
 
+// SetPendingOffer mocks base method.
+func (m *MockMatchingRepositoryInterface) SetPendingOffer(ctx context.Context, driverID, orderID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetPendingOffer", ctx, driverID, orderID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetPendingOffer indicates an expected call of SetPendingOffer.
+func (mr *MockMatchingRepositoryInterfaceMockRecorder) SetPendingOffer(ctx, driverID, orderID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetPendingOffer", reflect.TypeOf((*MockMatchingRepositoryInterface)(nil).SetPendingOffer), ctx, driverID, orderID)
+}
+
+// GetPendingOffer mocks base method.
+func (m *MockMatchingRepositoryInterface) GetPendingOffer(ctx context.Context, driverID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingOffer", ctx, driverID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingOffer indicates an expected call of GetPendingOffer.
+func (mr *MockMatchingRepositoryInterfaceMockRecorder) GetPendingOffer(ctx, driverID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingOffer", reflect.TypeOf((*MockMatchingRepositoryInterface)(nil).GetPendingOffer), ctx, driverID)
+}
+
+// ClearPendingOffer mocks base method.
+func (m *MockMatchingRepositoryInterface) ClearPendingOffer(ctx context.Context, driverID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClearPendingOffer", ctx, driverID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClearPendingOffer indicates an expected call of ClearPendingOffer.
+func (mr *MockMatchingRepositoryInterfaceMockRecorder) ClearPendingOffer(ctx, driverID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearPendingOffer", reflect.TypeOf((*MockMatchingRepositoryInterface)(nil).ClearPendingOffer), ctx, driverID)
+}
+
 // UpsertZoneStats mocks base method.
 func (m *MockMatchingRepositoryInterface) UpsertZoneStats(ctx context.Context, vehicleType, zoneID string, online, pending int) error {
 	m.ctrl.T.Helper()

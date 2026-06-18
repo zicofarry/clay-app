@@ -79,6 +79,18 @@ class DriverOrderRepository {
     }
   }
 
+  Future<void> respondToOffer(String orderId, {required String action, String? rejectReason}) async {
+    try {
+      await _api.dio.post('/dispatcher/respond', data: {
+        'order_id': orderId,
+        'action': action,
+        if (rejectReason != null) 'reject_reason': rejectReason,
+      });
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<void> heartbeat() async {
     try {
       await _api.dio.post('/dispatcher/heartbeat');

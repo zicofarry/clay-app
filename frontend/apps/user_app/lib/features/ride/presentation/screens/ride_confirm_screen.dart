@@ -51,6 +51,17 @@ class _RideConfirmScreenState extends ConsumerState<RideConfirmScreen> {
     final serviceName = service['name'] as String;
     final breakdown = service['breakdown'] as Map<String, dynamic>?;
 
+    ref.listen<RideState>(rideStateProvider, (prev, next) {
+      if (next.orderStatus == 'finding_driver' && !next.isLoading) {
+        context.go('/ride/searching');
+      }
+      if (next.error != null && next.error != prev?.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error!), backgroundColor: Colors.red),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -407,13 +418,6 @@ class _RideConfirmScreenState extends ConsumerState<RideConfirmScreen> {
 
   void _onConfirmOrder() {
     ref.read(rideStateProvider.notifier).confirmOrder();
-
-    // Listen for order creation → navigate to searching
-    ref.listenManual(rideStateProvider, (_, state) {
-      if (state.orderStatus == 'finding_driver' && !state.isLoading) {
-        context.go('/ride/searching');
-      }
-    });
   }
 }
 

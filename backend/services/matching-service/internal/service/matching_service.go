@@ -205,16 +205,17 @@ type DispatchModeResponse struct {
 }
 
 type FullDriverStatusResponse struct {
-	DriverID       string    `json:"driver_id"`
-	Status         string    `json:"status"`
-	Mode           string    `json:"mode"`
-	DailyTarget    int       `json:"daily_target,omitempty"`
-	EarningsToday  int       `json:"earnings_today"`
-	TripsToday     int       `json:"trips_today"`
-	AcceptanceRate float64   `json:"acceptance_rate"`
-	Rating         float64   `json:"rating"`
-	ActiveOrderID  string    `json:"active_order_id,omitempty"`
-	OnlineSince    time.Time `json:"online_since,omitempty"`
+	DriverID             string    `json:"driver_id"`
+	Status               string    `json:"status"`
+	Mode                 string    `json:"mode"`
+	DailyTarget          int       `json:"daily_target,omitempty"`
+	EarningsToday        int       `json:"earnings_today"`
+	TripsToday           int       `json:"trips_today"`
+	AcceptanceRate       float64   `json:"acceptance_rate"`
+	Rating               float64   `json:"rating"`
+	ActiveOrderID        string    `json:"active_order_id,omitempty"`
+	PendingOfferOrderID  string    `json:"pending_offer_order_id,omitempty"`
+	OnlineSince          time.Time `json:"online_since,omitempty"`
 }
 
 type EarningsTodayResponse struct {
@@ -526,6 +527,7 @@ func (s *MatchingService) Respond(ctx context.Context, driverID string, req *Off
 			_ = s.repo.SetDriverStatus(ctx, st)
 		}
 		_ = s.repo.IncrementAcceptance(ctx, driverID, true)
+		_ = s.repo.ClearPendingOffer(ctx, driverID)
 
 		// Mark session matched
 		now := s.now()
@@ -546,6 +548,7 @@ func (s *MatchingService) Respond(ctx context.Context, driverID string, req *Off
 	case "reject":
 		_ = s.repo.MarkRejected(ctx, req.OrderID, driverID)
 		_ = s.repo.IncrementAcceptance(ctx, driverID, false)
+		_ = s.repo.ClearPendingOffer(ctx, driverID)
 		// Move session to next candidate (caller / dispatcher loop handles re-broadcast).
 		sess.CurrentCandidateID = ""
 		sess.OfferExpiresAt = time.Time{}
@@ -638,15 +641,17 @@ func (s *MatchingService) GetFullStatus(ctx context.Context, driverID string) (*
 	acc, _ := s.repo.GetAcceptance(ctx, driverID)
 	rating, _ := s.repo.GetCachedRating(ctx, driverID)
 	activeOrder, _ := s.repo.GetActiveOrder(ctx, driverID)
+	pendingOffer, _ := s.repo.GetPendingOffer(ctx, driverID)
 
 	resp := &FullDriverStatusResponse{
-		DriverID:       driverID,
-		Status:         st.Status,
-		Mode:           "normal",
-		Rating:         rating,
-		ActiveOrderID:  activeOrder,
-		OnlineSince:    st.OnlineSince,
-		AcceptanceRate: computeAcceptanceRate(acc),
+		DriverID:            driverID,
+		Status:              st.Status,
+		Mode:                "normal",
+		Rating:              rating,
+		ActiveOrderID:       activeOrder,
+		PendingOfferOrderID: pendingOffer,
+		OnlineSince:         st.OnlineSince,
+		AcceptanceRate:      computeAcceptanceRate(acc),
 	}
 	if mode != nil {
 		resp.Mode = mode.Mode
@@ -718,7 +723,7 @@ func (s *MatchingService) StartDispatch(ctx context.Context, req *DispatchReques
 
 	// Defaults
 	if req.SearchRadiusKm <= 0 {
-		req.SearchRadiusKm = 5.0
+		req.SearchRadiusKm = 15.0
 	}
 	if req.MaxRounds <= 0 {
 		req.MaxRounds = 5
@@ -745,11 +750,43 @@ func (s *MatchingService) StartDispatch(ctx context.Context, req *DispatchReques
 	}
 
 	// Pick first candidate immediately so the dispatcher worker can broadcast it.
-	if cand, err := s.pickNextCandidate(ctx, sess); err == nil && cand != nil {
+	cand, pickErr := s.pickNextCandidate(ctx, sess)
+	if pickErr != nil {
+		s.logger.Error("pickNextCandidate failed",
+			slog.String("order_id", req.OrderID),
+			slog.Any("error", pickErr),
+		)
+	} else if cand == nil {
+		s.logger.Warn("no candidates found for dispatch",
+			slog.String("order_id", req.OrderID),
+			slog.String("service_type", req.ServiceType),
+			slog.Float64("pickup_lat", req.PickupLat),
+			slog.Float64("pickup_lng", req.PickupLng),
+			slog.Float64("radius_km", req.SearchRadiusKm),
+		)
+	} else {
 		sess.CurrentCandidateID = cand.DriverID
 		sess.OfferExpiresAt = now.Add(repository.OfferTTL)
 		sess.CandidatesTried++
-		_ = s.repo.UpdateSession(ctx, sess)
+		if err := s.repo.UpdateSession(ctx, sess); err != nil {
+			s.logger.Error("UpdateSession failed",
+				slog.String("order_id", req.OrderID),
+				slog.Any("error", err),
+			)
+		}
+		if err := s.repo.SetPendingOffer(ctx, cand.DriverID, req.OrderID); err != nil {
+			s.logger.Error("SetPendingOffer failed",
+				slog.String("order_id", req.OrderID),
+				slog.String("driver_id", cand.DriverID),
+				slog.Any("error", err),
+			)
+		} else {
+			s.logger.Info("pending offer set",
+				slog.String("order_id", req.OrderID),
+				slog.String("driver_id", cand.DriverID),
+				slog.Duration("ttl", repository.OfferTTL),
+			)
+		}
 	}
 
 	s.logger.Info("dispatch started",
@@ -759,12 +796,95 @@ func (s *MatchingService) StartDispatch(ctx context.Context, req *DispatchReques
 	)
 	// TODO: emit Kafka `matching.offer_sent`
 
+	// Start background broadcast loop: when current offer expires, pick next candidate.
+	go s.broadcastLoop(req.OrderID)
+
 	return &DispatchSessionResponse{
 		SessionID: sess.SessionID,
 		OrderID:   sess.OrderID,
 		Status:    sess.Status,
 		CreatedAt: sess.CreatedAt,
 	}, nil
+}
+
+// broadcastLoop waits for the current offer to expire, then picks the next
+// candidate. It runs until the session leaves "searching" status or max rounds
+// is reached.
+func (s *MatchingService) broadcastLoop(orderID string) {
+	for {
+		time.Sleep(repository.OfferTTL + 2*time.Second)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		sess, err := s.repo.GetSession(ctx, orderID)
+		if err != nil {
+			cancel()
+			s.logger.Info("broadcast loop ended: session gone",
+				slog.String("order_id", orderID),
+				slog.Any("error", err),
+			)
+			return
+		}
+		if sess.Status != "searching" {
+			cancel()
+			s.logger.Info("broadcast loop ended: session no longer searching",
+				slog.String("order_id", orderID),
+				slog.String("status", sess.Status),
+			)
+			return
+		}
+		if sess.CandidatesTried >= sess.MaxRounds {
+			cancel()
+			s.logger.Info("broadcast loop ended: max rounds reached",
+				slog.String("order_id", orderID),
+				slog.Int("candidates_tried", sess.CandidatesTried),
+			)
+			sess.Status = "no_drivers"
+			_ = s.repo.UpdateSession(ctx, sess)
+			return
+		}
+
+		// Mark current candidate as rejected so pickNextCandidate skips them
+		if sess.CurrentCandidateID != "" {
+			_ = s.repo.MarkRejected(ctx, orderID, sess.CurrentCandidateID)
+			s.logger.Info("marking timed-out candidate as rejected",
+				slog.String("order_id", orderID),
+				slog.String("driver_id", sess.CurrentCandidateID),
+			)
+		}
+
+		cand, pickErr := s.pickNextCandidate(ctx, sess)
+		if pickErr != nil || cand == nil {
+			cancel()
+			s.logger.Warn("broadcast loop: no more candidates",
+				slog.String("order_id", orderID),
+				slog.Int("candidates_tried", sess.CandidatesTried),
+				slog.Any("error", pickErr),
+			)
+			sess.Status = "no_drivers"
+			_ = s.repo.UpdateSession(ctx, sess)
+			return
+		}
+
+		now := s.now()
+		sess.CurrentCandidateID = cand.DriverID
+		sess.OfferExpiresAt = now.Add(repository.OfferTTL)
+		sess.CandidatesTried++
+		_ = s.repo.UpdateSession(ctx, sess)
+		if err := s.repo.SetPendingOffer(ctx, cand.DriverID, orderID); err != nil {
+			s.logger.Error("broadcast loop: SetPendingOffer failed",
+				slog.String("order_id", orderID),
+				slog.String("driver_id", cand.DriverID),
+				slog.Any("error", err),
+			)
+		} else {
+			s.logger.Info("broadcast loop: new pending offer set",
+				slog.String("order_id", orderID),
+				slog.String("driver_id", cand.DriverID),
+				slog.Int("round", sess.CandidatesTried),
+			)
+		}
+		cancel()
+	}
 }
 
 func (s *MatchingService) CancelDispatch(ctx context.Context, req *CancelDispatchRequest) error {

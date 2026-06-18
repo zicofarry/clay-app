@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_shared/clay_shared.dart';
 import '../../data/driver_order_repository.dart';
@@ -45,21 +46,30 @@ class OrderNotifier extends StateNotifier<OrderState> {
   OrderNotifier(this._repo) : super(const OrderState());
 
   Future<void> checkDispatch() async {
-    if (state.activeOrder != null) return;
     try {
       final status = await _repo.getDispatcherStatus();
+      final pendingOrderId = status['pending_offer_order_id'] as String?;
+      if (pendingOrderId != null && pendingOrderId.isNotEmpty && state.incomingOrder == null && state.activeOrder == null) {
+        final order = await _repo.getOrderDetail(pendingOrderId);
+        state = state.copyWith(incomingOrder: order);
+        return;
+      }
+      if (state.activeOrder != null) return;
       final activeOrderId = status['active_order_id'] as String?;
       if (activeOrderId != null && activeOrderId.isNotEmpty && state.incomingOrder == null) {
         final order = await _repo.getOrderDetail(activeOrderId);
         state = state.copyWith(incomingOrder: order);
       }
-    } catch (_) {}
+    } catch (e) {
+      dev.log('checkDispatch error: $e', name: 'OrderNotifier');
+    }
   }
 
   Future<void> acceptOrder() async {
     if (state.incomingOrder == null) return;
     final orderId = state.incomingOrder!['id']?.toString();
     if (orderId == null) return;
+    await _repo.respondToOffer(orderId, action: 'accept');
     final result = await _repo.acceptOrder(orderId);
     state = state.copyWith(
       activeOrder: result,
@@ -72,6 +82,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
     if (state.incomingOrder == null) return;
     final orderId = state.incomingOrder!['id']?.toString();
     if (orderId == null) return;
+    await _repo.respondToOffer(orderId, action: 'reject', rejectReason: reason);
     await _repo.rejectOrder(orderId, reason: reason);
     state = state.copyWith(clearIncoming: true);
   }
