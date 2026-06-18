@@ -13,10 +13,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/login',
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const MerchantLoginScreen()),
-      GoRoute(path: '/home', builder: (_, __) => const MerchantHomeScreen()),
+      GoRoute(path: '/login', builder: (_, _) => const MerchantLoginScreen()),
+      GoRoute(path: '/home', builder: (_, _) => const MerchantHomeScreen()),
       GoRoute(path: '/order/:id', builder: (_, state) => OrderDetailScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/report', builder: (_, __) => const ReportScreen()),
+      GoRoute(path: '/report', builder: (_, _) => const ReportScreen()),
     ],
   );
 });

@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/mock_merchant_auth.dart';
+import 'package:clay_shared/clay_shared.dart';
+import '../../data/merchant_auth_repository.dart';
 
 final merchantAuthProvider = StateNotifierProvider<MerchantAuthNotifier, MerchantAuthState>((ref) {
-  return MerchantAuthNotifier(MockMerchantAuthRepository());
+  return MerchantAuthNotifier(MerchantAuthRepository(ClayApi.instance));
 });
 
 class MerchantAuthState {
@@ -18,7 +19,7 @@ class MerchantAuthState {
 }
 
 class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
-  final MockMerchantAuthRepository _repo;
+  final MerchantAuthRepository _repo;
   MerchantAuthNotifier(this._repo) : super(const MerchantAuthState());
 
   Future<void> login(String phone, String password) async {
@@ -39,6 +40,7 @@ class MerchantAuthNotifier extends StateNotifier<MerchantAuthState> {
   }
 
   void logout() {
+    _repo.logout();
     state = const MerchantAuthState();
   }
 }

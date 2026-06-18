@@ -117,6 +117,17 @@ class _MerchantListScreenState extends ConsumerState<MerchantListScreen> {
     final state = ref.watch(foodStateProvider);
     final notifier = ref.read(foodStateProvider.notifier);
 
+    ref.listen(foodStateProvider, (_, state) {
+      if (state.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.error!),
+            backgroundColor: ClayColors.error,
+          ),
+        );
+      }
+    });
+
     // Auto-initialize selectedAddress from profile if empty
     if (state.selectedAddress == null && addressState.addresses.isNotEmpty) {
       final defaultAddr = addressState.addresses.firstWhere(
@@ -167,6 +178,12 @@ class _MerchantListScreenState extends ConsumerState<MerchantListScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 72,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: ClayColors.textPrimary, size: 20),
+                onPressed: () => context.pop(),
+              )
+            : null,
         title: InkWell(
           onTap: _showAddressPickerSheet,
           borderRadius: BorderRadius.circular(12),
@@ -632,6 +649,58 @@ class _MerchantListScreenState extends ConsumerState<MerchantListScreen> {
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 color: isSelected ? ClayColors.primary : ClayColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, WidgetRef ref, String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: ClayColors.error.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.wifi_off_rounded,
+                size: 64,
+                color: ClayColors.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Gagal Terhubung ke Server',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ClayColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pastikan server backend Anda sudah berjalan atau periksa koneksi internet Anda.\n\nDetail: $error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: ClayColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 180,
+              child: ClayButton(
+                label: 'Coba Lagi',
+                onPressed: () => ref.read(foodStateProvider.notifier).loadMerchants(),
               ),
             ),
           ],
