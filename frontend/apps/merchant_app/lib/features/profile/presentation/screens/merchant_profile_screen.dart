@@ -436,7 +436,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: ClayColors.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: ClayColors.divider),
                   ),
                   child: Row(
@@ -544,7 +544,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                 Card(
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(20),
                     side: const BorderSide(color: ClayColors.border),
                   ),
                   child: ListTile(
@@ -568,6 +568,36 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: ClayColors.textSecondary),
                     onTap: () => context.push('/profile/reviews'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: const BorderSide(color: ClayColors.border),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: ClayColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.devices_other_outlined, color: ClayColors.primaryDark, size: 22),
+                    ),
+                    title: const Text(
+                      'Sesi Login Aktif',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    subtitle: const Text(
+                      'Kelola perangkat dan sesi masuk yang terhubung',
+                      style: TextStyle(color: ClayColors.textSecondary, fontSize: 12),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: ClayColors.textSecondary),
+                    onTap: () => context.push('/profile/sessions'),
                   ),
                 ),
                 const SizedBox(height: 16),

@@ -79,7 +79,7 @@ class _RatingReviewsScreenState extends ConsumerState<RatingReviewsScreen> {
                   // 1. Overall Summary Section
                   Card(
                     elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     child: Padding(
                       padding: const EdgeInsets.all(20),
                       child: Column(
@@ -274,7 +274,7 @@ class _RatingReviewsScreenState extends ConsumerState<RatingReviewsScreen> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           elevation: 1,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Row(

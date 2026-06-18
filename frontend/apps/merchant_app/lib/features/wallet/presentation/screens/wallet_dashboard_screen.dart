@@ -155,7 +155,7 @@ class _WalletHeaderCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF3B82F6), Color(0xFF6FA7E6), Color(0xFF97C5F5)],
+          colors: [ClayColors.primary, ClayColors.primaryDark],
         ),
       ),
       child: Padding(
@@ -405,7 +405,7 @@ class _WalletTxCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: ClayColors.border),
       ),
       child: ListTile(
@@ -672,7 +672,7 @@ class _PaymentTxCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: ClayColors.border),
       ),
       child: ListTile(

@@ -145,7 +145,7 @@ class _TopUpScreenState extends ConsumerState<TopUpScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF97C5F5)],
+                    colors: [ClayColors.primary, ClayColors.primaryDark],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
