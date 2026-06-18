@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +19,15 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(chatRoomsProvider.notifier).loadRooms());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(chatRoomsProvider.notifier).startPolling();
+    });
+  }
+
+  @override
+  void dispose() {
+    ref.read(chatRoomsProvider.notifier).stopPolling();
+    super.dispose();
   }
 
   @override
