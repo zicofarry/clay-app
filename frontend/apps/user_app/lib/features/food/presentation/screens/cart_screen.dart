@@ -23,7 +23,10 @@ class CartScreen extends ConsumerWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: ClayColors.textPrimary),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: ClayColors.textPrimary, size: 20),
+          onPressed: () => context.pop(),
+        ),
         title: const Text(
           'Keranjang Belanja',
           style: TextStyle(
@@ -75,7 +78,7 @@ class CartScreen extends ConsumerWidget {
                       width: 200,
                       child: ClayButton(
                         label: 'Cari Makanan',
-                        onPressed: () => context.go('/food'),
+                        onPressed: () => context.push('/food'),
                       ),
                     ),
                   ],
