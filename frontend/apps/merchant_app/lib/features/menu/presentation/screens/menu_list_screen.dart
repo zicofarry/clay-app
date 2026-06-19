@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:clay_ui/clay_ui.dart';
 import '../../data/menu_repository.dart';
 import '../providers/menu_provider.dart';
+import 'add_edit_menu_item_screen.dart';
 
 class MenuListScreen extends ConsumerStatefulWidget {
   const MenuListScreen({super.key});
@@ -25,78 +26,149 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
     super.dispose();
   }
 
-  void _showForm([MenuItem? item]) {
-    final nameC = TextEditingController(text: item?.name ?? '');
-    final priceC = TextEditingController(text: item?.price.toString() ?? '');
-    final categoryC = TextEditingController(text: item?.category ?? '');
+  void _showCategoryForm([MenuCategory? category]) {
+    final nameC = TextEditingController(text: category?.name ?? '');
     final formKey = GlobalKey<FormState>();
-    final isEdit = item != null;
+    final isEdit = category != null;
 
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isEdit ? 'Edit Kategori' : 'Tambah Kategori'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: nameC,
+            decoration: const InputDecoration(labelText: 'Nama Kategori'),
+            validator: (val) => val == null || val.trim().isEmpty ? 'Nama kategori tidak boleh kosong' : null,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                if (isEdit) {
+                  ref.read(menuProvider.notifier).updateCategory(category.id, nameC.text.trim(), category.displayOrder);
+                }
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showManageCategoriesSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (sheetCtx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(sheetCtx).viewInsets.bottom + 16),
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(isEdit ? 'Edit Menu' : 'Tambah Menu', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  ClayTextField(
-                    label: 'Nama Menu',
-                    controller: nameC,
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Nama menu tidak boleh kosong' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  ClayTextField(
-                    label: 'Kategori',
-                    controller: categoryC,
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Kategori tidak boleh kosong' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  ClayTextField(
-                    label: 'Harga',
-                    controller: priceC,
-                    keyboardType: TextInputType.number,
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return 'Harga tidak boleh kosong';
-                      }
-                      final price = int.tryParse(val.trim());
-                      if (price == null || price <= 0) {
-                        return 'Harga harus berupa angka positif';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  ClayButton(label: isEdit ? 'Simpan' : 'Tambah', onPressed: () {
-                    if (formKey.currentState?.validate() ?? false) {
-                      final newItem = MenuItem(
-                        id: item?.id ?? 'M-${DateTime.now().millisecondsSinceEpoch}',
-                        name: nameC.text.trim(),
-                        category: categoryC.text.trim(),
-                        price: int.tryParse(priceC.text) ?? 0,
-                        available: item?.available ?? true,
-                      );
-                      if (isEdit) {
-                        ref.read(menuProvider.notifier).updateItem(newItem);
-                      } else {
-                        ref.read(menuProvider.notifier).addItem(newItem);
-                      }
-                      Navigator.pop(context);
-                    }
-                  }),
-                ],
-              ),
-            ),
+      builder: (sheetCtx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Consumer(
+              builder: (context, ref, child) {
+                final state = ref.watch(menuProvider);
+                final categories = state.categories;
+
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Kelola Kategori', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: categories.isEmpty
+                          ? const Center(child: Text('Belum ada kategori'))
+                          : ReorderableListView.builder(
+                              scrollController: scrollController,
+                              itemCount: categories.length,
+                              onReorder: (oldIndex, newIndex) {
+                                if (oldIndex < newIndex) {
+                                  newIndex -= 1;
+                                }
+                                final item = categories.removeAt(oldIndex);
+                                categories.insert(newIndex, item);
+                                final categoryIds = categories.map((c) => c.id).toList();
+                                ref.read(menuProvider.notifier).reorderCategories(categoryIds);
+                              },
+                              itemBuilder: (context, index) {
+                                final cat = categories[index];
+                                return ListTile(
+                                  key: ValueKey(cat.id),
+                                  title: Text(cat.name),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, size: 20),
+                                        onPressed: () {
+                                          _showCategoryForm(cat);
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                        onPressed: () {
+                                          _confirmDeleteCategory(cat);
+                                        },
+                                      ),
+                                      const Icon(Icons.drag_handle, color: Colors.grey),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _navigateToAddEditScreen([MenuItem? item]) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddEditMenuItemScreen(item: item),
+      ),
+    );
+  }
+
+  void _confirmDeleteCategory(MenuCategory category) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Kategori?'),
+        content: Text('Apakah Anda yakin ingin menghapus kategori "${category.name}"? Menu di dalamnya mungkin akan kehilangan kategori.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () {
+              ref.read(menuProvider.notifier).deleteCategory(category.id);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -119,8 +191,13 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
 
     final state = ref.watch(menuProvider);
 
-    // Dapatkan list unik kategori
-    final categories = ['Semua', ...state.items.map((i) => i.category).toSet()];
+    // Dapatkan list unik kategori dari state.categories
+    final categoryNames = ['Semua', ...state.categories.map((c) => c.name)];
+    // Jika ada item yang tidak punya kategori (Lainnya) dan belum ada di list, tambahkan
+    if (state.items.any((i) => i.category == 'Lainnya') && !categoryNames.contains('Lainnya')) {
+      categoryNames.add('Lainnya');
+    }
+    final categories = categoryNames;
 
     // Filter menu berdasarkan kategori terpilih
     final filtered = state.items.where((item) {
@@ -128,10 +205,19 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Menu')),
+      appBar: AppBar(
+        title: const Text('Menu'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.category),
+            tooltip: 'Kelola Kategori',
+            onPressed: _showManageCategoriesSheet,
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => _showForm(),
+        onPressed: () => _navigateToAddEditScreen(),
       ),
       body: SafeArea(
         child: Column(
@@ -234,7 +320,7 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
                                   onSelected: (v) {
                                     switch (v) {
                                       case 'edit':
-                                        _showForm(item);
+                                        _navigateToAddEditScreen(item);
                                       case 'toggle':
                                         ref.read(menuProvider.notifier).toggleAvailability(item.id);
                                       case 'delete':
