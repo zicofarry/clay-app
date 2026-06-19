@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:clay_ui/clay_ui.dart';
 import '../../data/menu_repository.dart';
 import '../providers/menu_provider.dart';
 import 'add_edit_menu_item_screen.dart';
@@ -98,7 +97,7 @@ class _MenuListScreenState extends ConsumerState<MenuListScreen> {
                           : ReorderableListView.builder(
                               scrollController: scrollController,
                               itemCount: categories.length,
-                              onReorder: (oldIndex, newIndex) {
+                              onReorderItem: (oldIndex, newIndex) {
                                 if (oldIndex < newIndex) {
                                   newIndex -= 1;
                                 }
