@@ -14,14 +14,26 @@ final menuProvider = StateNotifierProvider<MenuNotifier, MenuState>((ref) {
 
 class MenuState {
   final List<MenuItem> items;
+  final List<MenuCategory> categories;
   final bool isLoading;
   final String? error;
 
-  const MenuState({this.items = const [], this.isLoading = false, this.error});
+  const MenuState({
+    this.items = const [], 
+    this.categories = const [],
+    this.isLoading = false, 
+    this.error,
+  });
 
-  MenuState copyWith({List<MenuItem>? items, bool? isLoading, String? error}) {
+  MenuState copyWith({
+    List<MenuItem>? items, 
+    List<MenuCategory>? categories,
+    bool? isLoading, 
+    String? error,
+  }) {
     return MenuState(
       items: items ?? this.items,
+      categories: categories ?? this.categories,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -43,7 +55,7 @@ class MenuNotifier extends StateNotifier<MenuState> {
     try {
       final categories = await _repo.fetchCategories(merchantId);
       final items = await _repo.fetchMenuItems(merchantId, categories);
-      state = MenuState(items: items, isLoading: false, error: null);
+      state = MenuState(items: items, categories: categories, isLoading: false, error: null);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -57,7 +69,7 @@ class MenuNotifier extends StateNotifier<MenuState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final categoryId = await _resolveOrCreateCategoryId(merchantId, item.category);
-      await _repo.createMenuItem(merchantId, categoryId, item.name, item.price);
+      await _repo.createMenuItem(item.copyWith(merchantId: merchantId, categoryId: categoryId));
       await loadMenu();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -72,7 +84,7 @@ class MenuNotifier extends StateNotifier<MenuState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final categoryId = await _resolveOrCreateCategoryId(merchantId, item.category);
-      await _repo.updateMenuItem(merchantId, item.id, categoryId, item.name, item.price);
+      await _repo.updateMenuItem(item.copyWith(merchantId: merchantId, categoryId: categoryId));
       await loadMenu();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -102,6 +114,48 @@ class MenuNotifier extends StateNotifier<MenuState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repo.deleteMenuItem(merchantId, id);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> updateCategory(String categoryId, String name, int displayOrder) async {
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repo.updateCategory(merchantId, categoryId, name, displayOrder);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> deleteCategory(String categoryId) async {
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repo.deleteCategory(merchantId, categoryId);
+      await loadMenu();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> reorderCategories(List<String> categoryIds) async {
+    final merchant = _ref.read(merchantAuthProvider).merchant;
+    if (merchant == null || merchant['id'] == null) return;
+    final merchantId = merchant['id'] as String;
+
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repo.reorderCategories(merchantId, categoryIds);
       await loadMenu();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
