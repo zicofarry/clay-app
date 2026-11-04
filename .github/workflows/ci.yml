@@ -1,0 +1,206 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set-services.outputs.services }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Path Filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            audit-log-service:
+              - 'backend/services/audit-log-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            auth-service:
+              - 'backend/services/auth-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            chat-service:
+              - 'backend/services/chat-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            delivery-order-service:
+              - 'backend/services/delivery-order-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            email-service:
+              - 'backend/services/email-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            food-order-service:
+              - 'backend/services/food-order-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            gateway:
+              - 'backend/services/gateway/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            geo-service:
+              - 'backend/services/geo-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            history-service:
+              - 'backend/services/history-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            matching-service:
+              - 'backend/services/matching-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            merchant-service:
+              - 'backend/services/merchant-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            notification-service:
+              - 'backend/services/notification-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            payment-service:
+              - 'backend/services/payment-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            pricing-service:
+              - 'backend/services/pricing-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            promotion-service:
+              - 'backend/services/promotion-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            push-service:
+              - 'backend/services/push-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            rating-service:
+              - 'backend/services/rating-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            ride-order-service:
+              - 'backend/services/ride-order-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            search-service:
+              - 'backend/services/search-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            security-service:
+              - 'backend/services/security-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            sms-service:
+              - 'backend/services/sms-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            tracking-service:
+              - 'backend/services/tracking-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            user-service:
+              - 'backend/services/user-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+            wallet-service:
+              - 'backend/services/wallet-service/**'
+              - 'backend/pkg/**'
+              - 'backend/go.work*'
+              - '.github/workflows/**'
+
+      - name: Resolve Target Services
+        id: set-services
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            ALL_SERVICES='["audit-log-service","auth-service","chat-service","delivery-order-service","email-service","food-order-service","gateway","geo-service","history-service","matching-service","merchant-service","notification-service","payment-service","pricing-service","promotion-service","push-service","rating-service","ride-order-service","search-service","security-service","sms-service","tracking-service","user-service","wallet-service"]'
+            echo "services=$ALL_SERVICES" >> "$GITHUB_OUTPUT"
+          else
+            echo "services=${{ steps.filter.outputs.changes }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Test (${{ matrix.service }})
+    needs: changes
+    if: ${{ needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.changes.outputs.services) }}
+
+    defaults:
+      run:
+        working-directory: backend/services/${{ matrix.service }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: false
+
+      - name: Download Go dependencies
+        run: go mod download
+
+      - name: Run Unit Tests
+        run: go test -tags=unit -v ./...
+
+      - name: Run Linter (go vet)
+        run: go vet ./...
+
+      - name: Run Functional Tests
+        run: |
+          if [ -d "test/functional" ]; then
+            echo "Starting test dependencies with Docker Compose..."
+            docker compose up -d
+            echo "Waiting for containers to be ready..."
+            sleep 5
+            go test -tags=functional -v ./test/functional/...
+          else
+            echo "Functional tests skipped — no test/functional directory found."
+          fi
+
+      - name: Clean up Docker Compose
+        if: always()
+        run: |
+          if [ -d "test/functional" ]; then
+            docker compose down -v
+          fi
